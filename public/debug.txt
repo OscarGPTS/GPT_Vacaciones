@@ -1,0 +1,647 @@
+Array
+(
+    [0] => Array
+        (
+            [id] => 13
+            [job] => Ayudante Especializado
+            [area] => Servicios Generales y Almacén
+        )
+
+    [1] => Array
+        (
+            [id] => 14
+            [job] => Técnico Soldador Master
+            [area] => Operaciones
+        )
+
+    [2] => Array
+        (
+            [id] => 18
+            [job] => Encargada Administrativa
+            [area] => Servicios Generales y Almacén
+        )
+
+    [3] => Array
+        (
+            [id] => 22
+            [job] => Técnico Especialista en HT & LS Nivel III
+            [area] => Operaciones
+        )
+
+    [4] => Array
+        (
+            [id] => 26
+            [job] => Técnico Especialista en Soldadura
+            [area] => Operaciones
+        )
+
+    [5] => Array
+        (
+            [id] => 36
+            [job] => Gerencia Técnica
+            [area] => QHSE
+        )
+
+    [6] => Array
+        (
+            [id] => 37
+            [job] => Mecánico Tornero
+            [area] => Ingeniería y Manufactura
+        )
+
+    [7] => Array
+        (
+            [id] => 40
+            [job] => Ingeniero de proyectos
+            [area] => Proyectos
+        )
+
+    [8] => Array
+        (
+            [id] => 46
+            [job] => Jefatura de Contratos Gobierno
+            [area] => Proyectos
+        )
+
+    [9] => Array
+        (
+            [id] => 50
+            [job] => Técnico Especialista en HT & LS Nivel I
+            [area] => Operaciones
+        )
+
+    [10] => Array
+        (
+            [id] => 53
+            [job] => Ingeniería
+            [area] => Ingeniería y Manufactura
+        )
+
+    [11] => Array
+        (
+            [id] => 89
+            [job] => Técnico Soldador
+            [area] => Operaciones
+        )
+
+    [12] => Array
+        (
+            [id] => 92
+            [job] => Técnico Especialista en HT & LS Nivel II
+            [area] => Operaciones
+        )
+
+    [13] => Array
+        (
+            [id] => 99
+            [job] => Técnico Soldador
+            [area] => Operaciones
+        )
+
+    [14] => Array
+        (
+            [id] => 106
+            [job] => Dirección General
+            [area] => Dirección General
+        )
+
+    [15] => Array
+        (
+            [id] => 123
+            [job] => Recursos Humanos Sr
+            [area] => Administración y Finanzas
+        )
+
+    [16] => Array
+        (
+            [id] => 131
+            [job] => Técnico Soldador
+            [area] => Operaciones
+        )
+
+    [17] => Array
+        (
+            [id] => 132
+            [job] => Ayudante de Soldador
+            [area] => Operaciones
+        )
+
+    [18] => Array
+        (
+            [id] => 137
+            [job] => Mecánico Especialista
+            [area] => Ingeniería y Manufactura
+        )
+
+    [19] => Array
+        (
+            [id] => 152
+            [job] => Soporte Técnico IT
+            [area] => Servicios Generales y Almacén
+        )
+
+    [20] => Array
+        (
+            [id] => 157
+            [job] => Trainee HT & LS
+            [area] => Operaciones
+        )
+
+    [21] => Array
+        (
+            [id] => 158
+            [job] => Contador Sr
+            [area] => Administración y Finanzas
+        )
+
+    [22] => Array
+        (
+            [id] => 166
+            [job] => Contador Sr
+            [area] => Administración y Finanzas
+        )
+
+    [23] => Array
+        (
+            [id] => 168
+            [job] => Gerencia de Contratos
+            [area] => Comercial
+        )
+
+    [24] => Array
+        (
+            [id] => 180
+            [job] => Responsable de compras
+            [area] => Administración y Finanzas
+        )
+
+    [25] => Array
+        (
+            [id] => 187
+            [job] => Ingeniero de Costos Jr
+            [area] => Ingeniería y Manufactura
+        )
+
+    [26] => Array
+        (
+            [id] => 191
+            [job] => Diseñador
+            [area] => Ingeniería y Manufactura
+        )
+
+    [27] => Array
+        (
+            [id] => 193
+            [job] => Servicios Generales Sr
+            [area] => Servicios Generales y Almacén
+        )
+
+    [28] => Array
+        (
+            [id] => 199
+            [job] => Programador Jr.
+            [area] => Servicios Generales y Almacén
+        )
+
+    [29] => Array
+        (
+            [id] => 200
+            [job] => Ingeniero de Calidad Jr.
+            [area] => QHSE
+        )
+
+    [30] => Array
+        (
+            [id] => 202
+            [job] => Limpieza
+            [area] => Servicios Generales y Almacén
+        )
+
+    [31] => Array
+        (
+            [id] => 205
+            [job] => Trainee HT & LS
+            [area] => Operaciones
+        )
+
+    [32] => Array
+        (
+            [id] => 212
+            [job] => Trainee HT & LS
+            [area] => Operaciones
+        )
+
+    [33] => Array
+        (
+            [id] => 223
+            [job] => Servicios Generales Jr
+            [area] => Servicios Generales y Almacén
+        )
+
+    [34] => Array
+        (
+            [id] => 227
+            [job] => Jefatura de Proyectos
+            [area] => Proyectos
+        )
+
+    [35] => Array
+        (
+            [id] => 230
+            [job] => Servicios Generales Jr
+            [area] => Servicios Generales y Almacén
+        )
+
+    [36] => Array
+        (
+            [id] => 233
+            [job] => Ingeniero de Contratos Gobierno
+            [area] => Proyectos
+        )
+
+    [37] => Array
+        (
+            [id] => 235
+            [job] => Mecánico Tornero
+            [area] => Ingeniería y Manufactura
+        )
+
+    [38] => Array
+        (
+            [id] => 240
+            [job] => Trainee de Marketing
+            [area] => Dirección General
+        )
+
+    [39] => Array
+        (
+            [id] => 247
+            [job] => Trainee de Contabilidad
+            [area] => Administración y Finanzas
+        )
+
+    [40] => Array
+        (
+            [id] => 249
+            [job] => Ayudante de manufactura
+            [area] => Ingeniería y Manufactura
+        )
+
+    [41] => Array
+        (
+            [id] => 250
+            [job] => Encargado de Almacén
+            [area] => Servicios Generales y Almacén
+        )
+
+    [42] => Array
+        (
+            [id] => 251
+            [job] => Chofer
+            [area] => Servicios Generales y Almacén
+        )
+
+    [43] => Array
+        (
+            [id] => 252
+            [job] => Ayudante de Soldador
+            [area] => Operaciones
+        )
+
+    [44] => Array
+        (
+            [id] => 253
+            [job] => Ayudante de Mantenimiento
+            [area] => Ingeniería y Manufactura
+        )
+
+    [45] => Array
+        (
+            [id] => 256
+            [job] => Limpieza
+            [area] => Servicios Generales y Almacén
+        )
+
+    [46] => Array
+        (
+            [id] => 257
+            [job] => Maniobrista
+            [area] => Servicios Generales y Almacén
+        )
+
+    [47] => Array
+        (
+            [id] => 258
+            [job] => Limpieza
+            [area] => Servicios Generales y Almacén
+        )
+
+    [48] => Array
+        (
+            [id] => 260
+            [job] => Ingeniero de Producto
+            [area] => Ingeniería y Manufactura
+        )
+
+    [49] => Array
+        (
+            [id] => 263
+            [job] => Recursos Humanos Jr
+            [area] => Administración y Finanzas
+        )
+
+    [50] => Array
+        (
+            [id] => 264
+            [job] => Servicios Generales Jr
+            [area] => Servicios Generales y Almacén
+        )
+
+    [51] => Array
+        (
+            [id] => 265
+            [job] => Pintor industrial
+            [area] => Ingeniería y Manufactura
+        )
+
+    [52] => Array
+        (
+            [id] => 266
+            [job] => Ingeniero de Desarrollo (Mejora Continua)
+            [area] => QHSE
+        )
+
+    [53] => Array
+        (
+            [id] => 268
+            [job] => Mecánico Especialista
+            [area] => Ingeniería y Manufactura
+        )
+
+    [54] => Array
+        (
+            [id] => 269
+            [job] => Ingeniero de proyectos
+            [area] => Proyectos
+        )
+
+    [55] => Array
+        (
+            [id] => 270
+            [job] => Técnico Especialista en HT & LS Nivel II
+            [area] => Operaciones
+        )
+
+    [56] => Array
+        (
+            [id] => 271
+            [job] => Operador de Grúa
+            [area] => Servicios Generales y Almacén
+        )
+
+    [57] => Array
+        (
+            [id] => 274
+            [job] => Comprador
+            [area] => Administración y Finanzas
+        )
+
+    [58] => Array
+        (
+            [id] => 275
+            [job] => Mecánico Tornero
+            [area] => Ingeniería y Manufactura
+        )
+
+    [59] => Array
+        (
+            [id] => 276
+            [job] => Ingeniero de Producto
+            [area] => Ingeniería y Manufactura
+        )
+
+    [60] => Array
+        (
+            [id] => 277
+            [job] => Guardia de seguridad
+            [area] => Servicios Generales y Almacén
+        )
+
+    [61] => Array
+        (
+            [id] => 285
+            [job] => Guardia de seguridad
+            [area] => Servicios Generales y Almacén
+        )
+
+    [62] => Array
+        (
+            [id] => 286
+            [job] => Mecánico Tornero
+            [area] => Ingeniería y Manufactura
+        )
+
+    [63] => Array
+        (
+            [id] => 287
+            [job] => Ingeniero de Producto
+            [area] => Ingeniería y Manufactura
+        )
+
+    [64] => Array
+        (
+            [id] => 289
+            [job] => Mecánico Tornero
+            [area] => Ingeniería y Manufactura
+        )
+
+    [65] => Array
+        (
+            [id] => 290
+            [job] => Trainee de Contabilidad
+            [area] => Administración y Finanzas
+        )
+
+    [66] => Array
+        (
+            [id] => 292
+            [job] => Almacenista
+            [area] => Servicios Generales y Almacén
+        )
+
+    [67] => Array
+        (
+            [id] => 293
+            [job] => Trainee de HSE
+            [area] => QHSE
+        )
+
+    [68] => Array
+        (
+            [id] => 296
+            [job] => Recursos Humanos Jr
+            [area] => Administración y Finanzas
+        )
+
+    [69] => Array
+        (
+            [id] => 298
+            [job] => Comprador
+            [area] => Administración y Finanzas
+        )
+
+    [70] => Array
+        (
+            [id] => 299
+            [job] => Técnico Soldador
+            [area] => Operaciones
+        )
+
+    [71] => Array
+        (
+            [id] => 301
+            [job] => Trainee de Sistema de Gestión Integral (SGI)
+            [area] => QHSE
+        )
+
+    [72] => Array
+        (
+            [id] => 302
+            [job] => Trainee de Recursos Humanos
+            [area] => Administración y Finanzas
+        )
+
+    [73] => Array
+        (
+            [id] => 303
+            [job] => Ingeniero de Ventas
+            [area] => Comercial
+        )
+
+    [74] => Array
+        (
+            [id] => 304
+            [job] => Jefatura de Ventas
+            [area] => Comercial
+        )
+
+    [75] => Array
+        (
+            [id] => 305
+            [job] => Comprador
+            [area] => Administración y Finanzas
+        )
+
+    [76] => Array
+        (
+            [id] => 306
+            [job] => Analista de administración y presupuestos
+            [area] => Administración y Finanzas
+        )
+
+    [77] => Array
+        (
+            [id] => 307
+            [job] => Almacenista
+            [area] => Servicios Generales y Almacén
+        )
+
+    [78] => Array
+        (
+            [id] => 309
+            [job] => Inspector de control de calidad
+            [area] => QHSE
+        )
+
+    [79] => Array
+        (
+            [id] => 311
+            [job] => Guardia de seguridad
+            [area] => Servicios Generales y Almacén
+        )
+
+    [80] => Array
+        (
+            [id] => 313
+            [job] => Ingeniero de Ventas
+            [area] => Comercial
+        )
+
+    [81] => Array
+        (
+            [id] => 314
+            [job] => Residente de Obra (OMA)
+            [area] => Proyectos
+        )
+
+    [82] => Array
+        (
+            [id] => 315
+            [job] => Dirección General
+            [area] => Dirección General
+        )
+
+    [83] => Array
+        (
+            [id] => 316
+            [job] => Responsable del Sistema de Gestión Integral (SGI)
+            [area] => QHSE
+        )
+
+    [84] => Array
+        (
+            [id] => 318
+            [job] => Técnico Soldador
+            [area] => Operaciones
+        )
+
+    [85] => Array
+        (
+            [id] => 319
+            [job] => Becario de Contabilidad
+            [area] => Administración y Finanzas
+        )
+
+    [86] => Array
+        (
+            [id] => 320
+            [job] => Control Documental
+            [area] => Contratos
+        )
+
+    [87] => Array
+        (
+            [id] => 321
+            [job] => Soldador
+            [area] => Operaciones
+        )
+
+    [88] => Array
+        (
+            [id] => 322
+            [job] => Mecánico Especialista
+            [area] => Ingeniería y Manufactura
+        )
+
+    [89] => Array
+        (
+            [id] => 323
+            [job] => Ayudante de Mecánico
+            [area] => Mantenimiento 
+        )
+
+    [90] => Array
+        (
+            [id] => 324
+            [job] => Control de Obra
+            [area] => Contratos
+        )
+
+    [91] => Array
+        (
+            [id] => 331
+            [job] => Gerencia de servicios generales y almacén
+            [area] => Servicios Generales y Almacén
+        )
+
+)

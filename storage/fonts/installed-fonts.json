@@ -1,0 +1,22 @@
+{
+    "roboto": {
+        "normal": "C:\\xampp\\htdocs\\rrhh.satechenergy\\storage\\fonts\/roboto_normal_826b21c6e9e390acde75d9452fa9e59f",
+        "500": "C:\\xampp\\htdocs\\rrhh.satechenergy\\storage\\fonts\/roboto_500_6c31329457813f7a8ebc5a352147fef5",
+        "bold": "roboto_bold_1a8c4a1acbd70e6f5947d46ac9a3bfc6"
+    },
+    "sacramento": {
+        "normal": "sacramento_normal_a9dab65f9bf85594a9747315a4e4f1a7"
+    },
+    "sacramento', cursive": {
+        "normal": "sacramento___cursive_normal_bffa2a25dc06c64a3c3c10e352c2474a"
+    },
+    "buffalo": {
+        "normal": "buffalo_normal_b89b8c646df247ecbc13b8b54dbb20e7"
+    },
+    "dancing script', cursive": {
+        "normal": "dancing_script___cursive_normal_4f67b0e5601ead53aa4f6f680184644d"
+    },
+    "dancing script": {
+        "normal": "dancing_script_normal_4f67b0e5601ead53aa4f6f680184644d"
+    }
+}

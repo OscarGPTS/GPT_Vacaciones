@@ -1,0 +1,74 @@
+/* Estilos personalizados para notificaciones del sidebar */
+
+/* Badge de notificación principal en el menú de Vacaciones */
+.nav-main-item .badge {
+    font-size: 0.7rem;
+    padding: 0.25em 0.5em;
+    border-radius: 10px;
+    font-weight: 600;
+    line-height: 1;
+    min-width: 1.2em;
+    text-align: center;
+}
+
+/* Badge de notificación en submenús */
+.nav-main-submenu .badge {
+    font-size: 0.65rem;
+    padding: 0.2em 0.4em;
+    border-radius: 8px;
+    font-weight: 500;
+    min-width: 1em;
+}
+
+/* Animación sutil para llamar la atención */
+.nav-main-item .badge,
+.nav-main-submenu .badge {
+    animation: pulse-notification 2s infinite;
+}
+
+@keyframes pulse-notification {
+    0% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.8;
+        transform: scale(1.05);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* Colores específicos para diferentes tipos de notificaciones */
+.badge.bg-danger {
+    background-color: #dc3545 !important;
+    color: white !important;
+}
+
+.badge.bg-warning {
+    background-color: #ffc107 !important;
+    color: #000 !important;
+}
+
+.badge.bg-info {
+    background-color: #0dcaf0 !important;
+    color: #000 !important;
+}
+
+/* Hover effects */
+.nav-main-link:hover .badge {
+    transform: scale(1.1);
+    transition: transform 0.2s ease;
+}
+
+/* Responsivo para pantallas pequeñas */
+@media (max-width: 768px) {
+    .nav-main-item .badge,
+    .nav-main-submenu .badge {
+        font-size: 0.6rem;
+        padding: 0.15em 0.3em;
+        min-width: 0.8em;
+    }
+}
