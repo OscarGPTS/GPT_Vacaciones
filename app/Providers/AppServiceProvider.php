@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use Livewire\Livewire;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
@@ -27,6 +28,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
+        // Forzar HTTPS cuando se usa túnel o en producción
+        if (config('app.force_https', false) || request()->header('X-Forwarded-Proto') === 'https') {
+            URL::forceScheme('https');
+        }
+
         $project_title = '| RRHH';
         Route::resourceVerbs([
             'create' => 'crear',

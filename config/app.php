@@ -58,6 +58,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Force HTTPS Scheme
+    |--------------------------------------------------------------------------
+    |
+    | When using tunneling services (ngrok, cloudflare tunnel) or behind a
+    | proxy/load balancer that handles SSL, Laravel needs to be told to
+    | generate HTTPS URLs. Set FORCE_HTTPS=true in .env to enable this.
+    |
+    */
+
+    'force_https' => env('FORCE_HTTPS', false),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Timezone
     |--------------------------------------------------------------------------
     |
