@@ -28,6 +28,7 @@ class RequestRejected extends Model
 
     /**
      * Get the user that owns the rejected request.
+     * Cross-database relationship: mysql_vacations → mysql
      */
     public function user(): BelongsTo
     {

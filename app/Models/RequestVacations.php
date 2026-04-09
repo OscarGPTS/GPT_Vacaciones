@@ -41,6 +41,7 @@ class RequestVacations extends Model
 
     /**
      * Get the user that owns the request.
+     * Cross-database relationship: mysql_vacations → mysql
      */
     public function user(): BelongsTo
     {
@@ -89,6 +90,7 @@ class RequestVacations extends Model
 
     /**
      * Get the user responsible for covering duties.
+     * Cross-database relationship: mysql_vacations → mysql
      */
     public function reveal(): BelongsTo
     {

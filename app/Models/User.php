@@ -141,11 +141,20 @@ class User extends Authenticatable
         return $userDepartamentoId === $departamentoId;
     }
 
+    /**
+     * Solicitudes de vacaciones realizadas por el usuario.
+     * Cross-database: mysql → mysql_vacations
+     * (RequestVacations ya tiene protected $connection = 'mysql_vacations')
+     */
     public function requestDone()
     {
         return $this->hasMany(RequestVacations::class, 'user_id');
     }
 
+    /**
+     * Alias de requestDone().
+     * Cross-database: mysql → mysql_vacations
+     */
     public function requestVacations()
     {
         return $this->hasMany(RequestVacations::class, 'user_id');
@@ -156,21 +165,37 @@ class User extends Authenticatable
         return $this->hasOne(User::class, 'id', 'jefe_directo_id');
     }
 
+    /**
+     * Solicitudes asignadas al usuario como jefe directo.
+     * Cross-database: mysql → mysql_vacations
+     */
     public function requestToAuth()
     {
         return $this->hasMany(RequestVacations::class, 'direct_manager_id');
     }
 
+    /**
+     * Períodos de vacaciones disponibles del usuario.
+     * Cross-database: mysql → mysql_vacations
+     */
     public function vacationsAvailable()
     {
         return $this->hasMany(VacationsAvailable::class, 'users_id');
     }
 
+    /**
+     * Solicitudes aprobadas del usuario.
+     * Cross-database: mysql → mysql_vacations
+     */
     public function approvedRequests()
     {
         return $this->hasMany(RequestApproved::class, 'users_id');
     }
 
+    /**
+     * Solicitudes rechazadas del usuario.
+     * Cross-database: mysql → mysql_vacations
+     */
     public function rejectedRequests()
     {
         return $this->hasMany(RequestRejected::class, 'users_id');
@@ -178,6 +203,8 @@ class User extends Authenticatable
 
     /**
      * Departamentos que este usuario puede aprobar como dirección.
+     * Cross-database: mysql → mysql_vacations
+     * (DirectionApprover ya tiene protected $connection = 'mysql_vacations')
      */
     public function directionApprovals()
     {

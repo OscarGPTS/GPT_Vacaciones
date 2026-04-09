@@ -48,6 +48,7 @@ class VacationsAvailable extends Model
 
     /**
      * Get the user that owns the vacation available record.
+     * Cross-database relationship: mysql_vacations → mysql
      */
     public function user(): BelongsTo
     {

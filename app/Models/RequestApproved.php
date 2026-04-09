@@ -28,6 +28,7 @@ class RequestApproved extends Model
 
     /**
      * Get the user that owns the approved request.
+     * Cross-database relationship: mysql_vacations → mysql
      */
     public function user(): BelongsTo
     {

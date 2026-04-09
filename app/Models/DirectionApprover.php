@@ -25,6 +25,7 @@ class DirectionApprover extends Model
 
     /**
      * Get the user who is the approver (the boss).
+     * Cross-database relationship: mysql_vacations → mysql
      */
     public function boss(): BelongsTo
     {
