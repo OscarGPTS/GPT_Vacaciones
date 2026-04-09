@@ -94,7 +94,27 @@ if ($testScheme === 'https') {
 echo "\n";
 
 // TEST 6: Variables de entorno OAuth (si existen)
-echo "🔍 Test 6: Verificando variables OAuth...\n";
+echo "🔍 Test 6: Verificando configuración de sesiones...\n";
+
+$sessionSecure = config('session.secure');
+$sessionSameSite = config('session.same_site');
+
+if ($forceHttps && $sessionSecure) {
+    echo "   ✅ SESSION_SECURE_COOKIE está activado (requerido para HTTPS)\n";
+    $passed++;
+} elseif ($forceHttps && !$sessionSecure) {
+    echo "   ❌ SESSION_SECURE_COOKIE debe estar activado para HTTPS\n";
+    echo "   💡 Agrega a .env: SESSION_SECURE_COOKIE=true\n";
+    $failed++;
+} else {
+    echo "   ℹ️  HTTPS no forzado, SESSION_SECURE_COOKIE no es obligatorio\n";
+}
+
+echo "   ℹ️  SameSite: " . ($sessionSameSite ?? 'null') . "\n";
+echo "\n";
+
+// TEST 7: Variables de entorno OAuth (si existen)
+echo "🔍 Test 7: Verificando variables OAuth...\n";
 
 $providers = [
     'Google' => ['GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET'],
@@ -130,7 +150,7 @@ if ($failed > 0) {
 }
 echo "\n";
 
-if ($passed >= 4 && $failed === 0) {
+if ($passed >= 5 && $failed === 0) {
     echo "🎉 ¡CONFIGURACIÓN HTTPS/OAuth CORRECTA!\n\n";
     echo "📋 PRÓXIMOS PASOS:\n";
     echo "   1. Asegúrate que tu túnel esté corriendo (ngrok/cloudflare)\n";
@@ -141,6 +161,9 @@ if ($passed >= 4 && $failed === 0) {
     echo "      https://vacaciones.tech-energy.lat/login/google/callback\n";
     echo "   5. Guarda y espera 1-2 minutos\n";
     echo "   6. Prueba el login: https://vacaciones.tech-energy.lat/login\n";
+    echo "\n";
+    echo "💡 CONSEJO: Abre DevTools (F12) > Application > Cookies para verificar\n";
+    echo "   que la cookie 'laravel_session' tenga Secure=Yes\n";
     echo "\n";
     exit(0);
 } elseif ($passed >= 3) {

@@ -56,18 +56,26 @@ Se configuró Laravel para **forzar HTTPS** cuando está detrás de un proxy/tú
 ```env
 APP_URL=https://tu-subdominio.ngrok-free.app
 FORCE_HTTPS=true
+SESSION_SECURE_COOKIE=true
+SESSION_SAME_SITE=lax
+SESSION_DOMAIN=null
 ```
 
 **Para producción con HTTPS:**
 ```env
 APP_URL=https://tu-dominio.com
 FORCE_HTTPS=true
+SESSION_SECURE_COOKIE=true
+SESSION_SAME_SITE=lax
+SESSION_DOMAIN=null
 ```
 
 **Para desarrollo local sin túnel:**
 ```env
 APP_URL=http://localhost
 FORCE_HTTPS=false
+SESSION_SECURE_COOKIE=false
+SESSION_SAME_SITE=lax
 ```
 
 ### 2. Limpiar Caché
@@ -155,6 +163,47 @@ php artisan tinker
 FORCE_HTTPS=true
 
 # Limpiar caché:
+php artisan config:clear
+```
+
+### Error: Selecciono cuenta de Google pero no inicia sesión
+
+**Causa:** Las cookies de sesión no se guardan porque no están marcadas como `Secure` en HTTPS.
+
+**Solución:**
+```env
+# Agregar a .env:
+SESSION_SECURE_COOKIE=true
+SESSION_SAME_SITE=lax
+SESSION_DOMAIN=null
+
+# Limpiar caché:
+php artisan config:clear
+php artisan cache:clear
+```
+
+**Cómo verificar:**
+1. Abre las DevTools del navegador (F12)
+2. Ve a la pestaña "Application" > "Cookies"
+3. Busca la cookie `laravel_session`
+4. Debe tener:
+   - ✅ `Secure`: Yes
+   - ✅ `SameSite`: Lax
+   - ✅ `Domain`: tu dominio
+
+Si la cookie no aparace o está marcada como bloqueada, revisa la configuración.
+
+### Error: "Session cookie is not secure"
+
+**Causa:** `SESSION_SECURE_COOKIE` no está habilitado.
+
+**Solución:**
+```env
+SESSION_SECURE_COOKIE=true
+```
+
+Luego limpia caché:
+```bash
 php artisan config:clear
 ```
 
