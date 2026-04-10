@@ -85,6 +85,9 @@ class VacacionesController extends Controller
         // Obtener días no laborables
         $noworkingdays = NoWorkingDays::orderBy('day')->get();
         
+        // Verificar si el usuario tiene permiso de delegación
+        $canDelegate = \App\Models\DelegationPermission::hasPermission(auth()->id());
+
         // Obtener todos los usuarios activos para asignar como responsable o para representar
         $users = \App\Models\User::where('id', '!=', auth()->id())
             ->where('active', 1)
@@ -96,11 +99,16 @@ class VacacionesController extends Controller
                 return [$user->id => $user->first_name . ' ' . $user->last_name];
             });
 
-        return view('vacaciones.create', compact('noworkingdays', 'users'));
+        return view('vacaciones.create', compact('noworkingdays', 'users', 'canDelegate'));
     }
 
     public function store(Request $request)
     {
+        // Verificar permiso de delegación si se intenta solicitar en representación
+        if ($request->behalf_user_id && !\App\Models\DelegationPermission::hasPermission(auth()->id())) {
+            return back()->with('error', 'No tienes permiso para solicitar vacaciones en representación de otro usuario.');
+        }
+
         // Determinar el usuario para quien es la solicitud
         $targetUserId = $request->behalf_user_id ?? auth()->id();
         $targetUser = \App\Models\User::findOrFail($targetUserId);

@@ -150,6 +150,16 @@ return new class extends Migration
             $table->index('created_at');
         });
 
+        Schema::connection('mysql_vacations')->create('delegation_permissions', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('user_id')->index()
+                ->comment('Usuario que tiene permiso de solicitar en representación');
+            $table->boolean('is_active')->default(true)
+                ->comment('Si el permiso está activo');
+            $table->timestamps();
+            $table->unique('user_id');
+        });
+
     }
 
     /**
@@ -157,6 +167,7 @@ return new class extends Migration
      */
     public function down(): void
     {
+        Schema::connection('mysql_vacations')->dropIfExists('delegation_permissions');
         Schema::connection('mysql_vacations')->dropIfExists('system_logs');
         Schema::connection('mysql_vacations')->dropIfExists('manager_approvers');
         Schema::connection('mysql_vacations')->dropIfExists('direction_approvers');

@@ -154,6 +154,14 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
         Route::delete('{bossId}/all', [App\Http\Controllers\Admin\AdminManagerApproversController::class, 'destroyAll'])->name('destroy-all');
     });
 
+    // Gestión de Permisos de Delegación
+    Route::prefix('delegation-permissions')->name('admin.delegation-permissions.')->group(function() {
+        Route::get('/', [App\Http\Controllers\Admin\DelegationPermissionsController::class, 'index'])->name('index');
+        Route::post('/', [App\Http\Controllers\Admin\DelegationPermissionsController::class, 'store'])->name('store');
+        Route::post('{id}/toggle', [App\Http\Controllers\Admin\DelegationPermissionsController::class, 'toggle'])->name('toggle');
+        Route::delete('{id}', [App\Http\Controllers\Admin\DelegationPermissionsController::class, 'destroy'])->name('destroy');
+    });
+
     // Prueba de Envío de Correo
     Route::get('test-email', [App\Http\Controllers\TestEmailController::class, 'index'])->name('admin.test-email');
     Route::post('test-email/send', [App\Http\Controllers\TestEmailController::class, 'send'])->name('admin.test-email.send');

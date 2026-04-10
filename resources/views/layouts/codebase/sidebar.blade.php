@@ -23,6 +23,14 @@
                 </a>
             </li>
             <li class="nav-main-item">
+                <a class="nav-main-link" href="{{ route('admin.delegation-permissions.index') }}">
+                    <i class="nav-main-link-icon fa fa-user-friends"></i>
+                    <span class="nav-main-link-name">Permisos de Delegación</span>
+                </a>
+            </li>
+            {{-- Prueba de Correo y Optimización ocultos --}}
+            {{--
+            <li class="nav-main-item">
                 <a class="nav-main-link" href="{{ route('admin.test-email') }}">
                     <i class="nav-main-link-icon fa fa-envelope-open-text"></i>
                     <span class="nav-main-link-name">Prueba de Correo</span>
@@ -34,6 +42,7 @@
                     <span class="nav-main-link-name">Optimización</span>
                 </a>
             </li>
+            --}}
             <br>
         @endcan
 

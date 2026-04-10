@@ -262,6 +262,7 @@
             </div>
             
             <!-- Opción para solicitar en representación -->
+            @if(isset($canDelegate) && $canDelegate)
             <div class="alert alert-warning">
                 <div class="form-check">
                     <input class="form-check-input" type="checkbox" id="onBehalfCheckbox">
@@ -273,6 +274,7 @@
                     Activa esta opción si vas a crear una solicitud para un usuario que no tiene acceso al sistema.
                 </small>
             </div>
+            @endif
             
             <!-- Tarjetas de Selección de Períodos -->
             <div id="periodsSelectionPanel" style="display: none;" class="mb-3">
