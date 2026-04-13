@@ -490,22 +490,34 @@ class VacacionesRh extends Component
 
     public function getUsersProperty()
     {
-        return User::whereHas('requestVacations', function (Builder $q) {
-            $q->where('direct_manager_status', 'Aprobada')
-              ->where('direction_approbation_status', 'Aprobada')
-              ->where('human_resources_status', '!=', 'Rechazada');
-        })
-        ->where('active', 1)
-        ->orderBy('first_name')
-        ->get();
+        // Primero obtener IDs de usuarios desde mysql_vacations
+        $userIds = RequestVacations::where('direct_manager_status', 'Aprobada')
+            ->where('direction_approbation_status', 'Aprobada')
+            ->where('human_resources_status', '!=', 'Rechazada')
+            ->distinct()
+            ->pluck('user_id')
+            ->toArray();
+        
+        // Luego filtrar usuarios en mysql usando whereIn (no cross-database)
+        return User::whereIn('id', $userIds)
+            ->where('active', 1)
+            ->orderBy('first_name')
+            ->get();
     }
 
     public function getDepartmentsProperty()
     {
-        return Departamento::whereHas('jobs.empleados.requestVacations', function (Builder $q) {
-            $q->where('direct_manager_status', 'Aprobada')
-              ->where('direction_approbation_status', 'Aprobada')
-              ->where('human_resources_status', '!=', 'Rechazada');
+        // Primero obtener IDs de usuarios desde mysql_vacations
+        $userIds = RequestVacations::where('direct_manager_status', 'Aprobada')
+            ->where('direction_approbation_status', 'Aprobada')
+            ->where('human_resources_status', '!=', 'Rechazada')
+            ->distinct()
+            ->pluck('user_id')
+            ->toArray();
+        
+        // Luego obtener departamentos de esos usuarios (via jobs)
+        return Departamento::whereHas('jobs.empleados', function (Builder $q) use ($userIds) {
+            $q->whereIn('id', $userIds);
         })
         ->orderBy('name')
         ->get();

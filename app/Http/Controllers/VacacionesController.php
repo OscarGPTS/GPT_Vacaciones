@@ -20,57 +20,69 @@ class VacacionesController extends Controller
     {
         // Obtener las solicitudes del usuario autenticado
         $requests = RequestVacations::where('user_id', auth()->id())
-            ->with(['requestDays', 'reveal'])
+            ->select(['id', 'user_id', 'created_by_user_id', 'reveal_id', 'type_request', 'start', 'end', 
+                     'direct_manager_status', 'direction_approbation_status', 'human_resources_status', 'created_at'])
+            ->with(['requestDays:id,requests_id,start,end', 'reveal:id,first_name,last_name'])
             ->orderBy('created_at', 'desc')
             ->paginate(20);
         
-        // Obtener las solicitudes creadas en representación por el usuario autenticado
-        $behalfRequests = RequestVacations::where('created_by_user_id', auth()->id())
-            ->with(['user', 'user.job', 'requestDays', 'reveal'])
-            ->orderBy('created_at', 'desc')
-            ->paginate(20);
+        // Solo cargar solicitudes en representación si el usuario tiene permiso de delegación
+        $canDelegate = \App\Models\DelegationPermission::hasPermission(auth()->id());
+        $behalfRequests = collect([]);
+        
+        if ($canDelegate) {
+            $behalfRequests = RequestVacations::where('created_by_user_id', auth()->id())
+                ->select(['id', 'user_id', 'created_by_user_id', 'reveal_id', 'type_request', 'start', 'end',
+                         'direct_manager_status', 'direction_approbation_status', 'human_resources_status', 'created_at'])
+                ->with([
+                    'user:id,first_name,last_name,job_id', 
+                    'user.job:id,name',
+                    'requestDays:id,requests_id,start,end', 
+                    'reveal:id,first_name,last_name'
+                ])
+                ->orderBy('created_at', 'desc')
+                ->paginate(20);
+        }
         
         // Obtener períodos de vacaciones vigentes del usuario
+        $now = \Carbon\Carbon::now();
         $vacationPeriods = VacationsAvailable::where('users_id', auth()->id())
             ->where('is_historical', false)
+            ->select(['id', 'period', 'date_start', 'date_end', 'days_availables', 'days_enjoyed', 'days_reserved'])
             ->orderBy('period')
             ->get()
-            ->map(function ($period) {
-                // Calcular fecha de expiración (date_end + 1 año + 3 meses)
-                // El empleado genera vacaciones durante 1 año, luego tiene 1 año + 3 meses para tomarlas
-                // Ejemplo: Período 03/10/2023-02/10/2024 → Vence 02/01/2026 (mismo día que date_end)
-                $expirationDate = \Carbon\Carbon::parse($period->date_end)->addYear()->addMonths(3);
-                $daysUntilExpiration = $expirationDate->diffInDays(\Carbon\Carbon::now(), false);
+            ->map(function ($period) use ($now) {
+                // Calcular fecha de expiración (date_end + 15 meses)
+                $expirationDate = $period->date_end->copy()->addMonths(15);
+                $daysUntilExpiration = $expirationDate->diffInDays($now, false);
                 
-                // Calcular días disponibles reales del período.
-                // Usa days_calculated solo cuando ya tiene valor útil; de lo contrario
-                // respalda con days_availables para no ocultar períodos activos importados.
+                // Calcular días disponibles reales
                 $availableDays = $period->available_balance;
                 
-                // Verificar si está vencido (date_end + 15 meses)
+                // Verificar si está vencido
                 $isExpired = $daysUntilExpiration < 0;
                 
                 return [
                     'period' => $period->period,
-                    'period_name' => $period->period_name,
+                    'period_name' => 'Período ' . $period->period,
                     'date_start' => $period->date_start,
                     'date_end' => $period->date_end,
                     'days_availables' => $period->days_availables,
                     'days_enjoyed' => $period->days_enjoyed,
                     'days_reserved' => $period->days_reserved ?? 0,
-                    'available_days' => floor($availableDays), // Sin decimales
-                    'available_days_exact' => round($availableDays, 2), // Valor exacto para tooltip
+                    'available_days' => floor($availableDays),
+                    'available_days_exact' => round($availableDays, 2),
                     'expiration_date' => $expirationDate,
                     'days_until_expiration' => $daysUntilExpiration,
                     'is_expired' => $isExpired,
-                    'expires_soon' => $daysUntilExpiration <= 60 && $daysUntilExpiration < 0,
+                    'expires_soon' => $daysUntilExpiration <= 60 && !$isExpired,
                 ];
-            })->filter(function($period) {
+            })->reject(function($period) {
                 // Filtrar períodos vencidos
-                return !$period['is_expired'];
+                return $period['is_expired'];
             });
         
-        // Calcular total de días disponibles (redondeado)
+        // Calcular total de días disponibles
         $totalAvailableDays = $vacationPeriods->sum('available_days');
             
         return view('vacaciones.index', compact('requests', 'behalfRequests', 'vacationPeriods', 'totalAvailableDays'));
