@@ -85,7 +85,7 @@ class VacacionesController extends Controller
         // Calcular total de días disponibles
         $totalAvailableDays = $vacationPeriods->sum('available_days');
             
-        return view('vacaciones.index', compact('requests', 'behalfRequests', 'vacationPeriods', 'totalAvailableDays'));
+        return view('vacaciones.index', compact('requests', 'behalfRequests', 'vacationPeriods', 'totalAvailableDays', 'canDelegate'));
     }
 
     public function create()

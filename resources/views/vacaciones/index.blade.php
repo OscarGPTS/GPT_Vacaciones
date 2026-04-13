@@ -85,12 +85,14 @@
                                 <span class="badge bg-primary ms-1">{{ $requests->count() }}</span>
                             </button>
                         </li>
+                        @if(isset($canDelegate) && $canDelegate)
                         <li class="nav-item" role="presentation">
                             <button class="nav-link" id="behalf-requests-tab" data-bs-toggle="tab" data-bs-target="#behalf-requests" type="button" role="tab">
                                 <i class="fas fa-user-friends"></i> Solicitudes en Representación
                                 <span class="badge bg-info ms-1">{{ $behalfRequests->count() }}</span>
                             </button>
                         </li>
+                        @endif
                     </ul>
 
                     <div class="tab-content" id="vacationTabsContent">
@@ -232,6 +234,7 @@
             </div>
 
             <!-- Pestaña de Solicitudes en Representación -->
+            @if(isset($canDelegate) && $canDelegate)
             <div class="tab-pane fade" id="behalf-requests" role="tabpanel">
                 @if($behalfRequests->count() > 0)
                     <div class="alert alert-info">
@@ -385,6 +388,7 @@
             </div>
         </div>
     </div>
+    @endif
 
     <!-- Modales para Mis Solicitudes -->
     @foreach($requests as $request)
@@ -486,6 +490,7 @@
     @endforeach
 
     <!-- Modales para Solicitudes en Representación -->
+    @if(isset($canDelegate) && $canDelegate)
     @foreach($behalfRequests as $request)
         <div class="modal fade" id="detailBehalfModal{{ $request->id }}" tabindex="-1">
             <div class="modal-dialog modal-lg">
@@ -601,5 +606,6 @@
             </div>
         </div>
     @endforeach
+    @endif
 </div>
 @endsection
