@@ -47,10 +47,7 @@
     <script src="https://balkan.app/js/OrgChart.js"></script>
     
     <style>
-        /* Ocultar barra de búsqueda del organigrama para exportación */
-        #tree .boc-search {
-            display: none !important;
-        }
+        /* La barra de búsqueda se oculta temporalmente solo durante la exportación */
     </style>
     
     <!-- Librerías para exportación -->
@@ -192,6 +189,8 @@
                 
                 button.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Generando PDF...';
                 
+                // Ocultar barra de búsqueda solo durante la captura
+                hideSearchBar();
                 // Capturar con configuración optimizada
                 const canvas = await html2canvas(document.getElementById('tree'), {
                     scale: 1.5,
@@ -201,6 +200,7 @@
                     backgroundColor: '#ffffff',
                     removeContainer: false
                 });
+                showSearchBar();
 
                 const imgData = canvas.toDataURL('image/png', 0.95);
                 const { jsPDF } = window.jspdf;
@@ -313,6 +313,8 @@
                     // Generar PDF
                     button.innerHTML = `<i class="fa fa-spinner fa-spin"></i> Generando PDF ${i + 1}/${selectedDepartments.length}...`;
                     
+                    // Ocultar barra de búsqueda solo durante la captura
+                    hideSearchBar();
                     const canvas = await html2canvas(document.getElementById('tree'), {
                         scale: 1.5,
                         allowTaint: false,
@@ -445,6 +447,8 @@
                 
                 button.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Generando PNG...';
                 
+                // Ocultar barra de búsqueda solo durante la captura
+                hideSearchBar();
                 // Capturar organigrama
                 const orgCanvas = await html2canvas(document.getElementById('tree'), {
                     scale: 1.5,
@@ -453,6 +457,7 @@
                     logging: false,
                     backgroundColor: '#ffffff'
                 });
+                showSearchBar();
 
                 // Crear canvas final con logo
                 const finalCanvas = document.createElement('canvas');
@@ -577,6 +582,15 @@
                     countElement.title = '';
                 }
             }
+        }
+
+        // Helpers para ocultar/mostrar la barra de búsqueda durante exportación
+        function hideSearchBar() {
+            document.querySelectorAll('#tree .boc-search').forEach(el => el.style.display = 'none');
+        }
+
+        function showSearchBar() {
+            document.querySelectorAll('#tree .boc-search').forEach(el => el.style.display = '');
         }
 
         // Función auxiliar para obtener el nombre de archivo según selección
