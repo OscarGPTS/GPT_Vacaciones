@@ -8,9 +8,17 @@
                 <div class="card-header">
                     <div class="d-flex justify-content-between align-items-center">
                         <h3 class="mb-0">Mis Solicitudes de Vacaciones y Permisos</h3>
-                        <a href="{{ route('vacaciones.create') }}" class="btn btn-primary">
-                            <i class="fa fa-plus"></i> Nueva Solicitud
-                        </a>
+                        {{-- @if($vacationPeriods->count() > 0) --}}
+                            <a href="{{ route('vacaciones.create') }}" class="btn btn-primary">
+                                <i class="fa fa-plus"></i> Nueva Solicitud
+                            </a>
+                       {{--  @else --}}
+                            {{-- <button class="btn btn-secondary" disabled 
+                                    data-bs-toggle="tooltip" 
+                                    title="No tienes períodos de vacaciones disponibles">
+                                <i class="fa fa-lock"></i> Nueva Solicitud
+                            </button> --}}
+                       {{--  @endif --}}
                     </div>
                 </div>
 
@@ -68,6 +76,22 @@
                                                 que vencen el día 
                                                 <strong class="{{ $expirationClass }}">{{ $expirationDate }}</strong>
                                                 <span class="{{ $expirationClass }}">{{ $daysRemainingText }}</span>
+                                                
+                                                @if($period['is_not_yet_available'])
+                                                    @php
+                                                        $availableFromFormatted = \Carbon\Carbon::parse($period['available_from_date'])->format('d/m/Y');
+                                                        $daysUntilAvailable = $period['days_until_available'];
+                                                    @endphp
+                                                    <span class="badge bg-info text-white ms-2">
+                                                        <i class="fa fa-clock"></i> 
+                                                        No disponible hasta {{ $availableFromFormatted }} ({{ $daysUntilAvailable }} días)
+                                                    </span>
+                                                @elseif($period['expires_soon'])
+                                                    <span class="badge bg-warning text-dark ms-2">
+                                                        <i class="fa fa-exclamation-triangle"></i> 
+                                                        ¡Vence pronto!
+                                                    </span>
+                                                @endif
                                             </div>
                                         @endif
                                     @endforeach
@@ -75,6 +99,36 @@
                             </div>
                         </div>
                     </div>
+                    @else
+                        <!-- Mensaje cuando no hay períodos disponibles -->
+                        <div class="alert alert-info border mb-3 py-3">
+                            <div class="d-flex align-items-start">
+                                <i class="fa fa-info-circle fa-2x me-3 text-info"></i>
+                                <div class="flex-grow-1">
+                                    <strong>No tienes períodos de vacaciones disponibles actualmente</strong>
+                                    @if(isset($unlockInfo))
+                                        <div class="mt-2">
+                                            <p class="mb-1">
+                                                <i class="fa fa-calendar-alt"></i> 
+                                                Fecha de ingreso: <strong>{{ $unlockInfo['admission_date'] }}</strong>
+                                            </p>
+                                            <p class="mb-0">
+                                                <i class="fa fa-unlock-alt text-success"></i> 
+                                                Tus vacaciones se desbloquearán el <strong class="text-success">{{ $unlockInfo['unlock_date'] }}</strong>
+                                                <span class="badge bg-success ms-1">(faltan {{ $unlockInfo['days_remaining'] }} días)</span>
+                                            </p>
+                                            <small class="text-muted">
+                                                Se requiere 1 año de antigüedad mínima para solicitar vacaciones.
+                                            </small>
+                                        </div>
+                                    @else
+                                        <p class="mt-2 mb-0 text-muted">
+                                            Por favor, contacta con Recursos Humanos para verificar tu información de vacaciones.
+                                        </p>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
                     @endif
 
                     <!-- Pestañas -->
@@ -107,11 +161,11 @@
                                         <th>Fecha Solicitud</th>
                                         <th>Tipo</th>
                                         <th>Días Solicitados</th>
-                                        <th>Período de Vacaciones</th>
-                                        <th>Rango de Días</th>
-                                        <th>Estado Jefe</th>
-                                        <th>Estado RH</th>
-                                        <th>Estado General</th>
+                                        <th>Período</th>
+                                        <th>Días de Vacaciones</th>
+                                        <th>Jefe Directo</th>
+                                        <th>Dirección</th>
+                                        <th>RH</th>
                                         <th>Acciones</th>
                                     </tr>
                                 </thead>
@@ -127,82 +181,62 @@
                                         </td>
                                         <td>
                                             @php
-                                                $vacationPeriod = $request->vacation_period;
+                                                // Parsear opcion para obtener el período (formato: "11|2024-05-25")
+                                                $periodNumber = null;
+                                                if ($request->opcion) {
+                                                    $parts = explode('|', $request->opcion);
+                                                    $periodNumber = $parts[0] ?? null;
+                                                }
                                             @endphp
-                                            @if($vacationPeriod)
-                                                <div class="d-flex align-items-center">
-                                                    <div>
-                                                        <strong class="text-primary">Período {{ $vacationPeriod->period }}</strong>
-                                                        <br>
-                                                        <small class="text-muted">
-                                                            {{ \Carbon\Carbon::parse($vacationPeriod->date_start)->format('d/m/Y') }}
-                                                            - 
-                                                            {{ \Carbon\Carbon::parse($vacationPeriod->date_end)->format('d/m/Y') }}
-                                                        </small>
-                                                    </div>
-                                                </div>
+                                            @if($periodNumber)
+                                                <span class="badge bg-info">Período {{ $periodNumber }}</span>
                                             @else
-                                                <span class="text-muted fst-italic">
-                                                    No especificado
-                                                </span>
+                                                <span class="text-muted fst-italic">N/A</span>
                                             @endif
                                         </td>
                                         <td>
                                             @if($request->requestDays->count() > 0)
-                                                <small>
-                                                    {{ \Carbon\Carbon::parse($request->requestDays->min('start'))->format('d/m/Y') }}
-                                                    al
-                                                    {{ \Carbon\Carbon::parse($request->requestDays->max('start'))->format('d/m/Y') }}
-                                                </small>
+                                                <div style="max-width: 300px;">
+                                                    @foreach($request->requestDays->sortBy('start')->take(5) as $day)
+                                                        <span class="badge bg-light text-dark border me-1 mb-1">
+                                                            {{ \Carbon\Carbon::parse($day->start)->format('d/m/Y') }}
+                                                        </span>
+                                                    @endforeach
+                                                    @if($request->requestDays->count() > 5)
+                                                        <span class="badge bg-secondary">+{{ $request->requestDays->count() - 5 }} más</span>
+                                                    @endif
+                                                </div>
                                             @endif
                                         </td>
                                         <td>
                                             @if($request->direct_manager_status === 'Pendiente')
-                                                <span class="badge bg-warning">
-                                                    Pendiente
-                                                </span>
+                                                <span class="badge bg-warning">Pendiente</span>
                                             @elseif($request->direct_manager_status === 'Aprobada')
-                                                <span class="badge bg-success">
-                                                    Aprobada
-                                                </span>
+                                                <span class="badge bg-success">Aprobada</span>
                                             @else
-                                                <span class="badge bg-danger">
-                                                    Rechazada
-                                                </span>
+                                                <span class="badge bg-danger">Rechazada</span>
                                             @endif
                                         </td>
                                         <td>
-                                            @if($request->direct_manager_status === 'Aprobada')
-                                                @if($request->human_resources_status === 'Pendiente')
-                                                    <span class="badge bg-warning">
-                                                        Pendiente
-                                                    </span>
-                                                @elseif($request->human_resources_status === 'Aprobada')
-                                                    <span class="badge bg-success">
-                                                        Aprobada
-                                                    </span>
-                                                @else
-                                                    <span class="badge bg-danger">
-                                                        Rechazada
-                                                    </span>
-                                                @endif
+                                            @if($request->direction_approbation_status === 'Pendiente')
+                                                <span class="badge bg-warning">Pendiente</span>
+                                            @elseif($request->direction_approbation_status === 'Aprobada')
+                                                <span class="badge bg-success">Aprobada</span>
+                                            @elseif($request->direction_approbation_status === 'Rechazada')
+                                                <span class="badge bg-danger">Rechazada</span>
                                             @else
-                                                <span class="badge bg-secondary">Pendiente</span>
+                                                <span class="badge bg-secondary">-</span>
                                             @endif
                                         </td>
                                         <td>
-                                            @if($request->direct_manager_status === 'Aprobada' && $request->human_resources_status === 'Rechazada')
-                                                <span class="badge bg-success">
-                                                    Rechazada
-                                                </span>
-                                            @elseif($request->direct_manager_status === 'Rechazada' || $request->human_resources_status === 'Rechazada')
-                                                <span class="badge bg-danger">
-                                                    Rechazada
-                                                </span>
+                                            @if($request->human_resources_status === 'Pendiente')
+                                                <span class="badge bg-warning">Pendiente</span>
+                                            @elseif($request->human_resources_status === 'Aprobada')
+                                                <span class="badge bg-success">Aprobada</span>
+                                            @elseif($request->human_resources_status === 'Rechazada')
+                                                <span class="badge bg-danger">Rechazada</span>
                                             @else
-                                                <span class="badge bg-warning">
-                                                    En proceso
-                                                </span>
+                                                <span class="badge bg-secondary">-</span>
                                             @endif
                                         </td>
                                         <td>
@@ -251,11 +285,11 @@
                                     <th>Fecha Solicitud</th>
                                     <th>Tipo</th>
                                     <th>Días Solicitados</th>
-                                    <th>Período de Vacaciones</th>
-                                    <th>Rango de Días</th>
-                                    <th>Estado Jefe</th>
-                                    <th>Estado RH</th>
-                                    <th>Estado General</th>
+                                    <th>Período</th>
+                                    <th>Días de Vacaciones</th>
+                                    <th>Jefe Directo</th>
+                                    <th>Dirección</th>
+                                    <th>RH</th>
                                     <th>Acciones</th>
                                 </tr>
                             </thead>
@@ -281,82 +315,62 @@
                                     </td>
                                     <td>
                                         @php
-                                            $vacationPeriod = $request->vacation_period;
+                                            // Parsear opcion para obtener el período (formato: "11|2024-05-25")
+                                            $periodNumber = null;
+                                            if ($request->opcion) {
+                                                $parts = explode('|', $request->opcion);
+                                                $periodNumber = $parts[0] ?? null;
+                                            }
                                         @endphp
-                                        @if($vacationPeriod)
-                                            <div class="d-flex align-items-center">
-                                                <div>
-                                                    <strong class="text-primary">Período {{ $vacationPeriod->period }}</strong>
-                                                    <br>
-                                                    <small class="text-muted">
-                                                        {{ \Carbon\Carbon::parse($vacationPeriod->date_start)->format('d/m/Y') }}
-                                                        - 
-                                                        {{ \Carbon\Carbon::parse($vacationPeriod->date_end)->format('d/m/Y') }}
-                                                    </small>
-                                                </div>
-                                            </div>
+                                        @if($periodNumber)
+                                            <span class="badge bg-info">Período {{ $periodNumber }}</span>
                                         @else
-                                            <span class="text-muted fst-italic">
-                                                No especificado
-                                            </span>
+                                            <span class="text-muted fst-italic">N/A</span>
                                         @endif
                                     </td>
                                     <td>
                                         @if($request->requestDays->count() > 0)
-                                            <small>
-                                                {{ \Carbon\Carbon::parse($request->requestDays->min('start'))->format('d/m/Y') }}
-                                                al
-                                                {{ \Carbon\Carbon::parse($request->requestDays->max('start'))->format('d/m/Y') }}
-                                            </small>
+                                            <div style="max-width: 300px;">
+                                                @foreach($request->requestDays->sortBy('start')->take(5) as $day)
+                                                    <span class="badge bg-light text-dark border me-1 mb-1">
+                                                        {{ \Carbon\Carbon::parse($day->start)->format('d/m/Y') }}
+                                                    </span>
+                                                @endforeach
+                                                @if($request->requestDays->count() > 5)
+                                                    <span class="badge bg-secondary">+{{ $request->requestDays->count() - 5 }} más</span>
+                                                @endif
+                                            </div>
                                         @endif
                                     </td>
                                     <td>
                                         @if($request->direct_manager_status === 'Pendiente')
-                                            <span class="badge bg-warning">
-                                                Pendiente
-                                            </span>
+                                            <span class="badge bg-warning">Pendiente</span>
                                         @elseif($request->direct_manager_status === 'Aprobada')
-                                            <span class="badge bg-success">
-                                                Aprobada
-                                            </span>
+                                            <span class="badge bg-success">Aprobada</span>
                                         @else
-                                            <span class="badge bg-danger">
-                                                Rechazada
-                                            </span>
+                                            <span class="badge bg-danger">Rechazada</span>
                                         @endif
                                     </td>
                                     <td>
-                                        @if($request->direct_manager_status === 'Aprobada')
-                                            @if($request->human_resources_status === 'Pendiente')
-                                                <span class="badge bg-warning">
-                                                    Pendiente
-                                                </span>
-                                            @elseif($request->human_resources_status === 'Aprobada')
-                                                <span class="badge bg-success">
-                                                    Aprobada
-                                                </span>
-                                            @else
-                                                <span class="badge bg-danger">
-                                                    Rechazada
-                                                </span>
-                                            @endif
+                                        @if($request->direction_approbation_status === 'Pendiente')
+                                            <span class="badge bg-warning">Pendiente</span>
+                                        @elseif($request->direction_approbation_status === 'Aprobada')
+                                            <span class="badge bg-success">Aprobada</span>
+                                        @elseif($request->direction_approbation_status === 'Rechazada')
+                                            <span class="badge bg-danger">Rechazada</span>
                                         @else
-                                            <span class="badge bg-secondary">Pendiente</span>
+                                            <span class="badge bg-secondary">-</span>
                                         @endif
                                     </td>
                                     <td>
-                                        @if($request->direct_manager_status === 'Aprobada' && $request->human_resources_status === 'Aprobada')
-                                            <span class="badge bg-success">
-                                                Aprobada
-                                            </span>
-                                        @elseif($request->direct_manager_status === 'Rechazada' || $request->human_resources_status === 'Rechazada')
-                                            <span class="badge bg-danger">
-                                                Rechazada
-                                            </span>
+                                        @if($request->human_resources_status === 'Pendiente')
+                                            <span class="badge bg-warning">Pendiente</span>
+                                        @elseif($request->human_resources_status === 'Aprobada')
+                                            <span class="badge bg-success">Aprobada</span>
+                                        @elseif($request->human_resources_status === 'Rechazada')
+                                            <span class="badge bg-danger">Rechazada</span>
                                         @else
-                                            <span class="badge bg-warning">
-                                                En proceso
-                                            </span>
+                                            <span class="badge bg-secondary">-</span>
                                         @endif
                                     </td>
                                     <td>
@@ -429,13 +443,27 @@
                                         @endif
                                     </li>
                                     <li>
+                                        <strong>Dirección:</strong>
+                                        @if($request->direction_approbation_status === 'Pendiente')
+                                            <span class="badge bg-warning">Pendiente</span>
+                                        @elseif($request->direction_approbation_status === 'Aprobada')
+                                            <span class="badge bg-success">Aprobada</span>
+                                        @elseif($request->direction_approbation_status === 'Rechazada')
+                                            <span class="badge bg-danger">Rechazada</span>
+                                        @else
+                                            <span class="badge bg-secondary">-</span>
+                                        @endif
+                                    </li>
+                                    <li>
                                         <strong>Recursos Humanos:</strong>
                                         @if($request->human_resources_status === 'Pendiente')
                                             <span class="badge bg-warning">Pendiente</span>
                                         @elseif($request->human_resources_status === 'Aprobada')
                                             <span class="badge bg-success">Aprobada</span>
-                                        @else
+                                        @elseif($request->human_resources_status === 'Rechazada')
                                             <span class="badge bg-danger">Rechazada</span>
+                                        @else
+                                            <span class="badge bg-secondary">-</span>
                                         @endif
                                     </li>
                                 </ul>
@@ -547,13 +575,27 @@
                                         @endif
                                     </li>
                                     <li>
+                                        <strong>Dirección:</strong>
+                                        @if($request->direction_approbation_status === 'Pendiente')
+                                            <span class="badge bg-warning">Pendiente</span>
+                                        @elseif($request->direction_approbation_status === 'Aprobada')
+                                            <span class="badge bg-success">Aprobada</span>
+                                        @elseif($request->direction_approbation_status === 'Rechazada')
+                                            <span class="badge bg-danger">Rechazada</span>
+                                        @else
+                                            <span class="badge bg-secondary">-</span>
+                                        @endif
+                                    </li>
+                                    <li>
                                         <strong>Recursos Humanos:</strong>
                                         @if($request->human_resources_status === 'Pendiente')
                                             <span class="badge bg-warning">Pendiente</span>
                                         @elseif($request->human_resources_status === 'Aprobada')
                                             <span class="badge bg-success">Aprobada</span>
-                                        @else
+                                        @elseif($request->human_resources_status === 'Rechazada')
                                             <span class="badge bg-danger">Rechazada</span>
+                                        @else
+                                            <span class="badge bg-secondary">-</span>
                                         @endif
                                     </li>
                                 </ul>

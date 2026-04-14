@@ -25,7 +25,10 @@ class ManagerApprover extends Model
 
     /**
      * Get the user who is the approver (the boss).
-     * Cross-database relationship: mysql_vacations → mysql
+     * 
+     * ⚠️ CROSS-DATABASE RELATIONSHIP: mysql_vacations → mysql
+     * ⚠️ NO USAR con with() o eager loading - causará error "Table not found"
+     * ⚠️ Cargar manualmente: $user = User::find($approver->boss_id);
      */
     public function boss(): BelongsTo
     {
@@ -34,6 +37,8 @@ class ManagerApprover extends Model
 
     /**
      * Get the user who is the approver (alias for boss).
+     * 
+     * ⚠️ CROSS-DATABASE - Ver advertencia en boss()
      */
     public function user(): BelongsTo
     {
@@ -42,6 +47,10 @@ class ManagerApprover extends Model
 
     /**
      * Get the department that this approver can approve.
+     * 
+     * ⚠️ CROSS-DATABASE RELATIONSHIP: mysql_vacations → mysql
+     * ⚠️ NO USAR con with() o eager loading - causará error "Table not found"
+     * ⚠️ Cargar manualmente: $dept = Departamento::find($approver->departamento_id);
      */
     public function departamento(): BelongsTo
     {
@@ -50,6 +59,10 @@ class ManagerApprover extends Model
 
     /**
      * Get the employee that this approver is assigned to.
+     * 
+     * ⚠️ CROSS-DATABASE RELATIONSHIP: mysql_vacations → mysql
+     * ⚠️ NO USAR con with() o eager loading - causará error "Table not found"
+     * ⚠️ Cargar manualmente: $employee = User::find($approver->employee_id);
      */
     public function employee(): BelongsTo
     {
@@ -92,12 +105,19 @@ class ManagerApprover extends Model
      */
     public static function getApproversForDepartment($departamentoId)
     {
-        return static::where('departamento_id', $departamentoId)
+        // Obtener approvers SIN relación cross-database
+        $approvers = static::where('departamento_id', $departamentoId)
             ->where('is_active', true)
-            ->with('boss')
-            ->get()
-            ->pluck('boss')
-            ->unique('id');
+            ->get();
+        
+        // Cargar bosses manualmente de la base de datos mysql
+        $bossIds = $approvers->pluck('boss_id')->unique()->filter();
+        $bosses = User::whereIn('id', $bossIds)->get()->keyBy('id');
+        
+        // Mapear y retornar usuarios únicos
+        return $approvers->map(function($approver) use ($bosses) {
+            return $bosses->get($approver->boss_id);
+        })->filter()->unique('id');
     }
 
     /**

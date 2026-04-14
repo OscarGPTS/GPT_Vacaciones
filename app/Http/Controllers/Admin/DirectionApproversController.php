@@ -17,11 +17,35 @@ class DirectionApproversController extends Controller
      */
     public function index()
     {
-        // Obtener todos los aprobadores con sus relaciones
-        $approvers = DirectionApprover::with(['user', 'user.job', 'departamento', 'employee', 'employee.job'])
-            ->orderBy('created_at', 'desc')
+        // PASO 1: Obtener aprobadores SIN relaciones cross-database
+        $approversRaw = DirectionApprover::orderBy('created_at', 'desc')->get();
+        
+        // PASO 2: Extraer IDs para queries separadas (evitar cross-database)
+        $userIds = $approversRaw->pluck('boss_id')
+            ->merge($approversRaw->pluck('employee_id'))
+            ->unique()
+            ->filter()
+            ->values();
+        $departamentoIds = $approversRaw->pluck('departamento_id')->unique()->filter()->values();
+        
+        // PASO 3: Cargar datos de la base de datos principal (mysql)
+        $usersData = User::with('job')
+            ->whereIn('id', $userIds)
             ->get()
-            ->groupBy('boss_id');
+            ->keyBy('id');
+        $departamentosData = Departamento::whereIn('id', $departamentoIds)
+            ->get()
+            ->keyBy('id');
+        
+        // PASO 4: Mapear manualmente las relaciones
+        $approversRaw->each(function($approver) use ($usersData, $departamentosData) {
+            $approver->user = $usersData->get($approver->boss_id);
+            $approver->employee = $usersData->get($approver->employee_id);
+            $approver->departamento = $departamentosData->get($approver->departamento_id);
+        });
+        
+        // Agrupar por boss_id
+        $approvers = $approversRaw->groupBy('boss_id');
         
         // Obtener usuarios activos para el select
         $users = User::with('job')->where('active', 1)
@@ -151,10 +175,17 @@ class DirectionApproversController extends Controller
     public function destroy($id)
     {
         try {
-            $approver = DirectionApprover::with(['user', 'departamento', 'employee'])->findOrFail($id);
-            $userName = $approver->user->first_name . ' ' . $approver->user->last_name;
-            $employeeName = $approver->employee->first_name . ' ' . $approver->employee->last_name;
-            $deptName = $approver->departamento->name;
+            // Obtener approver SIN relaciones cross-database
+            $approver = DirectionApprover::findOrFail($id);
+            
+            // Cargar datos manualmente de la base de datos principal
+            $user = User::find($approver->boss_id);
+            $employee = User::find($approver->employee_id);
+            $departamento = Departamento::find($approver->departamento_id);
+            
+            $userName = $user ? ($user->first_name . ' ' . $user->last_name) : 'N/A';
+            $employeeName = $employee ? ($employee->first_name . ' ' . $employee->last_name) : 'N/A';
+            $deptName = $departamento ? $departamento->name : 'N/A';
             
             $message = "Se eliminó la asignación de {$userName} para el empleado {$employeeName} (Depto: {$deptName}).";
             

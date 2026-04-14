@@ -25,7 +25,10 @@ class DirectionApprover extends Model
 
     /**
      * Get the user who is the approver (the boss).
-     * Cross-database relationship: mysql_vacations → mysql
+     * 
+     * ⚠️ CROSS-DATABASE RELATIONSHIP: mysql_vacations → mysql
+     * ⚠️ NO USAR con with() o eager loading - causará error "Table not found"
+     * ⚠️ Cargar manualmente: $user = User::find($approver->boss_id);
      */
     public function boss(): BelongsTo
     {
@@ -34,6 +37,8 @@ class DirectionApprover extends Model
 
     /**
      * Get the user who is the approver (alias for boss).
+     * 
+     * ⚠️ CROSS-DATABASE - Ver advertencia en boss()
      */
     public function user(): BelongsTo
     {
@@ -42,6 +47,10 @@ class DirectionApprover extends Model
 
     /**
      * Get the department that this approver can approve.
+     * 
+     * ⚠️ CROSS-DATABASE RELATIONSHIP: mysql_vacations → mysql
+     * ⚠️ NO USAR con with() o eager loading - causará error "Table not found"
+     * ⚠️ Cargar manualmente: $dept = Departamento::find($approver->departamento_id);
      */
     public function departamento(): BelongsTo
     {
@@ -50,6 +59,10 @@ class DirectionApprover extends Model
 
     /**
      * Get the employee that this approver is assigned to.
+     * 
+     * ⚠️ CROSS-DATABASE RELATIONSHIP: mysql_vacations → mysql
+     * ⚠️ NO USAR con with() o eager loading - causará error "Table not found"
+     * ⚠️ Cargar manualmente: $employee = User::find($approver->employee_id);
      */
     public function employee(): BelongsTo
     {

@@ -18,22 +18,24 @@ class VacacionesController extends Controller
 {
     public function index()
     {
+        $userId = auth()->id();
+        
         // Obtener las solicitudes del usuario autenticado
-        $requests = RequestVacations::where('user_id', auth()->id())
+        $requests = RequestVacations::where('user_id', $userId)
             ->select(['id', 'user_id', 'created_by_user_id', 'reveal_id', 'type_request', 'start', 'end', 
-                     'direct_manager_status', 'direction_approbation_status', 'human_resources_status', 'created_at'])
-            ->with(['requestDays:id,requests_id,start,end', 'reveal:id,first_name,last_name'])
+                     'opcion', 'direct_manager_status', 'direction_approbation_status', 'human_resources_status', 'created_at'])
+            ->with(['requestDays:id,requests_id,start,end', 'reveal:id,first_name,last_name', 'user:id'])
             ->orderBy('created_at', 'desc')
             ->paginate(20);
         
         // Solo cargar solicitudes en representación si el usuario tiene permiso de delegación
-        $canDelegate = \App\Models\DelegationPermission::hasPermission(auth()->id());
+        $canDelegate = \App\Models\DelegationPermission::hasPermission($userId);
         $behalfRequests = collect([]);
         
         if ($canDelegate) {
-            $behalfRequests = RequestVacations::where('created_by_user_id', auth()->id())
+            $behalfRequests = RequestVacations::where('created_by_user_id', $userId)
                 ->select(['id', 'user_id', 'created_by_user_id', 'reveal_id', 'type_request', 'start', 'end',
-                         'direct_manager_status', 'direction_approbation_status', 'human_resources_status', 'created_at'])
+                         'opcion', 'direct_manager_status', 'direction_approbation_status', 'human_resources_status', 'created_at'])
                 ->with([
                     'user:id,first_name,last_name,job_id', 
                     'user.job:id,name',
@@ -44,17 +46,44 @@ class VacacionesController extends Controller
                 ->paginate(20);
         }
         
+        // Obtener información del usuario para calcular cuándo se desbloquean vacaciones
+        $currentUser = User::find($userId);
+        $unlockInfo = null;
+        
+        // Si el usuario tiene menos de 1 año de antigüedad, calcular cuándo se desbloquean
+        if ($currentUser && $currentUser->admission) {
+            $admissionDate = \Carbon\Carbon::parse($currentUser->admission);
+            $oneYearDate = $admissionDate->copy()->addYear();
+            $now = \Carbon\Carbon::now();
+            
+            if ($now->lt($oneYearDate)) {
+                $daysUntilUnlock = $now->diffInDays($oneYearDate);
+                $unlockInfo = [
+                    'unlock_date' => $oneYearDate->format('d/m/Y'),
+                    'days_remaining' => $daysUntilUnlock,
+                    'admission_date' => $admissionDate->format('d/m/Y'),
+                ];
+            }
+        }
+        
         // Obtener períodos de vacaciones vigentes del usuario
+        // IMPORTANTE: Usar 'status' = 'actual' (igual que getUserRestrictions) para consistencia
         $now = \Carbon\Carbon::now();
-        $vacationPeriods = VacationsAvailable::where('users_id', auth()->id())
-            ->where('is_historical', false)
-            ->select(['id', 'period', 'date_start', 'date_end', 'days_availables', 'days_enjoyed', 'days_reserved'])
+        $vacationPeriods = VacationsAvailable::where('users_id', $userId)
+            ->where('status', 'actual')
             ->orderBy('period')
-            ->get()
+            ->get() // Obtener modelos completos, no select parcial
             ->map(function ($period) use ($now) {
                 // Calcular fecha de expiración (date_end + 15 meses)
-                $expirationDate = $period->date_end->copy()->addMonths(15);
-                $daysUntilExpiration = $expirationDate->diffInDays($now, false);
+                $expirationDate = \Carbon\Carbon::parse($period->date_end)->addMonths(15);
+                // Calcular días restantes (positivo = futuro, negativo = pasado)
+                $daysUntilExpiration = $now->diffInDays($expirationDate, false);
+                
+                // Calcular si el período ya está disponible (1 año desde date_start)
+                $dateStart = \Carbon\Carbon::parse($period->date_start);
+                $availableFromDate = $dateStart->copy()->addYear();
+                $daysUntilAvailable = $now->diffInDays($availableFromDate, false);
+                $isNotYetAvailable = $daysUntilAvailable > 0;
                 
                 // Calcular días disponibles reales
                 $availableDays = $period->available_balance;
@@ -76,6 +105,9 @@ class VacacionesController extends Controller
                     'days_until_expiration' => $daysUntilExpiration,
                     'is_expired' => $isExpired,
                     'expires_soon' => $daysUntilExpiration <= 60 && !$isExpired,
+                    'is_not_yet_available' => $isNotYetAvailable,
+                    'available_from_date' => $availableFromDate,
+                    'days_until_available' => $daysUntilAvailable,
                 ];
             })->reject(function($period) {
                 // Filtrar períodos vencidos
@@ -85,23 +117,25 @@ class VacacionesController extends Controller
         // Calcular total de días disponibles
         $totalAvailableDays = $vacationPeriods->sum('available_days');
             
-        return view('vacaciones.index', compact('requests', 'behalfRequests', 'vacationPeriods', 'totalAvailableDays', 'canDelegate'));
+        return view('vacaciones.index', compact('requests', 'behalfRequests', 'vacationPeriods', 'totalAvailableDays', 'canDelegate', 'unlockInfo'));
     }
 
     public function create()
     {
+        $userId = auth()->id();
+        
         // Limpiar días seleccionados anteriormente que no están asociados a una solicitud
         // Solo del usuario autenticado actual
-        RequestApproved::where('users_id', auth()->id())->whereNull('requests_id')->delete();
+        RequestApproved::where('users_id', $userId)->whereNull('requests_id')->delete();
         
         // Obtener días no laborables
         $noworkingdays = NoWorkingDays::orderBy('day')->get();
         
         // Verificar si el usuario tiene permiso de delegación
-        $canDelegate = \App\Models\DelegationPermission::hasPermission(auth()->id());
+        $canDelegate = \App\Models\DelegationPermission::hasPermission($userId);
 
         // Obtener todos los usuarios activos para asignar como responsable o para representar
-        $users = \App\Models\User::where('id', '!=', auth()->id())
+        $users = \App\Models\User::where('id', '!=', $userId)
             ->where('active', 1)
             ->select('id', 'first_name', 'last_name')
             ->orderBy('first_name')

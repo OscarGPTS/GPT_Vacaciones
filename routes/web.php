@@ -18,6 +18,9 @@ use App\Http\Controllers\Vacaciones\VacacionesCotroller;
 use App\Http\Controllers\VacacionesController;
 use App\Livewire\PruebaComponent;
 use App\Livewire\VacacionesDireccion;
+use App\Livewire\VacacionesJefeDirecto;
+use App\Livewire\VacationCalendar;
+use App\Livewire\VacationImport;
 
 // Redirigir la página de inicio a vacaciones si está autenticado
 Route::get('/', function () {
@@ -49,8 +52,8 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/check-day-period', [VacacionesController::class, 'checkDayPeriod'])->name('check-day-period');
 
         // Rutas para aprobaciones
-        Route::get('/aprobar', [RequestController::class, 'authorizeRequestManager'])->name('aprobar');
-        Route::post('/aprobar/{id}', [RequestController::class, 'approveRejectManager'])->name('aprobar.action');
+        Route::get('/aprobar', VacacionesJefeDirecto::class)->name('aprobar');
+        Route::post('/aprobar/{id}', [RequestController::class, 'approveRejectManager'])->name('aprobar.action'); // Legacy - NO USAR
         
         // Rutas para Dirección
         Route::get('/direccion', VacacionesDireccion::class)->name('direccion');
@@ -59,8 +62,8 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/rh', [RequestController::class, 'authorizeRequestRH'])->name('rh');
         Route::post('/rh/{id}', [RequestController::class, 'approveRejectRH'])->name('rh.action');
         Route::get('/reporte', [RequestController::class, 'vacationReportLivewire'])->name('reporte');
-        Route::get('/importar', \App\Livewire\VacationImport::class)->name('importar')->middleware('can:ver modulo rrhh');
-        Route::get('/calendario', \App\Livewire\VacationCalendar::class)->name('calendario');
+        Route::get('/importar', VacationImport::class)->name('importar')->middleware('can:ver modulo rrhh');
+        Route::get('/calendario', VacationCalendar::class)->name('calendario');
         Route::post('/update-days-enjoyed', [RequestController::class, 'updateDaysEnjoyed'])->name('update-days-enjoyed');
         Route::post('/sync-vacations', [RequestController::class, 'syncVacations'])->name('sync-vacations');
         Route::post('/update-periods', [RequestController::class, 'updatePeriods'])->name('update-periods');

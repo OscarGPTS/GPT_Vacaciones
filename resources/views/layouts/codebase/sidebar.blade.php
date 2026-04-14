@@ -80,7 +80,7 @@
                     </a>
                 </li>
                 {{-- Solicitudes de jefe directo --}}
-                @if($hasSubordinates) 
+                @if($hasSubordinates || $pendingManagerRequests > 0) 
                     <li class="nav-main-item">
                         <a class="nav-main-link" href="{{ route('vacaciones.aprobar') }}">
                             <span class="nav-main-link-name">Solicitudes Jefe Directo</span>
@@ -92,7 +92,7 @@
                 @endif
                     
                 {{-- Solicitudes de dirección --}}
-                @if( $userHasDirectionRole)
+                @if( $userHasDirectionRole || $pendingDirectionRequests > 0)
                     <li class="nav-main-item">
                         <a class="nav-main-link" href="{{ route('vacaciones.direccion') }}">
                             <span class="nav-main-link-name">Solicitudes Dirección</span>
