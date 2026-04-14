@@ -273,17 +273,22 @@ class DirectionApproversController extends Controller
      */
     public function getUserDepartments($userId)
     {
-        $departments = DirectionApprover::where('boss_id', $userId)
-            ->with('departamento')
-            ->get()
-            ->map(function($item) {
-                return [
-                    'id' => $item->id,
-                    'departamento_id' => $item->departamento_id,
-                    'departamento_name' => $item->departamento->name,
-                    'is_active' => $item->is_active,
-                ];
-            });
+        // NO usar with() - cross-database issue
+        $approvers = DirectionApprover::where('boss_id', $userId)->get();
+        
+        // Cargar departamentos manualmente
+        $departamentoIds = $approvers->pluck('departamento_id')->unique();
+        $departamentosData = Departamento::whereIn('id', $departamentoIds)->get()->keyBy('id');
+        
+        $departments = $approvers->map(function($item) use ($departamentosData) {
+            $dept = $departamentosData->get($item->departamento_id);
+            return [
+                'id' => $item->id,
+                'departamento_id' => $item->departamento_id,
+                'departamento_name' => $dept ? $dept->name : 'N/A',
+                'is_active' => $item->is_active,
+            ];
+        });
 
         return response()->json($departments);
     }

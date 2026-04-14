@@ -146,7 +146,7 @@ details[open] summary::before {
                                 <tbody>
                                     @foreach($approvers as $bossId => $userApprovers)
                                         @php
-                                            $boss = $userApprovers->first()->user;
+                                            $boss = $userApprovers->first()->boss_user;
                                             $byDept = $userApprovers->groupBy('departamento_id');
                                             $activeCount = $userApprovers->where('is_active', true)->count();
                                             $totalCount = $userApprovers->count();
@@ -170,7 +170,7 @@ details[open] summary::before {
                                                 <div class="d-flex flex-wrap gap-1">
                                                     @foreach($byDept as $deptId => $deptApprovers)
                                                         @php
-                                                            $dept = $deptApprovers->first()->departamento;
+                                                            $dept = $deptApprovers->first()->departamento_data;
                                                             $deptActive = $deptApprovers->where('is_active', true)->count();
                                                         @endphp
                                                         <span class="badge bg-{{ $deptActive > 0 ? 'primary' : 'secondary' }}" style="font-size: 0.8rem;">
@@ -187,24 +187,24 @@ details[open] summary::before {
                                                     </summary>
                                                     <div class="employee-list-content">
                                                         @foreach($byDept as $deptId => $deptApprovers)
-                                                            @php $dept = $deptApprovers->first()->departamento; @endphp
+                                                            @php $dept = $deptApprovers->first()->departamento_data; @endphp
                                                             <div class="dept-section">
                                                                 <div class="fw-bold text-primary mb-2" style="font-size: 0.9rem;">
                                                                     <i class="fas fa-building me-2"></i>{{ $dept->name }}
                                                                     <span class="badge bg-secondary ms-1">{{ $deptApprovers->count() }}</span>
                                                                 </div>
                                                                 <div>
-                                                                    @foreach($deptApprovers->sortBy(fn($a) => $a->employee->first_name ?? '') as $approver)
+                                                                    @foreach($deptApprovers->sortBy(fn($a) => $a->employee_user->first_name ?? '') as $approver)
                                                                         <div class="employee-item">
                                                                             <div class="d-flex align-items-center gap-2">
                                                                                 <i class="fas fa-user-circle text-muted"></i>
-                                                                                <span>{{ $approver->employee->first_name ?? 'N/A' }} {{ $approver->employee->last_name ?? '' }}</span>
+                                                                                <span>{{ $approver->employee_user->first_name ?? 'N/A' }} {{ $approver->employee_user->last_name ?? '' }}</span>
                                                                                 <span class="badge bg-{{ $approver->is_active ? 'success' : 'secondary' }}" style="font-size: 0.7rem;">
                                                                                     {{ $approver->is_active ? 'Activo' : 'Inactivo' }}
                                                                                 </span>
                                                                             </div>
                                                                             <button class="btn btn-danger btn-delete-inline" 
-                                                                                    onclick="event.stopPropagation(); deleteApprover({{ $approver->id }}, '{{ addslashes(($approver->employee->first_name ?? '') . ' ' . ($approver->employee->last_name ?? '')) }}')"
+                                                                                    onclick="event.stopPropagation(); deleteApprover({{ $approver->id }}, '{{ addslashes(($approver->employee_user->first_name ?? '') . ' ' . ($approver->employee_user->last_name ?? '')) }}')"
                                                                                     title="Eliminar empleado">
                                                                                 <i class="fas fa-trash-alt"></i>
                                                                             </button>

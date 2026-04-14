@@ -17,11 +17,29 @@ class AdminManagerApproversController extends Controller
      */
     public function index()
     {
-        // Obtener todos los aprobadores con sus relaciones
-        $approvers = ManagerApprover::with(['user', 'user.job', 'departamento', 'employee', 'employee.job'])
-            ->orderBy('created_at', 'desc')
-            ->get()
-            ->groupBy('boss_id');
+        // IMPORTANTE: NO usar with() con relaciones cross-database
+        // ManagerApprover está en mysql_vacations, User/Departamento en mysql
+        
+        // Obtener todos los aprobadores SIN eager loading
+        $approversRaw = ManagerApprover::orderBy('created_at', 'desc')->get();
+        
+        // Obtener IDs únicos para cargar datos manualmente
+        $userIds = $approversRaw->pluck('boss_id')->merge($approversRaw->pluck('employee_id'))->unique();
+        $departamentoIds = $approversRaw->pluck('departamento_id')->unique();
+        
+        // Cargar datos de mysql (base de datos principal)
+        $usersData = User::with('job')->whereIn('id', $userIds)->get()->keyBy('id');
+        $departamentosData = Departamento::whereIn('id', $departamentoIds)->get()->keyBy('id');
+        
+        // Mapear los datos manualmente
+        $approversRaw->each(function($approver) use ($usersData, $departamentosData) {
+            $approver->boss_user = $usersData->get($approver->boss_id);
+            $approver->employee_user = $usersData->get($approver->employee_id);
+            $approver->departamento_data = $departamentosData->get($approver->departamento_id);
+        });
+        
+        // Agrupar por jefe
+        $approvers = $approversRaw->groupBy('boss_id');
         
         // Obtener usuarios activos para el select
         $users = User::with('job')->where('active', 1)
@@ -151,10 +169,17 @@ class AdminManagerApproversController extends Controller
     public function destroy($id)
     {
         try {
-            $approver = ManagerApprover::with(['user', 'departamento', 'employee'])->findOrFail($id);
-            $userName = $approver->user->first_name . ' ' . $approver->user->last_name;
-            $employeeName = $approver->employee->first_name . ' ' . $approver->employee->last_name;
-            $deptName = $approver->departamento->name;
+            // NO usar with() - cross-database issue
+            $approver = ManagerApprover::findOrFail($id);
+            
+            // Cargar datos manualmente desde mysql
+            $boss = User::find($approver->boss_id);
+            $employee = User::find($approver->employee_id);
+            $dept = Departamento::find($approver->departamento_id);
+            
+            $userName = $boss ? ($boss->first_name . ' ' . $boss->last_name) : 'N/A';
+            $employeeName = $employee ? ($employee->first_name . ' ' . $employee->last_name) : 'N/A';
+            $deptName = $dept ? $dept->name : 'N/A';
             
             $message = "Se eliminó la asignación de {$userName} para el empleado {$employeeName} (Depto: {$deptName}).";
             
@@ -242,17 +267,22 @@ class AdminManagerApproversController extends Controller
      */
     public function getUserDepartments($userId)
     {
-        $departments = ManagerApprover::where('boss_id', $userId)
-            ->with('departamento')
-            ->get()
-            ->map(function($item) {
-                return [
-                    'id' => $item->id,
-                    'departamento_id' => $item->departamento_id,
-                    'departamento_name' => $item->departamento->name,
-                    'is_active' => $item->is_active,
-                ];
-            });
+        // NO usar with() - cross-database issue
+        $approvers = ManagerApprover::where('boss_id', $userId)->get();
+        
+        // Cargar departamentos manualmente
+        $departamentoIds = $approvers->pluck('departamento_id')->unique();
+        $departamentosData = Departamento::whereIn('id', $departamentoIds)->get()->keyBy('id');
+        
+        $departments = $approvers->map(function($item) use ($departamentosData) {
+            $dept = $departamentosData->get($item->departamento_id);
+            return [
+                'id' => $item->id,
+                'departamento_id' => $item->departamento_id,
+                'departamento_name' => $dept ? $dept->name : 'N/A',
+                'is_active' => $item->is_active,
+            ];
+        });
 
         return response()->json($departments);
     }
