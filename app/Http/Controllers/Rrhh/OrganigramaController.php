@@ -52,20 +52,22 @@ class OrganigramaController extends Controller
             session()->put('orgchart_image_cache', []);
         }
         
+        $defaultAvatar = asset('assets/images/default-avatar.svg');
+
         $dataEmployees = [];
         foreach ($users as $user) {
 
-            $position = '';
-
-            if (!empty($user->job_id)) {
-                $position = $user->job->name;
+            if (!empty($user->job_id) && $user->job !== null) {
+                $position = $user->job->name ?? 'Sin puesto asignado';
             } else {
                 $position = 'Sin puesto asignado';
             }
             $tags = [];
 
+            // Usar avatar por defecto si no tiene imagen
+            $imageUrl = $user->profile_image ?: $defaultAvatar;
+
             // Si se solicita conversión de imágenes, convertir a base64
-            $imageUrl = $user->profile_image;
             if ($convertImages && $imageUrl && strpos($imageUrl, 'data:') !== 0) {
                 $imageUrl = $this->convertImageToBase64($imageUrl);
             }
@@ -74,7 +76,7 @@ class OrganigramaController extends Controller
                 "id" => $user->id,
                 "pid" => $user->boss_id,
                 'tags' => $tags,
-                "name" => $user->first_name . ' ' . $user->last_name,
+                "name" => trim(($user->first_name ?? '') . ' ' . ($user->last_name ?? '')) ?: 'Sin nombre',
                 "title" => $position,
                 "img" => $imageUrl,
             ];
@@ -148,12 +150,12 @@ class OrganigramaController extends Controller
         // Combinar ambos conjuntos
         $allUsers = $users->merge($bosses)->unique('id');
 
+        $defaultAvatar = asset('assets/images/default-avatar.svg');
+
         $dataEmployees = [];
         foreach ($allUsers as $user) {
-            $position = '';
-
-            if (!empty($user->job_id)) {
-                $position = $user->job->name;
+            if (!empty($user->job_id) && $user->job !== null) {
+                $position = $user->job->name ?? 'Sin puesto asignado';
             } else {
                 $position = 'Sin puesto asignado';
             }
@@ -163,9 +165,9 @@ class OrganigramaController extends Controller
                 "id" => $user->id,
                 "pid" => $user->boss_id,
                 'tags' => $tags,
-                "name" => $user->first_name . ' ' . $user->last_name,
+                "name" => trim(($user->first_name ?? '') . ' ' . ($user->last_name ?? '')) ?: 'Sin nombre',
                 "title" => $position,
-                "img" => $user->profile_image,
+                "img" => $user->profile_image ?: $defaultAvatar,
             ];
 
             array_push($dataEmployees, $emp);
