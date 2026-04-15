@@ -79,7 +79,7 @@
                             <ul class="mt-3 mb-0 list-inline">
                                 <li class="list-inline-item">
                                     <a class="link-fx text-dual fs-sm fw-semibold text-uppercase"
-                                        href="be_pages_generic_profile.html">{{ auth()->user()->first_name }}</a>
+                                        href="be_pages_generic_profile.html">{{ auth()->user()->first_name ?? 'Usuario' }}</a>
                                 </li>
                                 <li class="list-inline-item">
                                     <a class="link-fx text-dual" href="{{ route('login.logout') }}">
@@ -131,7 +131,7 @@
                             aria-labelledby="page-header-user-dropdown">
                             <div class="px-2 py-3 bg-body-light rounded-top">
                                 <h5 class="mb-0 text-center h6">
-                                    {{ auth()->user()->name }}
+                                    {{ auth()->user()->name ?? 'Usuario' }}
                                 </h5>
                             </div>
                             <div class="p-2">
