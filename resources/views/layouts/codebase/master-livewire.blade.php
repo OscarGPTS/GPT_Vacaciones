@@ -58,13 +58,13 @@
 
                         <!-- Visible only in normal mode -->
                         <div class="mx-auto text-center smini-hidden">
-                            <a class="img-link" href="javascript:void(0)">
-                                <img class="img-avatar" src="{{ auth()->user()->profile_image ?? 'default-avatar.png' }}" >
+                            <a class="img-link" href="{{ route('perfil.show') }}">
+                                <img class="img-avatar" src="{{ auth()->user()->profile_image ?? asset('assets/images/default-avatar.svg') }}" >
                             </a>
                             <ul class="mt-3 mb-0 list-inline">
                                 <li class="list-inline-item">
                                     <a class="link-fx text-dual fs-sm fw-semibold text-uppercase"
-                                        href="javascript:void(0)" >{{ auth()->user()->first_name }}</a>
+                                        href="{{ route('perfil.show') }}" >{{ auth()->user()->first_name ?? 'Usuario' }}</a>
                                 </li>
                                 <li class="list-inline-item">
                                     <a class="link-fx text-dual" href="{{ route('login.logout') }}" >

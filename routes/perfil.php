@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Perfil\CvController;
+use App\Http\Controllers\Perfil\ProfileController;
 use App\Livewire\Empleados\PersonalDataComponent;
 use App\Livewire\RequisicionCurso\CreateComponent;
 use App\Livewire\RequisicionCurso\RevisarComponent;
@@ -17,6 +18,9 @@ use App\Http\Controllers\Perfil\RequisicionCurso\RevisarController as RevisarCur
 use App\Http\Controllers\Perfil\RequisicionCurso\SolicitarController as SolicitarCursoController;
 
 Route::middleware(['auth'])->group(function () {
+
+    Route::get('perfil', [ProfileController::class, 'show'])
+        ->name('perfil.show');
 
     Route::get('perfil/informacion-personal', PersonalDataComponent::class)
     ->name('perfil.informacion_personal');

@@ -67,19 +67,20 @@
                     <div class="px-0 py-0 content-side content-side-user">
                         <!-- Visible only in mini mode -->
                         <div class="px-3 smini-visible-block animated fadeIn">
+                            aa
                             <img class="img-avatar img-avatar32" src="{{ auth()->user()->profile_image?? 'default-avatar.png' }}" >
                         </div>
                         <!-- END Visible only in mini mode -->
 
                         <!-- Visible only in normal mode -->
                         <div class="mx-auto text-center smini-hidden">
-                            <a class="img-link" href="be_pages_generic_profile.html">
-                                <img class="img-avatar" src="{{ auth()->user()->profile_image?? 'default-avatar.png' }}" >
+                            <a class="img-link" href="{{ route('perfil.show') }}">
+                                <img class="img-avatar" src="{{ auth()->user()->profile_image ?? asset('assets/images/default-avatar.svg') }}" >
                             </a>
                             <ul class="mt-3 mb-0 list-inline">
                                 <li class="list-inline-item">
                                     <a class="link-fx text-dual fs-sm fw-semibold text-uppercase"
-                                        href="be_pages_generic_profile.html">{{ auth()->user()->first_name ?? 'Usuario' }}</a>
+                                        href="{{ route('perfil.show') }}">{{ auth()->user()->first_name ?? 'Usuario' }}</a>
                                 </li>
                                 <li class="list-inline-item">
                                     <a class="link-fx text-dual" href="{{ route('login.logout') }}">
