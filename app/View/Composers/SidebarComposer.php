@@ -14,6 +14,12 @@ class SidebarComposer
      */
     public function compose(View $view): void
     {
+        $pendingManagerRequests = 0;
+        $pendingDirectionRequests = 0;
+        $pendingRHRequests = 0;
+        $hasSubordinates = false;
+        $userHasDirectionRole = false;
+
         if (Auth::check()) {
             // Obtener solicitudes pendientes para jefe directo
             $pendingManagerRequests = RequestVacations::where('direct_manager_id', auth()->id())
@@ -34,14 +40,14 @@ class SidebarComposer
 
             // Verificar si el usuario tiene empleados a su cargo
             $hasSubordinates = User::where('boss_id', auth()->id())->exists();
-
-            $view->with([
-                'pendingManagerRequests' => $pendingManagerRequests,
-                'pendingDirectionRequests' => $pendingDirectionRequests,
-                'pendingRHRequests' => $pendingRHRequests,
-                'hasSubordinates' => $hasSubordinates,
-                'userHasDirectionRole' => $userHasDirectionRole
-            ]);
         }
+
+        $view->with([
+            'pendingManagerRequests' => $pendingManagerRequests,
+            'pendingDirectionRequests' => $pendingDirectionRequests,
+            'pendingRHRequests' => $pendingRHRequests,
+            'hasSubordinates' => $hasSubordinates,
+            'userHasDirectionRole' => $userHasDirectionRole
+        ]);
     }
 }
