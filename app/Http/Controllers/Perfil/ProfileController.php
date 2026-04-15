@@ -20,37 +20,83 @@ class ProfileController extends Controller
             'personalData',
         ]);
 
-        // Períodos de vacaciones vigentes y vencidos
-        $vacationPeriods = VacationsAvailable::where('users_id', $user->id)
-            ->orderByDesc('period')
-            ->limit(5)
-            ->get();
+        $userId = $user->id;
+        $now = \Carbon\Carbon::now();
 
-        // Resumen: totales del período actual
-        $currentPeriod = $vacationPeriods->where('status', 'actual')->first()
-            ?? $vacationPeriods->first();
+        // ── Unlock info (menos de 1 año de antigüedad) ──────────────────
+        $unlockInfo = null;
+        if ($user->admission) {
+            $admissionDate = \Carbon\Carbon::parse($user->admission);
+            $oneYearDate   = $admissionDate->copy()->addYear();
+            if ($now->lt($oneYearDate)) {
+                $unlockInfo = [
+                    'unlock_date'    => $oneYearDate->format('d/m/Y'),
+                    'days_remaining' => $now->diffInDays($oneYearDate),
+                    'admission_date' => $admissionDate->format('d/m/Y'),
+                ];
+            }
+        }
 
-        // Últimas 6 solicitudes de vacaciones (cualquier estado)
-        $recentRequests = RequestVacations::where('user_id', $user->id)
+        // ── Períodos de vacaciones vigentes (igual lógica que VacacionesController) ──
+        $vacationPeriods = VacationsAvailable::where('users_id', $userId)
+            ->where('status', 'actual')
+            ->orderBy('period')
+            ->get()
+            ->map(function ($period) use ($now) {
+                $expirationDate      = \Carbon\Carbon::parse($period->date_end)->addMonths(15);
+                $daysUntilExpiration = $now->diffInDays($expirationDate, false);
+
+                $dateStart           = \Carbon\Carbon::parse($period->date_start);
+                $availableFromDate   = $dateStart->copy()->addYear();
+                $daysUntilAvailable  = $now->diffInDays($availableFromDate, false);
+                $isNotYetAvailable   = $daysUntilAvailable > 0;
+
+                $availableDays = $period->available_balance;
+                $isExpired     = $daysUntilExpiration < 0;
+
+                return [
+                    'period'               => $period->period,
+                    'period_name'          => 'Período ' . $period->period,
+                    'date_start'           => $period->date_start,
+                    'date_end'             => $period->date_end,
+                    'days_availables'      => $period->days_availables,
+                    'days_enjoyed'         => $period->days_enjoyed,
+                    'days_reserved'        => $period->days_reserved ?? 0,
+                    'available_days'       => floor($availableDays),
+                    'available_days_exact' => round($availableDays, 2),
+                    'expiration_date'      => $expirationDate,
+                    'days_until_expiration'=> $daysUntilExpiration,
+                    'is_expired'           => $isExpired,
+                    'expires_soon'         => $daysUntilExpiration <= 60 && !$isExpired,
+                    'is_not_yet_available' => $isNotYetAvailable,
+                    'available_from_date'  => $availableFromDate,
+                    'days_until_available' => $daysUntilAvailable,
+                ];
+            })
+            ->reject(fn($p) => $p['is_expired']);
+
+        $totalAvailableDays = $vacationPeriods->sum('available_days');
+        $totalAvailable     = $vacationPeriods->sum('days_availables');
+        $totalEnjoyed       = $vacationPeriods->sum('days_enjoyed');
+        $totalReserved      = $vacationPeriods->sum('days_reserved');
+        $totalRemaining     = $totalAvailableDays;
+
+        // ── Últimas 6 solicitudes ────────────────────────────────────────
+        $recentRequests = RequestVacations::where('user_id', $userId)
             ->orderByDesc('created_at')
             ->limit(6)
             ->get();
 
-        // Totales globales
-        $totalAvailable  = $vacationPeriods->sum('days_availables');
-        $totalEnjoyed    = $vacationPeriods->sum('days_enjoyed');
-        $totalReserved   = $vacationPeriods->sum('days_reserved');
-        $totalRemaining  = max(0, $totalAvailable - $totalEnjoyed - $totalReserved);
-
         return view('perfil.profile', compact(
             'user',
             'vacationPeriods',
-            'currentPeriod',
-            'recentRequests',
+            'totalAvailableDays',
             'totalAvailable',
             'totalEnjoyed',
             'totalReserved',
-            'totalRemaining'
+            'totalRemaining',
+            'unlockInfo',
+            'recentRequests'
         ));
     }
 

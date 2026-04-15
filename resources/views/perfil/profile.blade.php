@@ -493,58 +493,140 @@
         {{-- Períodos de vacaciones --}}
         <div class="profile-card card mb-4">
             <div class="card-body">
-                <div class="section-title mb-3">Períodos de vacaciones</div>
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div class="section-title mb-0">Balance de vacaciones</div>
+                    <a href="{{ route('vacaciones.index') }}" class="btn btn-sm btn-outline-secondary" style="font-size:.75rem;">
+                        <i class="fa fa-external-link-alt me-1"></i> Ver historial
+                    </a>
+                </div>
 
-                @if($vacationPeriods->isEmpty())
-                    <p class="text-muted mb-0" style="font-size:.88rem;">
-                        <i class="fa fa-info-circle me-1"></i> Sin períodos registrados
-                    </p>
+                @if($vacationPeriods->count() > 0)
+                    @foreach($vacationPeriods as $period)
+                    @php
+                        $daysText      = $period['available_days'] === 1 ? 'día' : 'días';
+                        $dateStart     = \Carbon\Carbon::parse($period['date_start'])->format('d/m/Y');
+                        $dateEnd       = \Carbon\Carbon::parse($period['date_end'])->format('d/m/Y');
+                        $expirationDate = \Carbon\Carbon::parse($period['expiration_date'])->format('d/m/Y');
+                        $daysRemaining = abs($period['days_until_expiration']);
+
+                        if ($period['is_expired']) {
+                            $daysClass      = 'text-danger fw-bold';
+                            $expirationClass = 'text-danger fw-bold';
+                            $daysRemainingText = "(hace {$daysRemaining} días)";
+                            $cardBg = '#fff5f5'; $borderColor = '#f5c2c7';
+                        } elseif ($period['expires_soon']) {
+                            $daysClass      = 'text-warning fw-bold';
+                            $expirationClass = 'text-warning fw-bold';
+                            $daysRemainingText = "(faltan {$daysRemaining} días)";
+                            $cardBg = '#fffbf0'; $borderColor = '#ffc107';
+                        } else {
+                            $daysClass      = 'text-success fw-bold';
+                            $expirationClass = '';
+                            $daysRemainingText = "(faltan {$daysRemaining} días)";
+                            $cardBg = '#f8fdfc'; $borderColor = '#d1e7dd';
+                        }
+                    @endphp
+
+                    <div class="mb-3 p-3 rounded" style="background:{{ $cardBg }}; border:1.5px solid {{ $borderColor }};">
+
+                        {{-- Cabecera del período --}}
+                        <div class="d-flex justify-content-between align-items-start flex-wrap gap-1 mb-2">
+                            <div>
+                                <span class="fw-bold" style="color:#24695c; font-size:.95rem;">Período {{ $period['period'] }}</span>
+                                <span class="text-muted ms-2" style="font-size:.8rem;">{{ $dateStart }} &mdash; {{ $dateEnd }}</span>
+                            </div>
+                            @if($period['is_not_yet_available'])
+                                <span class="badge bg-info text-white">
+                                    <i class="fa fa-lock me-1"></i>
+                                    Se desbloquea el {{ \Carbon\Carbon::parse($period['available_from_date'])->format('d/m/Y') }}
+                                    <span class="ms-1">({{ $period['days_until_available'] }} días)</span>
+                                </span>
+                            @elseif($period['expires_soon'])
+                                <span class="badge bg-warning text-dark">
+                                    <i class="fa fa-exclamation-triangle me-1"></i> ¡Vence pronto!
+                                </span>
+                            @endif
+                        </div>
+
+                        {{-- Barra de progreso visual --}}
+                        @php
+                            $total    = max(1, $period['days_availables']);
+                            $enjoyed  = $period['days_enjoyed'];
+                            $reserved = $period['days_reserved'];
+                            $available = $period['available_days'];
+                            $enjoyedPct  = min(100, round(($enjoyed  / $total) * 100));
+                            $reservedPct = min(100 - $enjoyedPct, round(($reserved / $total) * 100));
+                        @endphp
+                        <div class="progress mb-2" style="height:7px; border-radius:99px;">
+                            <div class="progress-bar" style="width:{{ $enjoyedPct }}%; background:#ba895d;" title="Disfrutados: {{ $enjoyed }}"></div>
+                            <div class="progress-bar" style="width:{{ $reservedPct }}%; background:#ffc107;" title="Reservados: {{ $reserved }}"></div>
+                        </div>
+
+                        {{-- Contadores en fila --}}
+                        <div class="row g-2 mt-1">
+                            <div class="col-6 col-sm-3">
+                                <div class="text-center p-1 rounded" style="background:rgba(255,255,255,.7);">
+                                    <div class="fw-bold" style="font-size:1.1rem; color:#1b4c43;">{{ number_format($period['days_availables'], 0) }}</div>
+                                    <div style="font-size:.68rem; text-transform:uppercase; color:#6c757d;">Total</div>
+                                </div>
+                            </div>
+                            <div class="col-6 col-sm-3">
+                                <div class="text-center p-1 rounded" style="background:rgba(255,255,255,.7);">
+                                    <div class="fw-bold" style="font-size:1.1rem; color:#ba895d;">{{ $period['days_enjoyed'] }}</div>
+                                    <div style="font-size:.68rem; text-transform:uppercase; color:#6c757d;">Disfrutados</div>
+                                </div>
+                            </div>
+                            <div class="col-6 col-sm-3">
+                                <div class="text-center p-1 rounded" style="background:rgba(255,255,255,.7);">
+                                    <div class="fw-bold" style="font-size:1.1rem; color:#f59e0b;">{{ number_format($period['days_reserved'], 0) }}</div>
+                                    <div style="font-size:.68rem; text-transform:uppercase; color:#6c757d;">Reservados</div>
+                                </div>
+                            </div>
+                            <div class="col-6 col-sm-3">
+                                <div class="text-center p-1 rounded" style="background:rgba(255,255,255,.7);">
+                                    <div class="fw-bold {{ $daysClass }}" style="font-size:1.1rem;" title="Exactos: {{ $period['available_days_exact'] }}">{{ $period['available_days'] }}</div>
+                                    <div style="font-size:.68rem; text-transform:uppercase; color:#6c757d;">Disponibles</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Vencimiento --}}
+                        <div class="mt-2" style="font-size:.8rem;">
+                            <i class="fa fa-hourglass-half me-1 text-muted"></i>
+                            Vencen el
+                            <strong class="{{ $expirationClass }}">{{ $expirationDate }}</strong>
+                            <span class="{{ $expirationClass }} ms-1">{{ $daysRemainingText }}</span>
+                        </div>
+
+                    </div>
+                    @endforeach
+
                 @else
-                    <div class="table-responsive">
-                        <table class="table table-sm table-hover mb-0">
-                            <thead>
-                                <tr>
-                                    <th style="font-size:.72rem; color:#6c757d; text-transform:uppercase;">Período</th>
-                                    <th class="text-center" style="font-size:.72rem; color:#6c757d; text-transform:uppercase;">Disponibles</th>
-                                    <th class="text-center" style="font-size:.72rem; color:#6c757d; text-transform:uppercase;">Disfrutados</th>
-                                    <th class="text-center" style="font-size:.72rem; color:#6c757d; text-transform:uppercase;">Reservados</th>
-                                    <th class="text-center" style="font-size:.72rem; color:#6c757d; text-transform:uppercase;">Restantes</th>
-                                    <th class="text-center" style="font-size:.72rem; color:#6c757d; text-transform:uppercase;">Estado</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach($vacationPeriods as $vp)
-                                @php
-                                    $remaining = max(0, ($vp->days_availables ?? 0) - ($vp->days_enjoyed ?? 0) - ($vp->days_reserved ?? 0));
-                                @endphp
-                                <tr>
-                                    <td>
-                                        <span class="fw-semibold" style="color:#24695c;">{{ $vp->period }}</span>
-                                        @if($vp->date_start && $vp->date_end)
-                                            <div class="text-muted" style="font-size:.72rem;">
-                                                {{ \Carbon\Carbon::parse($vp->date_start)->format('d/m/Y') }}
-                                                — {{ \Carbon\Carbon::parse($vp->date_end)->format('d/m/Y') }}
-                                            </div>
-                                        @endif
-                                    </td>
-                                    <td class="text-center fw-semibold">{{ number_format($vp->days_availables ?? 0, 0) }}</td>
-                                    <td class="text-center">{{ $vp->days_enjoyed ?? 0 }}</td>
-                                    <td class="text-center">{{ number_format($vp->days_reserved ?? 0, 0) }}</td>
-                                    <td class="text-center">
-                                        <span style="color:{{ $remaining > 0 ? '#0f5132' : '#842029' }}; font-weight:600;">
-                                            {{ number_format($remaining, 0) }}
-                                        </span>
-                                    </td>
-                                    <td class="text-center">
-                                        <span class="period-badge {{ $vp->status === 'actual' ? 'actual' : 'vencido' }}">
-                                            <i class="fa fa-circle" style="font-size:.45rem;"></i>
-                                            {{ ucfirst($vp->status ?? '—') }}
-                                        </span>
-                                    </td>
-                                </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
+                    {{-- Sin períodos: mostrar info de desbloqueo si aplica --}}
+                    <div class="alert alert-info border py-3 mb-0">
+                        <div class="d-flex align-items-start">
+                            <i class="fa fa-info-circle fa-2x me-3 text-info"></i>
+                            <div>
+                                <strong>No tienes períodos de vacaciones disponibles actualmente</strong>
+                                @if(isset($unlockInfo))
+                                    <div class="mt-2">
+                                        <p class="mb-1">
+                                            <i class="fa fa-calendar-alt"></i>
+                                            Fecha de ingreso: <strong>{{ $unlockInfo['admission_date'] }}</strong>
+                                        </p>
+                                        <p class="mb-0">
+                                            <i class="fa fa-unlock-alt text-success"></i>
+                                            Tus vacaciones se desbloquearán el
+                                            <strong class="text-success">{{ $unlockInfo['unlock_date'] }}</strong>
+                                            <span class="badge bg-success ms-1">(faltan {{ $unlockInfo['days_remaining'] }} días)</span>
+                                        </p>
+                                        <small class="text-muted">Se requiere 1 año de antigüedad mínima para solicitar vacaciones.</small>
+                                    </div>
+                                @else
+                                    <p class="mt-2 mb-0 text-muted">Contacta con Recursos Humanos para verificar tu información de vacaciones.</p>
+                                @endif
+                            </div>
+                        </div>
                     </div>
                 @endif
             </div>
