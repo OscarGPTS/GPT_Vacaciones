@@ -136,11 +136,11 @@
                                 </h5>
                             </div>
                             <div class="p-2">
-                                {{-- <a class="space-x-1 dropdown-item d-flex align-items-center justify-content-between"
-                                    href="be_pages_generic_profile.html">
-                                    <span>Profile</span>
+                                <a class="space-x-1 dropdown-item d-flex align-items-center justify-content-between"
+                                    href="{{ route('perfil.show') }}">
+                                    <span>Mi Perfil</span>
                                     <i class="opacity-25 fa fa-fw fa-user"></i>
-                                </a> --}}
+                                </a>
                                 {{-- <a class="dropdown-item d-flex align-items-center justify-content-between"
                                     href="be_pages_generic_inbox.html">
                                     <span>Inbox</span>

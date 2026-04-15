@@ -22,6 +22,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('perfil', [ProfileController::class, 'show'])
         ->name('perfil.show');
 
+    Route::post('perfil/foto', [ProfileController::class, 'updatePhoto'])
+        ->name('perfil.foto');
+
     Route::get('perfil/informacion-personal', PersonalDataComponent::class)
     ->name('perfil.informacion_personal');
 

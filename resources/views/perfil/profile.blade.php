@@ -206,6 +206,40 @@
         padding: .65rem .85rem;
     }
 
+    /* ── Avatar edit button ─────────────────────────────── */
+    .avatar-edit-btn {
+        position: absolute;
+        bottom: 2px;
+        right: 2px;
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        background: #24695c;
+        border: 2px solid #fff;
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: .7rem;
+        cursor: pointer;
+        box-shadow: 0 2px 6px rgba(0,0,0,.25);
+        transition: background .2s;
+        z-index: 20;
+    }
+
+    .avatar-edit-btn:hover { background: #1b4c43; }
+
+    .profile-avatar-outer {
+        position: relative;
+        display: inline-block;
+    }
+
+    /* ── Upload feedback ─────────────────────────────────── */
+    .foto-uploading {
+        opacity: .5;
+        pointer-events: none;
+    }
+
     @media (max-width: 991px) {
         .profile-banner { height: 160px; }
         .profile-avatar-wrap { bottom: -46px; }
@@ -219,6 +253,22 @@
 
 @section('content')
 
+@if(session('foto_actualizada'))
+<div class="alert alert-success alert-dismissible fade show d-flex align-items-center gap-2 mb-3" role="alert">
+    <i class="fa fa-check-circle fs-5"></i>
+    <span>Foto de perfil actualizada correctamente.</span>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+</div>
+@endif
+
+@if($errors->has('foto'))
+<div class="alert alert-danger alert-dismissible fade show d-flex align-items-center gap-2 mb-3" role="alert">
+    <i class="fa fa-exclamation-circle fs-5"></i>
+    <span>{{ $errors->first('foto') }}</span>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+</div>
+@endif
+
 {{-- ═══ PROFILE HEADER ════════════════════════════════════════════════════ --}}
 <div class="profile-card card mb-4">
 
@@ -226,13 +276,29 @@
     <div class="profile-banner">
         {{-- Avatar centrado sobreponiendo el banner --}}
         <div class="profile-avatar-wrap">
-            @if($user->profile_image)
-                <img src="{{ $user->profile_image }}" alt="{{ $user->first_name }}">
-            @else
-                <div class="profile-avatar-placeholder">
-                    {{ strtoupper(substr($user->first_name ?? 'U', 0, 1)) }}{{ strtoupper(substr($user->last_name ?? '', 0, 1)) }}
-                </div>
-            @endif
+
+            {{-- Formulario invisible para subir foto --}}
+            <form id="fotoForm" action="{{ route('perfil.foto') }}" method="POST" enctype="multipart/form-data">
+                @csrf
+                <input type="file" id="fotoInput" name="foto" accept="image/jpeg,image/png,image/webp"
+                    class="d-none" onchange="submitFotoForm()">
+            </form>
+
+            <div class="profile-avatar-outer">
+                @if($user->profile_image)
+                    <img id="avatarImg" src="{{ $user->profile_image }}" alt="{{ $user->first_name }}">
+                @else
+                    <div class="profile-avatar-placeholder">
+                        {{ strtoupper(substr($user->first_name ?? 'U', 0, 1)) }}{{ strtoupper(substr($user->last_name ?? '', 0, 1)) }}
+                    </div>
+                @endif
+
+                {{-- Botón de edición --}}
+                <button type="button" class="avatar-edit-btn" onclick="document.getElementById('fotoInput').click()"
+                    title="Cambiar foto de perfil">
+                    <i class="fa fa-camera"></i>
+                </button>
+            </div>
         </div>
     </div>
 
@@ -555,3 +621,42 @@
 </div>
 
 @endsection
+
+@push('scripts')
+<script>
+    function submitFotoForm() {
+        const input = document.getElementById('fotoInput');
+        if (!input.files || !input.files[0]) return;
+
+        const file = input.files[0];
+
+        // Validar tipo de archivo
+        const allowed = ['image/jpeg', 'image/png', 'image/webp'];
+        if (!allowed.includes(file.type)) {
+            alert('Solo se permiten imágenes JPG, PNG o WebP.');
+            input.value = '';
+            return;
+        }
+
+        // Validar tamaño (8 MB máx)
+        if (file.size > 8 * 1024 * 1024) {
+            alert('La imagen no puede superar 8 MB.');
+            input.value = '';
+            return;
+        }
+
+        // Preview instantáneo antes de subir
+        const avatarImg = document.getElementById('avatarImg');
+        if (avatarImg) {
+            const reader = new FileReader();
+            reader.onload = function(e) { avatarImg.src = e.target.result; };
+            reader.readAsDataURL(file);
+        }
+
+        // Indicar carga
+        document.querySelector('.profile-avatar-outer').classList.add('foto-uploading');
+
+        document.getElementById('fotoForm').submit();
+    }
+</script>
+@endpush

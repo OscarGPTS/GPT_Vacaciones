@@ -5,7 +5,9 @@ namespace App\Http\Controllers\Perfil;
 use App\Http\Controllers\Controller;
 use App\Models\RequestVacations;
 use App\Models\VacationsAvailable;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Intervention\Image\Facades\Image;
 
 class ProfileController extends Controller
 {
@@ -50,5 +52,39 @@ class ProfileController extends Controller
             'totalReserved',
             'totalRemaining'
         ));
+    }
+
+    public function updatePhoto(Request $request)
+    {
+        $request->validate([
+            'foto' => ['required', 'file', 'mimes:jpg,jpeg,png,webp', 'max:8192'],
+        ]);
+
+        $user = Auth::user();
+
+        // Directorio de destino
+        $dir = public_path('fotos-de-empleados/perfil');
+        if (!is_dir($dir)) {
+            mkdir($dir, 0755, true);
+        }
+
+        // Nombre de archivo estable: {id}.jpg
+        $filename = $user->id . '.jpg';
+        $destPath = $dir . DIRECTORY_SEPARATOR . $filename;
+
+        // Imagen redimensionada: 350×350 cuadrada con recorte centrado, JPEG 85%
+        Image::make($request->file('foto')->getRealPath())
+            ->fit(350, 350, function ($constraint) {
+                $constraint->upsize();
+            })
+            ->save($destPath, 85);
+
+        // URL pública con cache-buster para que el navegador la refresque
+        $url = asset('fotos-de-empleados/perfil/' . $filename) . '?v=' . time();
+
+        $user->profile_image = $url;
+        $user->save();
+
+        return back()->with('foto_actualizada', true);
     }
 }
