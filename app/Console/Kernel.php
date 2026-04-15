@@ -31,12 +31,6 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule)
     {
         // $schedule->command('inspire')->hourly();
-        $schedule->command('email:send_anniversary')
-        ->everyMinute();
-
-        $schedule->call(function (){
-            logger('cron job executed'); 
-        })->everyMinute();
 
         // ========== NUEVOS COMANDOS REFACTORIZADOS ==========
         
@@ -87,13 +81,6 @@ class Kernel extends ConsoleKernel
                  ->timezone('America/Mexico_City')
                  ->withoutOverlapping()
                  ->runInBackground();
-
-        // ── CRON DE PRUEBA: escribe en system_logs cada minuto ──────────
-        // Usar para validar que el scheduler de Linux/cPanel está activo.
-        // Una vez validado, comentar o eliminar esta línea.
-        $schedule->command('cron:test-log')
-                 ->everyMinute()
-                 ->withoutOverlapping();
     }
 
     /**
