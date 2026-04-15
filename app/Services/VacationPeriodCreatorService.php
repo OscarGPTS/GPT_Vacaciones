@@ -85,7 +85,7 @@ class VacationPeriodCreatorService
         $today = Carbon::today();
         $usesOldScheme = $admissionDate->lt($policyChangeDate);
 
-        DB::beginTransaction();
+        DB::connection('mysql_vacations')->beginTransaction();
         try {
             $created = [];
 
@@ -99,7 +99,7 @@ class VacationPeriodCreatorService
             $currentCreated = $this->createCurrentPeriods($user, $admissionDate, $today, $usesOldScheme, $policyChangeDate);
             $created['current'] = $currentCreated;
 
-            DB::commit();
+            DB::connection('mysql_vacations')->commit();
 
             $totalCreated = count($created['historical'] ?? []) + count($created['current'] ?? []);
 
@@ -109,7 +109,7 @@ class VacationPeriodCreatorService
                 'data' => $created
             ];
         } catch (\Exception $e) {
-            DB::rollBack();
+            DB::connection('mysql_vacations')->rollBack();
             Log::error('Error creating periods for user ' . $user->id . ': ' . $e->getMessage());
             
             return [
