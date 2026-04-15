@@ -74,6 +74,15 @@ Route::get('empleados/documentos/check/pdf/{id}', [EmpleadoController::class, 'D
     ->name('empleados.documentos.check.pdf')
     ->middleware(['auth', 'can:show check documentos']);
 
+
+// Rutas del organigrama
+Route::get('organigrama', [OrganigramaController::class, 'index'])->name('organigrama.index');
+Route::get('organigrama/data', [OrganigramaController::class, 'index_data'])->name('organigrama.data');
+Route::get('organigrama/getEmployees', [OrganigramaController::class, 'getEmployees'])->name('organigrama.getEmployees');
+Route::get('organigrama/getEmployeesByDepartment/{department}', [OrganigramaController::class, 'getEmployeesByDepartment'])->name('organigrama.getEmployeesByDepartment');
+Route::get('organigrama/getEmployeesByOrganization/{organization}', [OrganigramaController::class, 'getEmployeesByOrganization'])->name('organigrama.getEmployeesByOrganization');
+Route::get('organigrama/proxy-image', [OrganigramaController::class, 'proxyImage'])->name('organigrama.proxyImage');
+
 Route::middleware(['auth', 'can:ver modulo rrhh'])->group(function () {
     Route::get('puestos', [PuestoController::class, 'index'])
         ->name('puestos.index');
@@ -94,13 +103,7 @@ Route::middleware(['auth', 'can:ver modulo rrhh'])->group(function () {
     Route::get('departamentos', DepartamentoComponent::class)
         ->name('departamentos');
 
-    // Rutas del organigrama
-    Route::get('organigrama', [OrganigramaController::class, 'index'])->name('organigrama.index');
-    Route::get('organigrama/data', [OrganigramaController::class, 'index_data'])->name('organigrama.data');
-    Route::get('organigrama/getEmployees', [OrganigramaController::class, 'getEmployees'])->name('organigrama.getEmployees');
-    Route::get('organigrama/getEmployeesByDepartment/{department}', [OrganigramaController::class, 'getEmployeesByDepartment'])->name('organigrama.getEmployeesByDepartment');
-    Route::get('organigrama/getEmployeesByOrganization/{organization}', [OrganigramaController::class, 'getEmployeesByOrganization'])->name('organigrama.getEmployeesByOrganization');
-    Route::get('organigrama/proxy-image', [OrganigramaController::class, 'proxyImage'])->name('organigrama.proxyImage');
+
 
     Route::get('requisiciones/personal', [RequisicionPersonalController::class, 'index'])
         ->name('rrhh.requisiciones.personal.index');
