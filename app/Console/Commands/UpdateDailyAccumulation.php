@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
+use App\Models\SystemLog;
 use App\Services\VacationDailyAccumulatorService;
 
 class UpdateDailyAccumulation extends Command
@@ -73,6 +74,7 @@ class UpdateDailyAccumulation extends Command
 
     protected function updateForAllUsers()
     {
+        $startTime = now();
         $this->info('Actualizando acumulación diaria para todos los usuarios...');
         $this->warn('Este proceso puede tardar varios minutos.');
         $this->newLine();
@@ -96,6 +98,31 @@ class UpdateDailyAccumulation extends Command
                 $this->line("  ... y " . (count($results['errors']) - 5) . " más");
             }
         }
+
+        // ── Registrar resultado en system_logs ───────────────────────────
+        $duration  = $startTime->diffInSeconds(now());
+        $hasErrors = !empty($results['errors']);
+
+        SystemLog::create([
+            'user_id'    => null,
+            'created_by' => null,
+            'level'      => $hasErrors ? 'warning' : 'info',
+            'type'       => 'cron_daily_accrual',
+            'message'    => $hasErrors
+                ? "vacation:update-daily completado con errores ({$results['users_processed']} usuarios, {$results['periods_updated']} períodos actualizados en {$duration}s)"
+                : "vacation:update-daily completado exitosamente ({$results['users_processed']} usuarios, {$results['periods_updated']} períodos actualizados en {$duration}s)",
+            'context'    => [
+                'command'          => 'vacation:update-daily --all --check-expired',
+                'duration_secs'    => $duration,
+                'users_processed'  => $results['users_processed'] ?? 0,
+                'periods_updated'  => $results['periods_updated']  ?? 0,
+                'periods_skipped'  => $results['periods_skipped']  ?? 0,
+                'periods_expired'  => $results['periods_expired']  ?? 0,
+                'errors'           => array_slice($results['errors'] ?? [], 0, 20),
+                'executed_at'      => $startTime->toDateTimeString(),
+            ],
+            'status' => $hasErrors ? 'pending' : 'resolved',
+        ]);
 
         return 0;
     }

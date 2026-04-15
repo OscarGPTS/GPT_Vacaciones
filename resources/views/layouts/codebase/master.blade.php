@@ -17,18 +17,7 @@
 <body>
     <x-notifications />
     <div id="page-container" class="sidebar-o enable-page-overlay side-scroll page-header-modern main-content-boxed">
-        <!-- Sidebar -->
-        <!--
-        Helper classes
-
-        Adding .smini-hide to an element will make it invisible (opacity: 0) when the sidebar is in mini mode
-        Adding .smini-show to an element will make it visible (opacity: 1) when the sidebar is in mini mode
-          If you would like to disable the transition, just add the .no-transition along with one of the previous 2 classes
-
-        Adding .smini-hidden to an element will hide it when the sidebar is in mini mode
-        Adding .smini-visible to an element will show it only when the sidebar is in mini mode
-        Adding 'smini-visible-block' to an element will show it (display: block) only when the sidebar is in mini mode
-      -->
+        
         <nav id="sidebar">
             <!-- Sidebar Content -->
             <div class="sidebar-content">
@@ -36,13 +25,14 @@
                 <div class="content-header justify-content-lg-center">
                     <!-- Logo -->
                     <div>
-                        <span class="tracking-wide smini-visible fw-bold fs-lg">
-                            s<span class="text-primary">t</span>
+                        <!-- Mini mode: single letter -->
+                        <span class="smini-visible">
+                            <span class="gpt-mini-logo">G</span>
                         </span>
-                        <a class="mx-auto tracking-wide link-fx fw-bold" href="index.html">
-                            <span class="smini-hidden">
-                                <span class="fs-4 text-dark">RR</span><span class="fs-4 text-danger">HH</span>
-                            </span>
+                        <!-- Normal mode: company logo -->
+                        <a class="smini-hidden d-block" href="{{ url('/') }}">
+                            <img src="{{ asset('assets/images/logo/logo_GPT.png') }}" alt="GPT Services"
+                                 style="height:36px; max-width:138px; object-fit:contain; display:block;">
                         </a>
                     </div>
                     <!-- END Logo -->
@@ -122,18 +112,35 @@
                 <div class="space-x-1">
                     <!-- User Dropdown -->
                     <div class="dropdown d-inline-block">
-                        <button type="button" class="btn btn-sm btn-alt-secondary" id="page-header-user-dropdown"
-                            data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                            <i class="fa fa-user d-sm-none"></i>
-                            <span class="d-none d-sm-inline-block fw-semibold">Menu</span>
-                            <i class="opacity-50 fa fa-angle-down ms-1"></i>
+                        <button type="button" class="btn btn-sm d-flex align-items-center gap-2" id="page-header-user-dropdown"
+                            data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false"
+                            style="border:1px solid rgba(0,0,0,.1); border-radius:.45rem; background:#fff; box-shadow:0 1px 4px rgba(0,0,0,.06); padding:.3rem .7rem;">
+                            <img src="{{ auth()->user()->profile_image ?? asset('assets/images/default-avatar.svg') }}"
+                                 class="hdr-user-avatar" alt="">
+                            <span class="d-none d-sm-inline-block fw-semibold"
+                                  style="font-size:.83rem; color:#2d3748; max-width:110px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                                {{ auth()->user()->first_name ?? 'Usuario' }}
+                            </span>
+                            <i class="fa fa-angle-down" style="opacity:.4; font-size:.72rem;"></i>
                         </button>
                         <div class="p-0 dropdown-menu dropdown-menu-md dropdown-menu-end"
                             aria-labelledby="page-header-user-dropdown">
-                            <div class="px-2 py-3 bg-body-light rounded-top">
-                                <h5 class="mb-0 text-center h6">
-                                    {{ auth()->user()->name ?? 'Usuario' }}
-                                </h5>
+                            <div class="hdr-dropdown-head">
+                                <div class="d-flex align-items-center gap-2">
+                                    <img src="{{ auth()->user()->profile_image ?? asset('assets/images/default-avatar.svg') }}"
+                                         class="rounded-circle flex-shrink-0" width="40" height="40"
+                                         style="object-fit:cover; border:2px solid rgba(249,190,0,.7);">
+                                    <div class="overflow-hidden">
+                                        <div class="fw-bold text-white lh-sm"
+                                             style="font-size:.85rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                                            {{ trim((auth()->user()->first_name ?? '') . ' ' . (auth()->user()->last_name ?? '')) ?: 'Usuario' }}
+                                        </div>
+                                        <div class="text-white mt-1"
+                                             style="font-size:.72rem; opacity:.75; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                                            {{ auth()->user()->job?->name ?? 'Colaborador' }}
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                             <div class="p-2">
                                 <a class="space-x-1 dropdown-item d-flex align-items-center justify-content-between"

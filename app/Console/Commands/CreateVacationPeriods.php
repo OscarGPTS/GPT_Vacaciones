@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use App\Models\User;
+use App\Models\SystemLog;
 use App\Services\VacationPeriodCreatorService;
 
 class CreateVacationPeriods extends Command
@@ -85,6 +86,7 @@ class CreateVacationPeriods extends Command
 
     protected function createForAllUsers()
     {
+        $startTime = now();
         $this->info('Creando períodos faltantes para todos los usuarios...');
         $this->newLine();
 
@@ -108,6 +110,30 @@ class CreateVacationPeriods extends Command
                 $this->line("  • Usuario {$error['user_id']}: {$error['message']}");
             }
         }
+
+        // ── Registrar resultado en system_logs ───────────────────────────
+        $duration = $startTime->diffInSeconds(now());
+        $hasErrors = !empty($results['errors']);
+
+        SystemLog::create([
+            'user_id'    => null,
+            'created_by' => null,
+            'level'      => $hasErrors ? 'warning' : 'info',
+            'type'       => 'cron_create_periods',
+            'message'    => $hasErrors
+                ? "vacation:create-periods completado con errores ({$results['failed']} usuarios fallidos, {$results['total_created']} períodos creados en {$duration}s)"
+                : "vacation:create-periods completado exitosamente ({$results['success']} usuarios, {$results['total_created']} períodos creados en {$duration}s)",
+            'context'    => [
+                'command'        => 'vacation:create-periods --all',
+                'duration_secs'  => $duration,
+                'users_ok'       => $results['success']      ?? 0,
+                'users_failed'   => $results['failed']       ?? 0,
+                'periods_created'=> $results['total_created'] ?? 0,
+                'errors'         => array_slice($results['errors'] ?? [], 0, 20),
+                'executed_at'    => $startTime->toDateTimeString(),
+            ],
+            'status' => $hasErrors ? 'pending' : 'resolved',
+        ]);
 
         return 0;
     }

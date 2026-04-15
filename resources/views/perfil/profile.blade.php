@@ -5,29 +5,34 @@
     /* ── Banner & Avatar ─────────────────────────────────── */
     .profile-banner {
         height: 220px;
-        background: linear-gradient(135deg, #1b4c43 0%, #24695c 50%, #2d8a75 100%);
+        background-image: url('/assets/images/banner/profile.png');
+        background-size: cover;      
+        background-position: center; 
         position: relative;
         border-radius: .5rem .5rem 0 0;
-        overflow: hidden; /* keeps the pattern clipped */
+        overflow: hidden;
     }
 
+    /* Subtle dot-grid overlay — Material Design tonal surface texture */
     .profile-banner::before {
         content: '';
         position: absolute;
         inset: 0;
         background-image:
-            radial-gradient(circle at 20% 50%, rgba(255,255,255,.06) 0%, transparent 60%),
-            radial-gradient(circle at 80% 20%, rgba(255,255,255,.04) 0%, transparent 50%);
+            radial-gradient(circle at 10% 80%, rgba(249,190,0,.07) 0%, transparent 50%),
+            radial-gradient(circle at 90% 10%, rgba(255,255,255,.04) 0%, transparent 45%),
+            url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20'%3E%3Ccircle cx='1' cy='1' r='1' fill='rgba(255,255,255,.06)'/%3E%3C/svg%3E");
+        background-size: auto, auto, 20px 20px;
     }
 
-    /* Subtle hexagonal grid pattern */
+    /* Brand accent line at banner bottom — thin red rule */
     .profile-banner::after {
         content: '';
         position: absolute;
-        inset: 0;
-        opacity: .08;
-        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='52'%3E%3Cpolygon points='30,2 58,16 58,36 30,50 2,36 2,16' fill='none' stroke='white' stroke-width='1'/%3E%3C/svg%3E");
-        background-size: 60px 52px;
+        bottom: 0; left: 0; right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, #CF0A2C 0%, #F9BE00 60%, transparent 100%);
+        opacity: .75;
     }
 
     /* Avatar sits on top of the banner edge — positioned

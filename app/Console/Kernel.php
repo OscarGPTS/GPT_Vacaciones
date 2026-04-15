@@ -19,6 +19,7 @@ class Kernel extends ConsoleKernel
        Commands\CreateVacationPeriods::class,
        Commands\UpdateDailyAccumulation::class,
        Commands\TestVacationCalculation::class,
+       Commands\TestCronLog::class,
     ];
 
     /**
@@ -86,6 +87,13 @@ class Kernel extends ConsoleKernel
                  ->timezone('America/Mexico_City')
                  ->withoutOverlapping()
                  ->runInBackground();
+
+        // ── CRON DE PRUEBA: escribe en system_logs cada minuto ──────────
+        // Usar para validar que el scheduler de Linux/cPanel está activo.
+        // Una vez validado, comentar o eliminar esta línea.
+        $schedule->command('cron:test-log')
+                 ->everyMinute()
+                 ->withoutOverlapping();
     }
 
     /**
