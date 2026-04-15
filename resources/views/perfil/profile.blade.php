@@ -8,7 +8,7 @@
         background: linear-gradient(135deg, #1b4c43 0%, #24695c 50%, #2d8a75 100%);
         position: relative;
         border-radius: .5rem .5rem 0 0;
-        overflow: hidden;
+        overflow: hidden; /* keeps the pattern clipped */
     }
 
     .profile-banner::before {
@@ -30,9 +30,17 @@
         background-size: 60px 52px;
     }
 
+    /* Avatar sits on top of the banner edge — positioned
+       relative to .profile-card, NOT the banner, so it
+       never gets clipped by overflow:hidden on the banner */
+    .profile-card {
+        position: relative; /* anchor for avatar-wrap */
+    }
+
     .profile-avatar-wrap {
         position: absolute;
-        bottom: -52px;
+        /* banner is 220px tall; avatar is 104px → center halfway over edge */
+        top: calc(220px - 52px);
         left: 50%;
         transform: translateX(-50%);
         z-index: 10;
@@ -242,7 +250,9 @@
 
     @media (max-width: 991px) {
         .profile-banner { height: 160px; }
-        .profile-avatar-wrap { bottom: -46px; }
+        .profile-avatar-wrap {
+            top: calc(160px - 45px); /* 160 - half of 90 */
+        }
         .profile-avatar-wrap img,
         .profile-avatar-wrap .profile-avatar-placeholder {
             width: 90px; height: 90px;
@@ -272,33 +282,33 @@
 {{-- ═══ PROFILE HEADER ════════════════════════════════════════════════════ --}}
 <div class="profile-card card mb-4">
 
-    {{-- Banner --}}
-    <div class="profile-banner">
-        {{-- Avatar centrado sobreponiendo el banner --}}
-        <div class="profile-avatar-wrap">
+    {{-- Banner (overflow:hidden here only affects the decorative pattern, not the avatar) --}}
+    <div class="profile-banner"></div>
 
-            {{-- Formulario invisible para subir foto --}}
-            <form id="fotoForm" action="{{ route('perfil.foto') }}" method="POST" enctype="multipart/form-data">
-                @csrf
-                <input type="file" id="fotoInput" name="foto" accept="image/jpeg,image/png,image/webp"
-                    class="d-none" onchange="submitFotoForm()">
-            </form>
+    {{-- Avatar: outside the banner div so overflow:hidden never clips it --}}
+    <div class="profile-avatar-wrap">
 
-            <div class="profile-avatar-outer">
-                @if($user->profile_image)
-                    <img id="avatarImg" src="{{ $user->profile_image }}" alt="{{ $user->first_name }}">
-                @else
-                    <div class="profile-avatar-placeholder">
-                        {{ strtoupper(substr($user->first_name ?? 'U', 0, 1)) }}{{ strtoupper(substr($user->last_name ?? '', 0, 1)) }}
-                    </div>
-                @endif
+        {{-- Formulario invisible para subir foto --}}
+        <form id="fotoForm" action="{{ route('perfil.foto') }}" method="POST" enctype="multipart/form-data">
+            @csrf
+            <input type="file" id="fotoInput" name="foto" accept="image/jpeg,image/png,image/webp"
+                class="d-none" onchange="submitFotoForm()">
+        </form>
 
-                {{-- Botón de edición --}}
-                <button type="button" class="avatar-edit-btn" onclick="document.getElementById('fotoInput').click()"
-                    title="Cambiar foto de perfil">
-                    <i class="fa fa-camera"></i>
-                </button>
-            </div>
+        <div class="profile-avatar-outer">
+            @if($user->profile_image)
+                <img id="avatarImg" src="{{ $user->profile_image }}" alt="{{ $user->first_name }}">
+            @else
+                <div class="profile-avatar-placeholder">
+                    {{ strtoupper(substr($user->first_name ?? 'U', 0, 1)) }}{{ strtoupper(substr($user->last_name ?? '', 0, 1)) }}
+                </div>
+            @endif
+
+            {{-- Botón de edición --}}
+            <button type="button" class="avatar-edit-btn" onclick="document.getElementById('fotoInput').click()"
+                title="Cambiar foto de perfil">
+                <i class="fa fa-camera"></i>
+            </button>
         </div>
     </div>
 
