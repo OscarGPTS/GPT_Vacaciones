@@ -67,14 +67,14 @@
                     <div class="px-0 py-0 content-side content-side-user">
                         <!-- Visible only in mini mode -->
                         <div class="px-3 smini-visible-block animated fadeIn">
-                            <img class="img-avatar img-avatar32" src="{{ auth()->user()->profile_image }}">
+                            <img class="img-avatar img-avatar32" src="{{ auth()->user()->profile_image?? 'default-avatar.png' }}" >
                         </div>
                         <!-- END Visible only in mini mode -->
 
                         <!-- Visible only in normal mode -->
                         <div class="mx-auto text-center smini-hidden">
                             <a class="img-link" href="be_pages_generic_profile.html">
-                                <img class="img-avatar" src="{{ auth()->user()->profile_image }}">
+                                <img class="img-avatar" src="{{ auth()->user()->profile_image?? 'default-avatar.png' }}" >
                             </a>
                             <ul class="mt-3 mb-0 list-inline">
                                 <li class="list-inline-item">
