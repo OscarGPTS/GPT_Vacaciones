@@ -386,7 +386,7 @@ class VacationPeriodCreatorService
             'errors' => []
         ];
 
-        User::whereHas('job')->chunk(100, function ($users) use (&$results) {
+        User::where('active', 1)->chunk(100, function ($users) use (&$results) {
             foreach ($users as $user) {
                 $result = $this->createMissingPeriodsForUser($user);
                 if ($result['success']) {

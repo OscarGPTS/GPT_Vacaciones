@@ -42,12 +42,18 @@ class UpdateDailyAccumulation extends Command
         $all = $this->option('all');
         $checkExpired = $this->option('check-expired');
 
-        if ($checkExpired) {
+        // --check-expired alone: solo verificar períodos vencidos
+        if ($checkExpired && !$all) {
             return $this->checkExpiredPeriods();
         }
 
         if ($all) {
-            return $this->updateForAllUsers();
+            $exitCode = $this->updateForAllUsers();
+            // Si también se pidió verificar vencidos, ejecutarlo después de la acumulación
+            if ($checkExpired) {
+                $this->checkExpiredPeriods();
+            }
+            return $exitCode;
         }
 
         if ($userId) {
