@@ -9,11 +9,8 @@
 | Comando | Tipo | Hora | Descripción |
 |---|---|---|---|
 | `vacation:create-periods --all` | Producción | 00:00 diario | Crea períodos de vacaciones faltantes |
-| `vacation:update-daily --all --check-expired` | Producción | 00:05 diario | Acumulación diaria + marca vencidos |
-| `vacations:auto-approve` | Producción | 09:00 diario | Aprueba automáticamente solicitudes >5 días |
-| `cron:test-log` | Validación | Cada minuto | Escribe en `system_logs` para confirmar scheduler activo |
-
-> **Nota:** `cron:test-log` es para validación inicial. Una vez confirmado que el scheduler funciona, comentarlo en `Kernel.php`.
+| `vacation:update-daily --all --check-expired` | Producción | 00:20 diario | Acumulación diaria + marca vencidos |
+| `vacations:auto-approve` | Producción | 00:40 diario | Aprueba automáticamente solicitudes >5 días |
 
 ---
 
@@ -27,13 +24,11 @@ Los comandos `vacation:create-periods` y `vacation:update-daily` escriben autom�
 |---|---|
 | `cron_create_periods` | `vacation:create-periods --all` |
 | `cron_daily_accrual` | `vacation:update-daily --all` |
-| `cron_test` | `cron:test-log` |
 
 ### Niveles usados
 
 - `info` — ejecución exitosa sin errores  
 - `warning` — completó pero con algunos errores por usuario  
-- `debug` — cron de prueba  
 
 ### Consulta rápida en MySQL
 
@@ -41,7 +36,7 @@ Los comandos `vacation:create-periods` y `vacation:update-daily` escriben autom�
 -- Últimas 20 ejecuciones de crons
 SELECT id, level, type, message, status, created_at
 FROM system_logs
-WHERE type IN ('cron_create_periods', 'cron_daily_accrual', 'cron_test')
+WHERE type IN ('cron_create_periods', 'cron_daily_accrual')
 ORDER BY created_at DESC
 LIMIT 20;
 
@@ -173,52 +168,11 @@ php artisan vacation:update-daily --check-expired
 # Para un usuario específico
 php artisan vacation:create-periods 42
 php artisan vacation:update-daily 42
-
-# Cron de prueba manual
-php artisan cron:test-log
-php artisan cron:test-log --message="Prueba manual desde desarrollo"
 ```
 
 ---
 
-## 6. Validación del scheduler en producción
-
-### Paso 1: Activar cron de prueba
-
-Confirmar que en `Kernel.php` esté habilitado:
-
-```php
-$schedule->command('cron:test-log')
-         ->everyMinute()
-         ->withoutOverlapping();
-```
-
-### Paso 2: Configurar cron en cPanel
-
-Agregar el cron de `schedule:run` (ver sección 3).
-
-### Paso 3: Esperar 2–3 minutos y verificar
-
-```sql
-SELECT COUNT(*), MAX(created_at) 
-FROM system_logs 
-WHERE type = 'cron_test' 
-  AND created_at > NOW() - INTERVAL 10 MINUTE;
-```
-
-Si el COUNT > 0, el scheduler está funcionando correctamente.
-
-### Paso 4: Desactivar cron de prueba
-
-Una vez validado, comentar en `Kernel.php`:
-
-```php
-// $schedule->command('cron:test-log')->everyMinute()->withoutOverlapping();
-```
-
----
-
-## 7. Troubleshooting
+## 6. Troubleshooting
 
 ### "No output / cron no ejecuta"
 

@@ -49,7 +49,7 @@ class Kernel extends ConsoleKernel
         //    - Marca períodos vencidos (15 meses)
         //    - Solo modifica days_availables, preserva days_reserved y days_enjoyed
         $schedule->command('vacation:update-daily --all --check-expired')
-                 ->dailyAt('00:05')
+                 ->dailyAt('00:20')
                  ->timezone('America/Mexico_City')
                  ->withoutOverlapping()
                  ->runInBackground();
@@ -75,9 +75,10 @@ class Kernel extends ConsoleKernel
 
         // ========== COMANDOS ACTIVOS ==========
 
-        // Procesar aprobaciones automáticas de vacaciones (diariamente a las 9:00 AM)
+        // 3. Procesar aprobaciones automáticas de vacaciones (diariamente a las 00:40 AM)
+        //    - Aprueba solicitudes pendientes con más de 5 días sin respuesta
         $schedule->command('vacations:auto-approve')
-                 ->dailyAt('09:00')
+                 ->dailyAt('00:40')
                  ->timezone('America/Mexico_City')
                  ->withoutOverlapping()
                  ->runInBackground();
