@@ -6,6 +6,7 @@ use App\Models\RequestVacations;
 use App\Models\NoWorkingDays;
 use App\Models\RequestApproved;
 use App\Models\User;
+use App\Models\UserSignature;
 use App\Mail\VacationRequestCreated;
 use App\Models\VacationsAvailable;
 use App\Models\ManagerApprover;
@@ -116,8 +117,23 @@ class VacacionesController extends Controller
         
         // Calcular total de días disponibles
         $totalAvailableDays = $vacationPeriods->sum('available_days');
-            
-        return view('vacaciones.index', compact('requests', 'behalfRequests', 'vacationPeriods', 'totalAvailableDays', 'canDelegate', 'unlockInfo'));
+        $totalAvailable     = $vacationPeriods->sum('days_availables');
+        $totalEnjoyed       = $vacationPeriods->sum('days_enjoyed');
+        $totalReserved      = $vacationPeriods->sum('days_reserved');
+        $totalRemaining     = $totalAvailableDays;
+
+        // Datos del usuario con relaciones para el encabezado de perfil
+        $currentUser->load(['job.departamento', 'jefe.job', 'razonSocial']);
+
+        // Firma del usuario (requerida para crear solicitudes)
+        $userSignature    = UserSignature::forUser($userId);
+        $hasSignature     = $userSignature !== null;
+
+        return view('vacaciones.index', compact(
+            'requests', 'behalfRequests', 'vacationPeriods', 'totalAvailableDays', 'canDelegate', 'unlockInfo',
+            'totalAvailable', 'totalEnjoyed', 'totalReserved', 'totalRemaining',
+            'currentUser', 'userSignature', 'hasSignature'
+        ));
     }
 
     public function create()

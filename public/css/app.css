@@ -3149,9 +3149,6 @@ input:checked + .toggle-bg {
 .leading-9 {
   line-height: 2.25rem;
 }
-.tracking-wide {
-  letter-spacing: 0.025em;
-}
 .tracking-wider {
   letter-spacing: 0.05em;
 }

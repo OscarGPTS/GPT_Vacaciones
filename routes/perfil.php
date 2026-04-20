@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Perfil\CvController;
 use App\Http\Controllers\Perfil\ProfileController;
+use App\Http\Controllers\Perfil\FirmaController;
 use App\Livewire\Empleados\PersonalDataComponent;
 use App\Livewire\RequisicionCurso\CreateComponent;
 use App\Livewire\RequisicionCurso\RevisarComponent;
@@ -24,6 +25,10 @@ Route::middleware(['auth'])->group(function () {
 
     Route::post('perfil/foto', [ProfileController::class, 'updatePhoto'])
         ->name('perfil.foto');
+
+    // Firma digital del usuario
+    Route::post('perfil/firma', [FirmaController::class, 'store'])->name('perfil.firma.store');
+    Route::delete('perfil/firma', [FirmaController::class, 'destroy'])->name('perfil.firma.destroy');
 
     Route::get('perfil/informacion-personal', PersonalDataComponent::class)
     ->name('perfil.informacion_personal');

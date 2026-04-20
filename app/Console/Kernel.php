@@ -75,13 +75,14 @@ class Kernel extends ConsoleKernel
 
         // ========== COMANDOS ACTIVOS ==========
 
-        // 3. Procesar aprobaciones automáticas de vacaciones (diariamente a las 00:40 AM)
-        //    - Aprueba solicitudes pendientes con más de 5 días sin respuesta
-        $schedule->command('vacations:auto-approve')
-                 ->dailyAt('00:40')
-                 ->timezone('America/Mexico_City')
-                 ->withoutOverlapping()
-                 ->runInBackground();
+        // 3. Procesar aprobaciones automáticas de vacaciones (DESHABILITADO)
+        //    Desactivado por requerimiento: las vacaciones NO se aprueban automáticamente.
+        //    Para reactivar, descomentar las líneas siguientes:
+        // $schedule->command('vacations:auto-approve')
+        //          ->dailyAt('00:40')
+        //          ->timezone('America/Mexico_City')
+        //          ->withoutOverlapping()
+        //          ->runInBackground();
     }
 
     /**

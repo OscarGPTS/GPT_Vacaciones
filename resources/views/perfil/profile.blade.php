@@ -240,18 +240,6 @@
         z-index: 20;
     }
 
-    .avatar-edit-btn:hover { background: #1b4c43; }
-
-    .profile-avatar-outer {
-        position: relative;
-        display: inline-block;
-    }
-
-    /* ── Upload feedback ─────────────────────────────────── */
-    .foto-uploading {
-        opacity: .5;
-        pointer-events: none;
-    }
 
     @media (max-width: 991px) {
         .profile-banner { height: 160px; }
@@ -268,21 +256,6 @@
 
 @section('content')
 
-@if(session('foto_actualizada'))
-<div class="alert alert-success alert-dismissible fade show d-flex align-items-center gap-2 mb-3" role="alert">
-    <i class="fa fa-check-circle fs-5"></i>
-    <span>Foto de perfil actualizada correctamente.</span>
-    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
-</div>
-@endif
-
-@if($errors->has('foto'))
-<div class="alert alert-danger alert-dismissible fade show d-flex align-items-center gap-2 mb-3" role="alert">
-    <i class="fa fa-exclamation-circle fs-5"></i>
-    <span>{{ $errors->first('foto') }}</span>
-    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
-</div>
-@endif
 
 {{-- ═══ PROFILE HEADER ════════════════════════════════════════════════════ --}}
 <div class="profile-card card mb-4">
@@ -292,29 +265,13 @@
 
     {{-- Avatar: outside the banner div so overflow:hidden never clips it --}}
     <div class="profile-avatar-wrap">
-
-        {{-- Formulario invisible para subir foto --}}
-        <form id="fotoForm" action="{{ route('perfil.foto') }}" method="POST" enctype="multipart/form-data">
-            @csrf
-            <input type="file" id="fotoInput" name="foto" accept="image/jpeg,image/png,image/webp"
-                class="d-none" onchange="submitFotoForm()">
-        </form>
-
-        <div class="profile-avatar-outer">
-            @if($user->profile_image)
-                <img id="avatarImg" src="{{ $user->profile_image }}" alt="{{ $user->first_name }}">
-            @else
-                <div class="profile-avatar-placeholder">
-                    {{ strtoupper(substr($user->first_name ?? 'U', 0, 1)) }}{{ strtoupper(substr($user->last_name ?? '', 0, 1)) }}
-                </div>
-            @endif
-
-            {{-- Botón de edición --}}
-            <button type="button" class="avatar-edit-btn" onclick="document.getElementById('fotoInput').click()"
-                title="Cambiar foto de perfil">
-                <i class="fa fa-camera"></i>
-            </button>
-        </div>
+        @if($user->profile_image)
+            <img id="avatarImg" src="{{ $user->profile_image }}" alt="{{ $user->first_name }}">
+        @else
+            <div class="profile-avatar-placeholder">
+                {{ strtoupper(substr($user->first_name ?? 'U', 0, 1)) }}{{ strtoupper(substr($user->last_name ?? '', 0, 1)) }}
+            </div>
+        @endif
     </div>
 
     {{-- Nombre y cargo --}}
