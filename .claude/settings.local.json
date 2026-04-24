@@ -2,7 +2,11 @@
   "permissions": {
     "allow": [
       "Bash(php artisan *)",
-      "Bash(php -r ' *)"
+      "Bash(php -r ' *)",
+      "Bash(grep -E \"\\\\.\\(php|blade\\)$\")",
+      "Bash(xargs grep *)",
+      "Bash(grep -n 'connection\\\\|protected $connection' app/Models/RequestVacations.php)",
+      "Bash(php -l app/Http/Controllers/RequestController.php)"
     ]
   }
 }

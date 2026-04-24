@@ -11,6 +11,7 @@ use App\Models\VacationsAvailable;
 use App\Models\Departamento;
 use App\Models\DirectionApprover;
 use App\Models\ManagerApprover;
+use App\Models\UserSignature;
 use App\Services\VacationCalculatorService;
 use App\Services\VacationPeriodCreatorService;
 use App\Services\VacationDailyAccumulatorService;
@@ -315,7 +316,7 @@ class RequestController extends Controller
     /**
      * Liberar días reservados cuando se rechaza una solicitud
      */
-    private function releaseReservedDays(RequestVacations $requestVacation)
+    protected function releaseReservedDays(RequestVacations $requestVacation)
     {
         if (!empty($requestVacation->opcion)) {
             $parts = explode('|', $requestVacation->opcion);
@@ -454,12 +455,140 @@ class RequestController extends Controller
      */
     public function vacationReportLivewire()
     {
-        // Verificar permisos de RH
         if (!auth()->user()->can('ver modulo rrhh')) {
             return redirect()->route('home')->with('error', 'No tienes permisos para acceder a esta sección.');
         }
 
         return view('vacaciones.vacation_report_livewire');
+    }
+
+    public function cancelarSolicitud(int $userId, int $requestId)
+    {
+        if (!auth()->user()->can('ver modulo rrhh')) {
+            return redirect()->route('home')->with('error', 'No tienes permisos para acceder a esta sección.');
+        }
+
+        $solicitud = RequestVacations::with('requestDays')
+            ->where('id', $requestId)
+            ->where('user_id', $userId)
+            ->firstOrFail();
+
+        if ($solicitud->human_resources_status === 'Aprobada') {
+            return redirect()
+                ->route('vacaciones.reporte.perfil', $userId)
+                ->with('error', 'No se puede cancelar una solicitud ya aprobada por Recursos Humanos.');
+        }
+
+        DB::connection('mysql_vacations')->transaction(function () use ($solicitud) {
+            // 1. Liberar días reservados en el período correspondiente
+            $this->releaseReservedDays($solicitud);
+
+            // 2. Marcar la solicitud como cancelada por RH
+            $solicitud->update([
+                'human_resources_status' => 'Cancelada',
+            ]);
+        });
+
+        return redirect()
+            ->route('vacaciones.reporte.perfil', $userId)
+            ->with('success', 'Solicitud marcada como Cancelada. Los días reservados han sido liberados al período correspondiente.');
+    }
+
+    public function perfilUsuario(int $userId)
+    {
+        if (!auth()->user()->can('ver modulo rrhh')) {
+            return redirect()->route('home')->with('error', 'No tienes permisos para acceder a esta sección.');
+        }
+
+        $currentUser = User::with(['job.departamento', 'jefe.job', 'razonSocial'])->findOrFail($userId);
+
+        $now = \Carbon\Carbon::now();
+
+        // Períodos de vacaciones
+        $vacationPeriods = VacationsAvailable::where('users_id', $userId)
+            ->where('status', 'actual')
+            ->orderBy('period')
+            ->get()
+            ->map(function ($period) use ($now) {
+                $expirationDate     = \Carbon\Carbon::parse($period->date_end)->addMonths(15);
+                $daysUntilExpiration = $now->diffInDays($expirationDate, false);
+                $availableFromDate  = \Carbon\Carbon::parse($period->date_start)->addYear();
+                $daysUntilAvailable = $now->diffInDays($availableFromDate, false);
+                $isExpired          = $daysUntilExpiration < 0;
+
+                return [
+                    'period'              => $period->period,
+                    'date_start'          => $period->date_start,
+                    'date_end'            => $period->date_end,
+                    'days_availables'     => $period->days_availables,
+                    'days_enjoyed'        => $period->days_enjoyed,
+                    'days_reserved'       => $period->days_reserved ?? 0,
+                    'available_days'      => floor($period->available_balance),
+                    'available_days_exact'=> round($period->available_balance, 2),
+                    'expiration_date'     => $expirationDate,
+                    'days_until_expiration' => $daysUntilExpiration,
+                    'is_expired'          => $isExpired,
+                    'expires_soon'        => $daysUntilExpiration <= 60 && !$isExpired,
+                    'is_not_yet_available'=> $daysUntilAvailable > 0,
+                    'available_from_date' => $availableFromDate,
+                    'days_until_available'=> $daysUntilAvailable,
+                ];
+            })->reject(fn($p) => $p['is_expired']);
+
+        // Solicitudes del usuario
+        $requests = RequestVacations::where('user_id', $userId)
+            ->select(['id','user_id','created_by_user_id','reveal_id','type_request','start','end',
+                      'opcion','direct_manager_status','direction_approbation_status','human_resources_status','created_at'])
+            ->with(['requestDays:id,requests_id,start,end', 'reveal:id,first_name,last_name'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        // Historial de vacaciones aprobadas agrupado por año
+        $vacationHistory = RequestVacations::where('user_id', $userId)
+            ->where('type_request', 'Vacaciones')
+            ->where('direct_manager_status', 'Aprobada')
+            ->where('human_resources_status', 'Aprobada')
+            ->with(['approvedRequests'])
+            ->orderBy('start', 'desc')
+            ->get()
+            ->groupBy(fn($v) => date('Y', strtotime($v->start)))
+            ->map(function ($yearVacations, $year) {
+                $details = $yearVacations->map(fn($v) => [
+                    'id'           => $v->id,
+                    'start'        => $v->start,
+                    'end'          => $v->end,
+                    'days_count'   => $v->approvedRequests->count(),
+                    'approved_days'=> $v->approvedRequests->map(fn($d) => date('d/m/Y', strtotime($d->start)))->toArray(),
+                ]);
+                return ['year' => $year, 'total_days' => $details->sum('days_count'), 'vacations' => $details];
+            })->sortKeysDesc();
+
+        // Firma y términos
+        $userSignature    = UserSignature::forUser($userId);
+        $hasSignature     = $userSignature !== null;
+        $termsRecord      = UserSignature::where('user_id', $userId)->first();
+        $hasAcceptedTerms = $termsRecord && $termsRecord->terms_accepted_at !== null;
+        $termsAcceptedAt  = $hasAcceptedTerms ? $termsRecord->terms_accepted_at : null;
+
+        // Info de desbloqueo si < 1 año
+        $unlockInfo = null;
+        if ($currentUser->admission) {
+            $admissionDate = \Carbon\Carbon::parse($currentUser->admission);
+            $oneYearDate   = $admissionDate->copy()->addYear();
+            if ($now->lt($oneYearDate)) {
+                $unlockInfo = [
+                    'unlock_date'    => $oneYearDate->format('d/m/Y'),
+                    'days_remaining' => $now->diffInDays($oneYearDate),
+                    'admission_date' => $admissionDate->format('d/m/Y'),
+                ];
+            }
+        }
+
+        return view('vacaciones.perfil-usuario', compact(
+            'currentUser', 'vacationPeriods', 'requests', 'vacationHistory',
+            'userSignature', 'hasSignature', 'hasAcceptedTerms', 'termsAcceptedAt',
+            'unlockInfo'
+        ));
     }
 
     /**

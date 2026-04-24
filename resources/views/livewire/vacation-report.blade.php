@@ -390,13 +390,11 @@
                                                 </div>
                                             </td>
                                             <td class="text-center">
-                                                <button 
-                                                    type="button" 
-                                                    wire:click="showVacationHistory({{ $employee->id }}, '{{ $employee->first_name }} {{ $employee->last_name }}')"
-                                                    class="btn btn-sm btn-outline-info"
-                                                    title="Ver historial de vacaciones tomadas">
-                                                    Ver Historial
-                                                </button>
+                                                <a href="{{ route('vacaciones.reporte.perfil', $employee->id) }}"
+                                                   class="btn btn-sm btn-outline-info"
+                                                   title="Ver perfil completo de vacaciones">
+                                                    <i class="fa fa-user-circle me-1"></i> Ver Perfil
+                                                </a>
                                             </td>
                                         </tr>
                                         <!-- Fila expandible con todos los períodos de vacaciones -->
@@ -608,78 +606,8 @@
                             {{ $this->employeesData->links() }}
                         </div>
 
-                        <!-- Modal de Historial de Vacaciones -->
-                        @if($showVacationHistoryModal)
-                        <div class="modal fade show" style="display: block; background-color: rgba(0,0,0,0.5);" tabindex="-1">
-                            <div class="modal-dialog modal-lg">
-                                <div class="modal-content">
-                                    <div class="modal-header bg-info text-white">
-                                        <h5 class="modal-title">
-                                            <i class="fas fa-history"></i> Historial de Vacaciones - {{ $selectedEmployeeName }}
-                                        </h5>
-                                        <button type="button" class="btn-close btn-close-white" wire:click="closeVacationHistoryModal"></button>
-                                    </div>
-                                    <div class="modal-body bg-white">
-                                        @if($this->vacationHistory->count() > 0)
-                                            @foreach($this->vacationHistory as $yearData)
-                                                <div class="card mb-3">
-                                                    <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                                                        <h6 class="mb-0">
-                                                            <i class="fas fa-calendar-alt text-primary"></i>
-                                                            <strong>Año {{ $yearData['year'] }}</strong>
-                                                        </h6>
-                                                        <span class="badge bg-primary">
-                                                            Total: {{ $yearData['total_days'] }} {{ $yearData['total_days'] == 1 ? 'día' : 'días' }}
-                                                        </span>
-                                                    </div>
-                                                    <div class="card-body">
-                                                        <div class="table-responsive">
-                                                            <table class="table table-sm table-hover">
-                                                                <thead class="table-light">
-                                                                    <tr>
-                                                                        <th style="width: 50px;" class="text-center">#</th>
-                                                                        <th><i class="fas fa-calendar-day"></i> Fecha Inicio</th>
-                                                                        <th><i class="fas fa-calendar-day"></i> Fecha Fin</th>
-                                                                        <th class="text-center"><i class="fas fa-calculator"></i> Días</th>
-                                                                        <th><i class="fas fa-list"></i> Días Aprobados</th>
-                                                                    </tr>
-                                                                </thead>
-                                                                <tbody>
-                                                                    @foreach($yearData['vacations'] as $index => $vacation)
-                                                                        <tr>
-                                                                            <td class="text-center"><strong>{{ $index + 1 }}</strong></td>
-                                                                            <td>{{ \Carbon\Carbon::parse($vacation['start'])->format('d/m/Y') }}</td>
-                                                                            <td>{{ \Carbon\Carbon::parse($vacation['end'])->format('d/m/Y') }}</td>
-                                                                            <td class="text-center">
-                                                                                <span class="badge bg-success">{{ $vacation['days_count'] }}</span>
-                                                                            </td>
-                                                                            <td>
-                                                                                <small class="text-muted">
-                                                                                    {{ implode(', ', $vacation['approved_days']) }}
-                                                                                </small>
-                                                                            </td>
-                                                                        </tr>
-                                                                    @endforeach
-                                                                </tbody>
-                                                            </table>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            @endforeach
-                                        @else
-                                            <div class="alert alert-info text-center">
-                                                <i class="fas fa-info-circle fa-2x mb-2"></i>
-                                                <p class="mb-0">Este empleado no tiene vacaciones registradas.</p>
-                                            </div>
-                                        @endif
-                                    </div>
-                                    <div class="modal-footer bg-white">
-                                        <button type="button" class="btn btn-secondary" wire:click="closeVacationHistoryModal">
-                                            <i class="fas fa-times"></i> Cerrar
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
+                        <!-- El historial de vacaciones se muestra en la página de perfil de usuario -->
+                        @if(false)
                         </div>
                         @endif
 
