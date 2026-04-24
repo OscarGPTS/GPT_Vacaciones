@@ -68,7 +68,8 @@ class FirmaController extends Controller
             if (file_exists($fullPath)) {
                 unlink($fullPath);
             }
-            $sig->delete();
+            // Conservar el registro para no perder la aceptación de términos
+            $sig->update(['signature_url' => null]);
         }
 
         return back()->with('firma_eliminada', 'Firma eliminada. Deberás registrar una nueva para poder crear solicitudes.');

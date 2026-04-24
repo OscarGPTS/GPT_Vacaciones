@@ -12,14 +12,19 @@ class UserSignature extends Model
     protected $fillable = [
         'user_id',
         'signature_url',
+        'terms_accepted_at',
+    ];
+
+    protected $casts = [
+        'terms_accepted_at' => 'datetime',
     ];
 
     /**
-     * Devuelve el registro de firma para un usuario dado, o null si no existe.
+     * Devuelve el registro de firma (con signature_url) para un usuario, o null si no existe.
      */
     public static function forUser(int $userId): ?self
     {
-        return static::where('user_id', $userId)->first();
+        return static::where('user_id', $userId)->whereNotNull('signature_url')->first();
     }
 
     /**
@@ -27,6 +32,25 @@ class UserSignature extends Model
      */
     public static function userHasSignature(int $userId): bool
     {
-        return static::where('user_id', $userId)->exists();
+        return static::where('user_id', $userId)->whereNotNull('signature_url')->exists();
+    }
+
+    /**
+     * Indica si el usuario ya aceptó los términos y condiciones.
+     */
+    public static function hasAcceptedTerms(int $userId): bool
+    {
+        return static::where('user_id', $userId)->whereNotNull('terms_accepted_at')->exists();
+    }
+
+    /**
+     * Registra la aceptación de términos del usuario (crea el registro si no existe).
+     */
+    public static function acceptTerms(int $userId): void
+    {
+        static::updateOrCreate(
+            ['user_id' => $userId],
+            ['terms_accepted_at' => now()]
+        );
     }
 }

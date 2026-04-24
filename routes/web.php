@@ -48,6 +48,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/create', [VacacionesController::class, 'create'])->name('create');
         Route::post('/store', [VacacionesController::class, 'store'])->name('store');
         Route::post('/ajax', [VacacionesController::class, 'ajax'])->name('ajax');
+        Route::post('/terms', [VacacionesController::class, 'acceptTerms'])->name('terms.accept');
         Route::post('/get-user-restrictions', [VacacionesController::class, 'getUserRestrictions'])->name('get-user-restrictions');
         Route::post('/check-day-period', [VacacionesController::class, 'checkDayPeriod'])->name('check-day-period');
 

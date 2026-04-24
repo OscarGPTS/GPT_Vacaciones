@@ -130,10 +130,16 @@ class VacacionesController extends Controller
         $hasSignature     = $userSignature !== null;
         $isSuperAdmin     = auth()->user()->hasRole('super-admin');
 
+        // Términos y condiciones
+        $termsRecord      = UserSignature::where('user_id', $userId)->first();
+        $hasAcceptedTerms = $termsRecord && $termsRecord->terms_accepted_at !== null;
+        $termsAcceptedAt  = $hasAcceptedTerms ? $termsRecord->terms_accepted_at : null;
+
         return view('vacaciones.index', compact(
             'requests', 'behalfRequests', 'vacationPeriods', 'totalAvailableDays', 'canDelegate', 'unlockInfo',
             'totalAvailable', 'totalEnjoyed', 'totalReserved', 'totalRemaining',
-            'currentUser', 'userSignature', 'hasSignature', 'isSuperAdmin'
+            'currentUser', 'userSignature', 'hasSignature', 'isSuperAdmin',
+            'hasAcceptedTerms', 'termsAcceptedAt'
         ));
     }
 
@@ -486,5 +492,12 @@ class VacacionesController extends Controller
             default:
                 return response()->json(['error' => 'Invalid type']);
         }
+    }
+
+    public function acceptTerms()
+    {
+        UserSignature::acceptTerms(auth()->id());
+
+        return back()->with('terms_accepted', 'Has aceptado los términos y condiciones del sistema de vacaciones.');
     }
 }

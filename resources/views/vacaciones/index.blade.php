@@ -163,6 +163,48 @@
         </div>
     </div>
 
+    {{-- ═══ TÉRMINOS Y CONDICIONES — card compacto ════════════════════════ --}}
+    @if(session('terms_accepted'))
+    <div class="alert alert-success alert-dismissible fade show mb-3 py-2" style="font-size:.88rem;">
+        <i class="fa fa-check-circle me-1"></i>{{ session('terms_accepted') }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    @endif
+
+    <div class="card border-0 shadow-sm mb-4" style="border-left:4px solid {{ $hasAcceptedTerms ? '#198754' : '#f59e0b' }} !important; border-radius:.5rem;">
+        <div class="card-body py-3 px-4">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                <div class="d-flex align-items-center gap-3">
+                    <div style="width:40px;height:40px;border-radius:.45rem;background:{{ $hasAcceptedTerms ? '#d1fae5' : '#fef3c7' }};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                        <i class="fa {{ $hasAcceptedTerms ? 'fa-file-contract' : 'fa-exclamation-triangle' }}"
+                           style="color:{{ $hasAcceptedTerms ? '#065f46' : '#92400e' }};font-size:1rem;"></i>
+                    </div>
+                    <div>
+                        <div class="fw-semibold" style="font-size:.9rem;color:#111827;">
+                            Términos y Condiciones del Sistema de Vacaciones
+                        </div>
+                        <div style="font-size:.78rem;color:#6b7280;margin-top:.1rem;">
+                            @if($hasAcceptedTerms)
+                                <i class="fa fa-check-circle text-success me-1"></i>
+                                Aceptados el <strong>{{ $termsAcceptedAt->format('d/m/Y') }}</strong> a las {{ $termsAcceptedAt->format('H:i') }}
+                            @else
+                                <i class="fa fa-clock text-warning me-1"></i>
+                                Debes leer y aceptar los términos para poder crear solicitudes
+                            @endif
+                        </div>
+                    </div>
+                </div>
+                <button type="button"
+                        class="btn btn-sm {{ $hasAcceptedTerms ? 'btn-outline-secondary' : 'btn-warning fw-semibold' }}"
+                        data-bs-toggle="modal" data-bs-target="#termsModal"
+                        style="white-space:nowrap;">
+                    <i class="fa {{ $hasAcceptedTerms ? 'fa-eye' : 'fa-file-signature' }} me-1"></i>
+                    {{ $hasAcceptedTerms ? 'Ver términos' : 'Leer y aceptar' }}
+                </button>
+            </div>
+        </div>
+    </div>
+
     {{-- ═══ FILA: JEFE DIRECTO + FIRMA DIGITAL ════════════════════════════ --}}
     <div class="row g-3 mb-4">
 
@@ -979,7 +1021,168 @@
     @endforeach
     @endif
 </div>{{-- /row --}}
+
+
 </div>{{-- /container-fluid --}}
+
+{{-- ═══ MODAL TÉRMINOS Y CONDICIONES ══════════════════════════════════════ --}}
+<div class="modal fade" id="termsModal" tabindex="-1" aria-labelledby="termsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content bg-white">
+
+            <div class="modal-header border-0 pb-2" style="background:#f8fafc;">
+                <div>
+                    <h5 class="modal-title fw-bold mb-0" id="termsModalLabel" style="color:#111827;">
+                        <i class="fa fa-file-contract me-2 text-primary"></i>Términos y Condiciones
+                    </h5>
+                    <p class="mb-0 text-muted" style="font-size:.75rem;">
+                        Sistema de Gestión de Vacaciones &nbsp;·&nbsp; Actualización: Abril 2026
+                    </p>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            {{-- Cuerpo con scroll fijo --}}
+            <div class="modal-body px-4 py-3" style="font-size:.875rem;color:#374151;line-height:1.75;max-height:60vh;overflow-y:auto;" id="termsScrollBody">
+
+                <div class="terms-section mb-4">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <span class="badge rounded-pill bg-primary" style="font-size:.7rem;">1</span>
+                        <h6 class="mb-0 fw-bold" style="color:#1e3a5f;">Asignación y vigencia de días de vacaciones</h6>
+                    </div>
+                    <p class="mb-0 ps-4">
+                        Los días de vacaciones se asignan conforme a la antigüedad del colaborador según la <strong>Ley Federal del Trabajo</strong>.
+                        Cada período tiene una vigencia de <strong>15 meses</strong> a partir de la fecha de término; los días no ejercidos
+                        dentro de ese plazo <strong>caducan automáticamente</strong> y no son recuperables.
+                    </p>
+                </div>
+
+                <div class="terms-section mb-4">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <span class="badge rounded-pill bg-warning text-dark" style="font-size:.7rem;">2</span>
+                        <h6 class="mb-0 fw-bold" style="color:#1e3a5f;">Anticipación mínima para solicitar</h6>
+                    </div>
+                    <p class="mb-0 ps-4">
+                        Toda solicitud debe realizarse con al menos <strong>5 días hábiles de anticipación</strong> a la fecha de inicio.
+                        Las solicitudes fuera de ese plazo podrán ser rechazadas por el sistema o por el jefe directo.
+                    </p>
+                </div>
+
+                <div class="terms-section mb-4">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <span class="badge rounded-pill bg-success" style="font-size:.7rem;">3</span>
+                        <h6 class="mb-0 fw-bold" style="color:#1e3a5f;">Flujo de aprobación</h6>
+                    </div>
+                    <div class="ps-4">
+                        <p class="mb-2">Las solicitudes pasan por tres instancias en orden:</p>
+                        <div class="d-flex flex-column gap-1 mb-2">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="badge bg-light text-dark border" style="min-width:22px;">1</span>
+                                <span><strong>Jefe directo</strong> — primera instancia de aprobación.</span>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="badge bg-light text-dark border" style="min-width:22px;">2</span>
+                                <span><strong>Dirección</strong> — valida impacto operacional del área.</span>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="badge bg-light text-dark border" style="min-width:22px;">3</span>
+                                <span><strong>Recursos Humanos</strong> — confirma saldo y genera documento oficial.</span>
+                            </div>
+                        </div>
+                        <p class="mb-0 text-muted" style="font-size:.82rem;">
+                            Un rechazo en cualquier instancia cancela la solicitud y libera los días reservados.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="terms-section mb-4">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <span class="badge rounded-pill bg-secondary" style="font-size:.7rem;">4</span>
+                        <h6 class="mb-0 fw-bold" style="color:#1e3a5f;">Firma digital</h6>
+                    </div>
+                    <p class="mb-0 ps-4">
+                        Es obligatorio registrar la <strong>firma digital</strong> antes de crear solicitudes. La firma constituye
+                        un consentimiento informado y aparece en el documento PDF oficial. Puede actualizarse en cualquier momento;
+                        eliminarla suspende la creación de nuevas solicitudes hasta registrar una nueva.
+                    </p>
+                </div>
+
+                <div class="terms-section mb-4">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <span class="badge rounded-pill" style="font-size:.7rem;background:#6366f1;">5</span>
+                        <h6 class="mb-0 fw-bold" style="color:#1e3a5f;">Restricciones y límites</h6>
+                    </div>
+                    <ul class="mb-0 ps-4" style="line-height:1.9;">
+                        <li>Mínimo <strong>1 año de antigüedad</strong> para el primer período.</li>
+                        <li>No se pueden elegir días inhábiles, festivos ni fines de semana.</li>
+                        <li>El máximo por solicitud está limitado al saldo del período seleccionado.</li>
+                        <li>No se permiten solicitudes con saldo cero o en períodos vencidos.</li>
+                    </ul>
+                </div>
+
+                <div class="terms-section mb-4">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <span class="badge rounded-pill bg-info" style="font-size:.7rem;">6</span>
+                        <h6 class="mb-0 fw-bold" style="color:#1e3a5f;">Tratamiento de datos personales</h6>
+                    </div>
+                    <p class="mb-0 ps-4">
+                        La información registrada (nombre, firma digital, fechas) es de uso <strong>exclusivamente interno</strong>.
+                        Los datos se almacenan de forma segura y no se comparten con terceros. Para corrección o eliminación
+                        de datos, contacta a Recursos Humanos.
+                    </p>
+                </div>
+
+                <div class="terms-section mb-2">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <span class="badge rounded-pill bg-dark" style="font-size:.7rem;">7</span>
+                        <h6 class="mb-0 fw-bold" style="color:#1e3a5f;">Responsabilidad del colaborador</h6>
+                    </div>
+                    <ul class="mb-0 ps-4" style="line-height:1.9;">
+                        <li>Verificar que los días seleccionados correspondan al período correcto.</li>
+                        <li>Designar un responsable durante la ausencia cuando aplique.</li>
+                        <li>Revisar el estatus de la solicitud y atender observaciones del jefe o RH.</li>
+                        <li>No ceder credenciales a terceros sin el proceso de delegación autorizado.</li>
+                    </ul>
+                </div>
+
+            </div>
+
+            {{-- Footer --}}
+            <div class="modal-footer border-0 pt-0" style="background:#f8fafc;">
+                @if(!$hasAcceptedTerms)
+                <form action="{{ route('vacaciones.terms.accept') }}" method="POST" id="termsForm" class="w-100">
+                    @csrf
+                    <div class="d-flex align-items-center justify-content-between gap-3 flex-wrap">
+                        <div class="form-check d-flex align-items-center gap-2 mb-0">
+                            <input class="form-check-input" type="checkbox" id="termsCheck"
+                                   style="width:1.1rem;height:1.1rem;margin-top:0;cursor:pointer;">
+                            <label class="form-check-label" for="termsCheck"
+                                   style="font-size:.84rem;cursor:pointer;color:#374151;">
+                                He leído y acepto los términos y condiciones
+                            </label>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cerrar</button>
+                            <button type="submit" class="btn btn-primary btn-sm fw-semibold" id="acceptTermsBtn" disabled>
+                                <i class="fa fa-check me-1"></i> Aceptar
+                            </button>
+                        </div>
+                    </div>
+                </form>
+                @else
+                <div class="d-flex align-items-center justify-content-between w-100 flex-wrap gap-2">
+                    <span class="text-success" style="font-size:.84rem;">
+                        <i class="fa fa-check-circle me-1"></i>
+                        Aceptados el <strong>{{ $termsAcceptedAt->format('d/m/Y') }}</strong> a las {{ $termsAcceptedAt->format('H:i') }}
+                    </span>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+                @endif
+            </div>
+
+        </div>
+    </div>
+</div>
 
 {{-- ═══ MODAL FIRMA DIGITAL ════════════════════════════════════════════════ --}}
 <div class="modal fade" id="firmaModal" tabindex="-1" aria-labelledby="firmaModalLabel" aria-hidden="true">
@@ -1109,6 +1312,15 @@
     // Tooltips de Bootstrap
     const tooltipEls = document.querySelectorAll('[data-bs-toggle="tooltip"]');
     tooltipEls.forEach(el => new bootstrap.Tooltip(el));
+})();
+
+// Términos — habilitar botón al marcar checkbox
+(function () {
+    const check = document.getElementById('termsCheck');
+    const btn   = document.getElementById('acceptTermsBtn');
+    if (check && btn) {
+        check.addEventListener('change', () => { btn.disabled = !check.checked; });
+    }
 })();
 </script>
 @endpush
