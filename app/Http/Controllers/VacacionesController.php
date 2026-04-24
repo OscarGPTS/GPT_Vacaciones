@@ -128,11 +128,12 @@ class VacacionesController extends Controller
         // Firma del usuario (requerida para crear solicitudes)
         $userSignature    = UserSignature::forUser($userId);
         $hasSignature     = $userSignature !== null;
+        $isSuperAdmin     = auth()->user()->hasRole('super-admin');
 
         return view('vacaciones.index', compact(
             'requests', 'behalfRequests', 'vacationPeriods', 'totalAvailableDays', 'canDelegate', 'unlockInfo',
             'totalAvailable', 'totalEnjoyed', 'totalReserved', 'totalRemaining',
-            'currentUser', 'userSignature', 'hasSignature'
+            'currentUser', 'userSignature', 'hasSignature', 'isSuperAdmin'
         ));
     }
 

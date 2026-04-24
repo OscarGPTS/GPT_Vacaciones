@@ -102,7 +102,11 @@
         border-radius: .5rem;
         cursor: crosshair;
         background: #f9fffe;
-        width: 100%;
+        width: 300px;
+        max-width: 100%;
+        aspect-ratio: 1 / 1;
+        display: block;
+        margin: 0 auto;
         touch-action: none;
     }
     .firma-preview {
@@ -210,10 +214,12 @@
                                     <img src="{{ asset($userSignature->signature_url) }}?v={{ filemtime(public_path($userSignature->signature_url)) }}"
                                          class="firma-preview" alt="Mi firma"
                                          style="max-height:56px; max-width:160px;">
+                                    @if($isSuperAdmin)
                                     <button type="button" class="btn btn-outline-secondary btn-sm"
                                             data-bs-toggle="modal" data-bs-target="#firmaModal">
                                         <i class="fa fa-edit me-1"></i> Editar firma
                                     </button>
+                                    @endif
                                 </div>
                             @else
                                 <div class="text-muted mt-1" style="font-size:.83rem;">Necesitas registrar tu firma para crear solicitudes.</div>
@@ -978,7 +984,7 @@
 {{-- ═══ MODAL FIRMA DIGITAL ════════════════════════════════════════════════ --}}
 <div class="modal fade" id="firmaModal" tabindex="-1" aria-labelledby="firmaModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
-        <div class="modal-content">
+        <div class="modal-content bg-white">
             <div class="modal-header" style="background:linear-gradient(135deg,#18181b,#27272a); color:#fff;">
                 <h5 class="modal-title" id="firmaModalLabel">
                     <i class="fa fa-pen-nib me-2"></i>
@@ -994,7 +1000,7 @@
 
                 {{-- Canvas --}}
                 <div class="position-relative mb-2">
-                    <canvas id="signature-canvas" height="220"></canvas>
+                    <canvas id="signature-canvas"></canvas>
                     <small class="text-muted position-absolute" style="bottom:8px; right:12px; pointer-events:none; opacity:.4; font-size:.72rem;">
                         Dibuja aquí
                     </small>
@@ -1054,7 +1060,7 @@
         const ratio  = Math.max(window.devicePixelRatio || 1, 1);
         const rect   = canvas.getBoundingClientRect();
         canvas.width  = rect.width  * ratio;
-        canvas.height = canvas.clientHeight * ratio;
+        canvas.height = rect.height * ratio;
         canvas.getContext('2d').scale(ratio, ratio);
     }
 
