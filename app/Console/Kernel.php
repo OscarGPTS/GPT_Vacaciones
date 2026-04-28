@@ -20,6 +20,7 @@ class Kernel extends ConsoleKernel
        Commands\UpdateDailyAccumulation::class,
        Commands\TestVacationCalculation::class,
        Commands\TestCronLog::class,
+       Commands\NotifyVacationPeriodUnlocked::class,
     ];
 
     /**
@@ -50,6 +51,13 @@ class Kernel extends ConsoleKernel
         //    - Solo modifica days_availables, preserva days_reserved y days_enjoyed
         $schedule->command('vacation:update-daily --all --check-expired')
                  ->dailyAt('00:20')
+                 ->timezone('America/Mexico_City')
+                 ->withoutOverlapping()
+                 ->runInBackground();
+
+        // 3. Notificar a usuarios cuyo período de vacaciones se habilitó hoy (date_end = hoy)
+        $schedule->command('vacation:notify-period-unlocked')
+                 ->dailyAt('00:40')
                  ->timezone('America/Mexico_City')
                  ->withoutOverlapping()
                  ->runInBackground();
