@@ -80,6 +80,11 @@
         50%       { box-shadow: 0 0 0 9px rgba(245,158,11,0); }
     }
     .btn-pulse { animation: btn-pulse 2.2s ease-in-out infinite; }
+    @keyframes btn-glow {
+        0%, 100% { box-shadow: 0 0 4px 1px rgba(245,158,11,.6), 0 0 0 2px rgba(245,158,11,.3); }
+        50%       { box-shadow: 0 0 14px 4px rgba(245,158,11,.95), 0 0 0 3px rgba(245,158,11,.7); }
+    }
+    .btn-blink { animation: btn-glow 1.4s ease-in-out infinite; }
     /* ── Boss mini card ──────────────────────────────────── */
     .boss-mini {
         display: flex; align-items: center; gap: .65rem;
@@ -195,7 +200,7 @@
                     </div>
                 </div>
                 <button type="button"
-                        class="btn btn-sm {{ $hasAcceptedTerms ? 'btn-outline-secondary' : 'btn-warning fw-semibold' }}"
+                        class="btn btn-sm {{ $hasAcceptedTerms ? 'btn-outline-secondary' : 'btn-warning fw-semibold btn-blink' }}"
                         data-bs-toggle="modal" data-bs-target="#termsModal"
                         style="white-space:nowrap;">
                     <i class="fa {{ $hasAcceptedTerms ? 'fa-eye' : 'fa-file-signature' }} me-1"></i>
