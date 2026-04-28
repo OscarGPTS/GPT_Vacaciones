@@ -302,13 +302,11 @@
                                                             @endphp
                                                             <div class="text-center small">
                                                                 <div class="mb-1">
-                                                                    <span class="badge bg-success">Saldo: {{ number_format($saldoBase, 1) }}</span>
+                                                                    <span class="badge bg-success">Disponibles: {{ number_format($saldoBase, 1) }}</span>
                                                                 </div>
+                                                          
                                                                 <div class="mb-1">
-                                                                    <span class="badge bg-secondary">Apartados: {{ number_format($diasApartados, 1) }}</span>
-                                                                </div>
-                                                                <div class="mb-1">
-                                                                    <span class="badge bg-primary">Quedaría: {{ number_format($saldoProyectado, 1) }}</span>
+                                                                    <span class="badge bg-primary">Tras aprobar quedarían: {{ number_format($saldoProyectado, 1) }}</span>
                                                                 </div>
                                                                 <div class="text-muted mt-1">
                                                                     <strong>Antes:</strong> {{ $diasAntes }} · <strong>Después:</strong> {{ $diasDespues }}
