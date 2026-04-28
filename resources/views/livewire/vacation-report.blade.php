@@ -481,7 +481,18 @@
                                                                                 <td>
                                                                                     @php $endYr = \Carbon\Carbon::parse($period->date_end)->year; @endphp
                                                                                     <span class="badge bg-dark">{{ $endYr }}-{{ $endYr + 1 }}</span>
-                                                                                    <br><small class="text-muted">{{ \Carbon\Carbon::parse($period->date_start)->format('d/m/Y') }} — {{ \Carbon\Carbon::parse($period->date_end)->format('d/m/Y') }}</small>
+                                                                                    <br>
+                                                                                    <small class="text-muted d-block mt-1">
+                                                                                        <i class="fas fa-calendar-check text-success me-1"></i>
+                                                                                        <strong>Desde:</strong> {{ \Carbon\Carbon::parse($period->date_end)->format('d/m/Y') }}
+                                                                                    </small>
+                                                                                    <small class="text-muted d-block">
+                                                                                        <i class="fas fa-calendar-times text-danger me-1"></i>
+                                                                                        <strong>Hasta:</strong> {{ $expirationDate->format('d/m/Y') }}
+                                                                                    </small>
+                                                                                    <small class="text-muted d-block" style="font-size:.68rem;">
+                                                                                        ({{ \Carbon\Carbon::parse($period->date_end)->diffInMonths($expirationDate) }} meses para usar)
+                                                                                    </small>
                                                                                 </td>
                                                                                 <td class="text-center">
                                                                                     <span class="badge {{ $isExpired ? 'bg-secondary' : 'bg-secondary' }}">{{ number_format($period->vacationPerYear->days ?? 0, 2) }}</span>
