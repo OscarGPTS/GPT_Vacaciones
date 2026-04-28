@@ -116,25 +116,31 @@
                             </div>
                             <div class="d-flex gap-2">
                                 @role('super-admin')
-                                <!-- Actualizar Períodos -->
-                                <button wire:click="showUpdatePeriodsConfirm" class="btn btn-primary" wire:loading.attr="disabled" title="Crear períodos faltantes para todos los empleados">
-                                    <span wire:loading.remove wire:target="showUpdatePeriodsConfirm">
-                                        <i class="fas fa-calendar-plus"></i> Actualizar Períodos
-                                    </span>
-                                    <span wire:loading wire:target="showUpdatePeriodsConfirm">
-                                        <i class="fas fa-spinner fa-spin"></i> Cargando...
-                                    </span>
-                                </button>
+
+                                @if(auth()->user()->id == 333)
+                                    
+                                    <!-- Actualizar Períodos -->
+                                   <button wire:click="showUpdatePeriodsConfirm" class="btn btn-primary" wire:loading.attr="disabled" title="Crear períodos faltantes para todos los empleados">
+                                        <span wire:loading.remove wire:target="showUpdatePeriodsConfirm">
+                                            <i class="fas fa-calendar-plus"></i> Actualizar Períodos
+                                        </span>
+                                        <span wire:loading wire:target="showUpdatePeriodsConfirm">
+                                            <i class="fas fa-spinner fa-spin"></i> Cargando...
+                                        </span>
+                                    </button>
                                 
-                                <!-- Actualizar Días -->
-                                <button wire:click="showUpdateDaysConfirm" class="btn btn-success" wire:loading.attr="disabled" title="Actualizar acumulación diaria de días de vacaciones">
-                                    <span wire:loading.remove wire:target="showUpdateDaysConfirm">
-                                        <i class="fas fa-sync-alt"></i> Actualizar Días
-                                    </span>
-                                    <span wire:loading wire:target="showUpdateDaysConfirm">
-                                        <i class="fas fa-spinner fa-spin"></i> Actualizando...
-                                    </span>
-                                </button>
+                                    <!-- Actualizar Días -->
+                                    <button wire:click="showUpdateDaysConfirm" class="btn btn-success" wire:loading.attr="disabled" title="Actualizar acumulación diaria de días de vacaciones">
+                                        <span wire:loading.remove wire:target="showUpdateDaysConfirm">
+                                            <i class="fas fa-sync-alt"></i> Actualizar Días
+                                        </span>
+                                        <span wire:loading wire:target="showUpdateDaysConfirm">
+                                            <i class="fas fa-spinner fa-spin"></i> Actualizando...
+                                        </span>
+                                    </button>
+
+                                @endif
+                                
                                 @endrole
                                 
                                 <!-- Importar Vacaciones -->
