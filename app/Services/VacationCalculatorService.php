@@ -396,19 +396,29 @@ class VacationCalculatorService
 
     /**
      * Obtener días disponibles totales para un usuario
-     * Excluye periodos históricos y vencidos
+     * Excluye periodos históricos, vencidos y aquellos cuyo cutoff_date ya pasó
      */
     public function getAvailableDaysForUser(User $user): array
     {
         $totalAvailable = 0;
         $totalEnjoyed = 0;
         $totalRemaining = 0;
+        $today = \Carbon\Carbon::today();
 
-        // Solo considerar periodos activos (no históricos y no vencidos)
-        $vacations = VacationsAvailable::where('users_id', $user->id)
+        $allVacations = VacationsAvailable::where('users_id', $user->id)
             ->where('is_historical', false)
             ->where('status', '!=', 'vencido')
             ->get();
+
+        // Solo periodos dentro del rango vigente: date_end <= hoy <= cutoff_date
+        // Antes de date_end el empleado no ha cumplido el año, no puede usar los días
+        $vacations = $allVacations->filter(function ($vacation) use ($today) {
+            $dateEnd = \Carbon\Carbon::parse($vacation->date_end);
+            $cutoff = !empty($vacation->cutoff_date)
+                ? \Carbon\Carbon::parse($vacation->cutoff_date)
+                : $dateEnd->copy()->addMonths(self::EXPIRATION_MONTHS);
+            return $today->gte($dateEnd) && $today->lte($cutoff);
+        })->values();
 
         foreach ($vacations as $vacation) {
             $available = $vacation->days_availables;

@@ -260,20 +260,10 @@
                         </span>
                     </div>
                     <div class="d-flex gap-2 justify-content-around mt-3">
-                        <div class="vac-period-stat" style="background:rgba(36,105,92,.08);">
-                            <div class="vac-period-stat-value" style="color:#1b4c43;">{{ $period['days_availables'] }}</div>
-                            <div class="vac-period-stat-label" style="color:#24695c;">Asignados</div>
-                        </div>
                         <div class="vac-period-stat" style="background:rgba(186,137,93,.1);">
                             <div class="vac-period-stat-value" style="color:#6a3d00;">{{ $period['days_enjoyed'] }}</div>
                             <div class="vac-period-stat-label" style="color:#ba895d;">Disfrutados</div>
                         </div>
-                        @if(($period['days_reserved'] ?? 0) > 0)
-                        <div class="vac-period-stat" style="background:rgba(192,57,43,.08);">
-                            <div class="vac-period-stat-value" style="color:#6b1e1e;">{{ $period['days_reserved'] }}</div>
-                            <div class="vac-period-stat-label" style="color:#c0392b;">Reservados</div>
-                        </div>
-                        @endif
                         <div class="vac-period-stat" style="background:rgba(41,128,185,.1);">
                             <div class="vac-period-stat-value" style="color:#1a3a8a;">{{ $period['available_days'] }}</div>
                             <div class="vac-period-stat-label" style="color:#2980b9;">Disponibles</div>

@@ -223,8 +223,22 @@
                                 @foreach($employeesData as $data)
                                     @php
                                         $employee = $data['employee'];
-                                        $usagePercentage = $data['days_entitled'] > 0 ? 
+                                        $today = \Carbon\Carbon::today();
+                                        $usagePercentage = $data['days_entitled'] > 0 ?
                                             round(($data['days_taken'] / $data['days_entitled']) * 100, 1) : 0;
+                                        $periodsDisponibles = $data['all_vacation_periods']
+                                            ->filter(function($period) use ($today) {
+                                                if ($period->is_historical || (isset($period->status) && $period->status === 'vencido')) {
+                                                    return false;
+                                                }
+                                                $dateEnd = \Carbon\Carbon::parse($period->date_end);
+                                                $cutoff = !empty($period->cutoff_date)
+                                                    ? \Carbon\Carbon::parse($period->cutoff_date)
+                                                    : $dateEnd->copy()->addMonths(15);
+                                                // Disponible solo si ya cumplió el año (date_end <= hoy) y no ha vencido (hoy <= cutoff)
+                                                return $today->gte($dateEnd) && $today->lte($cutoff);
+                                            })
+                                            ->sortBy('date_end');
                                     @endphp
                                     <tr class="employee-row" data-employee-id="{{ $employee->id }}">
                                         <td class="text-center">
@@ -272,7 +286,17 @@
                                             @endif
                                         </td>
                                         <td class="text-center">
-                                            <span class="badge bg-primary fs-6">{{ $data['days_entitled'] }} días</span>
+                                            @if($periodsDisponibles->isEmpty())
+                                                <span class="badge bg-secondary">Sin períodos activos</span>
+                                            @else
+                                                @foreach($periodsDisponibles as $pd)
+                                                    @php $endYr = \Carbon\Carbon::parse($pd->date_end)->year; @endphp
+                                                    <div class="mb-1">
+                                                        <span class="badge bg-secondary">{{ $endYr }}-{{ $endYr + 1 }}</span>
+                                                        <span class="badge bg-primary">{{ number_format($pd->days_availables, 2) }} días</span>
+                                                    </div>
+                                                @endforeach
+                                            @endif
                                         </td>
                                         <td class="text-center">
                                             <span class="badge bg-success fs-6">{{ $data['days_taken'] }} días</span>
@@ -326,7 +350,7 @@
                                                                 <tr>
                                                                     <th style="width: 50px;" class="text-center">#</th>
                                                                     <th><i class="fas fa-calendar-day"></i> Período</th>
-                                                                    <th><i class="fas fa-calendar-plus"></i> Ingreso</th>
+                                                                    <th><i class="fas fa-calendar-plus"></i> Año Período</th>
                                                                     <th><i class="fas fa-calendar-minus"></i> Aniversario</th>
                                                                     <th><i class="fas fa-calendar-check"></i> Fecha Corte</th>
                                                                     <th class="text-center"><i class="fas fa-calculator"></i> Días Acumulados</th>
@@ -345,7 +369,8 @@
                                                                     <tr>
                                                                         <td class="text-center"><strong>{{ $index + 1 }}</strong></td>
                                                                         <td><span class="badge bg-secondary">Período {{ $period->period }}</span></td>
-                                                                        <td>{{ \Carbon\Carbon::parse($period->date_start)->format('d/m/Y') }}</td>
+                                                                        @php $endYear = \Carbon\Carbon::parse($period->date_end)->year; @endphp
+                                                                        <td><span class="badge bg-dark">{{ $endYear }}-{{ $endYear + 1 }}</span></td>
                                                                         <td>{{ \Carbon\Carbon::parse($period->date_end)->format('d/m/Y') }}</td>
                                                                         <td>{{ \Carbon\Carbon::parse($period->cutoff_date)->format('d/m/Y') }}</td>
                                                                         <td class="text-center">

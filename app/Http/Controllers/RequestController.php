@@ -510,28 +510,26 @@ class RequestController extends Controller
             ->orderBy('period')
             ->get()
             ->map(function ($period) use ($now) {
-                $expirationDate     = \Carbon\Carbon::parse($period->date_end)->addMonths(15);
+                $dateEnd            = \Carbon\Carbon::parse($period->date_end);
+                $expirationDate     = $dateEnd->copy()->addMonths(15);
                 $daysUntilExpiration = $now->diffInDays($expirationDate, false);
-                $availableFromDate  = \Carbon\Carbon::parse($period->date_start)->addYear();
-                $daysUntilAvailable = $now->diffInDays($availableFromDate, false);
                 $isExpired          = $daysUntilExpiration < 0;
+                // Disponible solo desde que cumple el año (date_end <= hoy)
+                $isNotYetAvailable  = \Carbon\Carbon::today()->lt($dateEnd);
 
                 return [
-                    'period'              => $period->period,
-                    'date_start'          => $period->date_start,
-                    'date_end'            => $period->date_end,
-                    'days_availables'     => $period->days_availables,
-                    'days_enjoyed'        => $period->days_enjoyed,
-                    'days_reserved'       => $period->days_reserved ?? 0,
-                    'available_days'      => floor($period->available_balance),
-                    'available_days_exact'=> round($period->available_balance, 2),
-                    'expiration_date'     => $expirationDate,
-                    'days_until_expiration' => $daysUntilExpiration,
-                    'is_expired'          => $isExpired,
-                    'expires_soon'        => $daysUntilExpiration <= 60 && !$isExpired,
-                    'is_not_yet_available'=> $daysUntilAvailable > 0,
-                    'available_from_date' => $availableFromDate,
-                    'days_until_available'=> $daysUntilAvailable,
+                    'period'               => $period->period,
+                    'date_start'           => $period->date_start,
+                    'date_end'             => $period->date_end,
+                    'days_availables'      => $period->days_availables,
+                    'days_enjoyed'         => $period->days_enjoyed,
+                    'available_days'       => floor($period->available_balance),
+                    'available_days_exact' => round($period->available_balance, 2),
+                    'expiration_date'      => $expirationDate,
+                    'days_until_expiration'=> $daysUntilExpiration,
+                    'is_expired'           => $isExpired,
+                    'expires_soon'         => $daysUntilExpiration <= 60 && !$isExpired,
+                    'is_not_yet_available' => $isNotYetAvailable,
                 ];
             })->reject(fn($p) => $p['is_expired']);
 

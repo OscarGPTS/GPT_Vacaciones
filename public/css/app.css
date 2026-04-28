@@ -2976,6 +2976,9 @@ input:checked + .toggle-bg {
   padding-top: 1.5rem;
   padding-bottom: 1.5rem;
 }
+.pb-0 {
+  padding-bottom: 0px;
+}
 .pb-1 {
   padding-bottom: 0.25rem;
 }
@@ -3047,6 +3050,15 @@ input:checked + .toggle-bg {
 }
 .ps-2 {
   padding-inline-start: 0.5rem;
+}
+.ps-3 {
+  padding-inline-start: 0.75rem;
+}
+.ps-4 {
+  padding-inline-start: 1rem;
+}
+.pt-0 {
+  padding-top: 0px;
 }
 .pt-0\.5 {
   padding-top: 0.125rem;

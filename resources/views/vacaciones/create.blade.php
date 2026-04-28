@@ -813,7 +813,7 @@
                     const isExpired = $(this).attr('data-expired') === 'true';
                     
                     if (isLocked) {
-                        displayError('Este período aún no está disponible. Se desbloqueará cuando finalice el período de generación.');
+                        displayError('Este período aún no está disponible. Se desbloqueará cuando cumplas el año de antigüedad.');
                         return;
                     }
                     

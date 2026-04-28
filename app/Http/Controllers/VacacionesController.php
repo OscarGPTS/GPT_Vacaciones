@@ -80,35 +80,26 @@ class VacacionesController extends Controller
                 // Calcular días restantes (positivo = futuro, negativo = pasado)
                 $daysUntilExpiration = $now->diffInDays($expirationDate, false);
                 
-                // Calcular si el período ya está disponible (1 año desde date_start)
-                $dateStart = \Carbon\Carbon::parse($period->date_start);
-                $availableFromDate = $dateStart->copy()->addYear();
-                $daysUntilAvailable = $now->diffInDays($availableFromDate, false);
-                $isNotYetAvailable = $daysUntilAvailable > 0;
-                
-                // Calcular días disponibles reales
-                $availableDays = $period->available_balance;
-                
-                // Verificar si está vencido
+                // Disponible solo desde que cumple el año (date_end <= hoy)
+                $dateEnd = \Carbon\Carbon::parse($period->date_end);
+                $isNotYetAvailable = \Carbon\Carbon::today()->lt($dateEnd);
                 $isExpired = $daysUntilExpiration < 0;
-                
+                $availableDays = $period->available_balance;
+
                 return [
-                    'period' => $period->period,
-                    'period_name' => 'Período ' . $period->period,
-                    'date_start' => $period->date_start,
-                    'date_end' => $period->date_end,
-                    'days_availables' => $period->days_availables,
-                    'days_enjoyed' => $period->days_enjoyed,
-                    'days_reserved' => $period->days_reserved ?? 0,
-                    'available_days' => floor($availableDays),
+                    'period'               => $period->period,
+                    'period_name'          => 'Período ' . $period->period,
+                    'date_start'           => $period->date_start,
+                    'date_end'             => $period->date_end,
+                    'days_availables'      => $period->days_availables,
+                    'days_enjoyed'         => $period->days_enjoyed,
+                    'available_days'       => floor($availableDays),
                     'available_days_exact' => round($availableDays, 2),
-                    'expiration_date' => $expirationDate,
-                    'days_until_expiration' => $daysUntilExpiration,
-                    'is_expired' => $isExpired,
-                    'expires_soon' => $daysUntilExpiration <= 60 && !$isExpired,
+                    'expiration_date'      => $expirationDate,
+                    'days_until_expiration'=> $daysUntilExpiration,
+                    'is_expired'           => $isExpired,
+                    'expires_soon'         => $daysUntilExpiration <= 60 && !$isExpired,
                     'is_not_yet_available' => $isNotYetAvailable,
-                    'available_from_date' => $availableFromDate,
-                    'days_until_available' => $daysUntilAvailable,
                 ];
             })->reject(function($period) {
                 // Filtrar períodos vencidos

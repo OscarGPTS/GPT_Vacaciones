@@ -306,7 +306,7 @@
                                         <th>Empleado</th>
                                         <th>Departamento</th>
                                         <th>Jefe Directo</th>
-                                        <th>Fecha de Admisión</th>
+                                        <th>Período</th>
                                         <th>Días Disponibles</th>
                                         <th>Cargo</th>
                                         <th style="width: 170px;">Días para vencer</th>
@@ -317,9 +317,20 @@
                                     @forelse($this->employeesData as $data)
                                         @php
                                             $employee = $data['employee'];
-                                            $usagePercentage = $data['days_entitled'] > 0 ? 
+                                            $usagePercentage = $data['days_entitled'] > 0 ?
                                                 round(($data['days_taken'] / $data['days_entitled']) * 100, 1) : 0;
                                             $daysToExpire = $data['oldest_active_period_days_to_expire'];
+                                            $today = \Carbon\Carbon::today();
+                                            $periodsDisponibles = $data['all_vacation_periods']
+                                                ->filter(function($period) use ($today) {
+                                                    if ($period->is_historical || (isset($period->status) && $period->status === 'vencido')) return false;
+                                                    $dateEnd = \Carbon\Carbon::parse($period->date_end);
+                                                    $cutoff  = !empty($period->cutoff_date)
+                                                        ? \Carbon\Carbon::parse($period->cutoff_date)
+                                                        : $dateEnd->copy()->addMonths(15);
+                                                    return $today->gte($dateEnd) && $today->lte($cutoff);
+                                                })
+                                                ->sortBy('date_end');
                                         @endphp
                                         <tr class="employee-row" data-employee-id="{{ $employee->id }}">
                                             <td class="text-center">
@@ -353,18 +364,27 @@
                                                 @endif
                                             </td>
                                             <td class="text-center">
-                                                @if($employee->admission)
-                                                    <span class="badge bg-secondary fs-6">
-                                                        {{ \Carbon\Carbon::parse($employee->admission)->format('d/m/Y') }}
-                                                    </span>
+                                                @if($periodsDisponibles->isEmpty())
+                                                    <span class="text-muted">—</span>
                                                 @else
-                                                    <span class="text-muted">N/D</span>
+                                                    @foreach($periodsDisponibles as $pd)
+                                                        @php $endYr = \Carbon\Carbon::parse($pd->date_end)->year; @endphp
+                                                        <div class="mb-1">
+                                                            <span class="badge bg-secondary">{{ $endYr }}-{{ $endYr + 1 }}</span>
+                                                        </div>
+                                                    @endforeach
                                                 @endif
                                             </td>
                                             <td class="text-center">
-                                                <span class="badge bg-primary fs-6">
-                                                    {{ number_format($data['days_entitled'], 2) }} días
-                                                </span>
+                                                @if($periodsDisponibles->isEmpty())
+                                                    <span class="badge bg-secondary">Sin períodos activos</span>
+                                                @else
+                                                    @foreach($periodsDisponibles as $pd)
+                                                        <div class="mb-1">
+                                                            <span class="badge bg-primary">{{ number_format($pd->days_availables, 2) }} días</span>
+                                                        </div>
+                                                    @endforeach
+                                                @endif
                                             </td>
                                             <td>
                                                 @if($employee->job)
@@ -412,7 +432,7 @@
                                                                         <tr>
                                                                             <th style="width: 50px; background-color: #1e3a8a; color: white;" class="text-center">#</th>
                                                                             <th style="background-color: #1e3a8a; color: white;" class="text-center">Antigüedad</th>
-                                                                            <th style="background-color: #1e3a8a; color: white;">Fecha de Aniversario</th>
+                                                                            <th style="background-color: #1e3a8a; color: white;">Período</th>
                                                                             <th style="background-color: #b8bfc6; color: black;" class="text-center">Días de Vacaciones<br>Correspondientes<br>Período</th>
                                                                             {{-- <th style="background-color: #ffc000; color: black;" class="text-center">Días Calculados<br>(Acumulación<br>Sistema)</th> --}}
                                                                             <th style="background-color: #9bc2e6; color: black;" class="text-center">Saldo Pendiente</th>
@@ -458,10 +478,10 @@
                                                                                 <td class="text-center">
                                                                                     <span class="badge {{ $isExpired ? 'bg-secondary' : 'bg-secondary' }}">{{ $yearLabel }}</span>
                                                                                 </td>
-                                                                                <td>{{ \Carbon\Carbon::parse($period->date_end)->format('d/m/Y') }}
-                                                                                    <br><small class="text-muted">({{ \Carbon\Carbon::parse($period->date_start)->format('d/m/Y') }} - {{ \Carbon\Carbon::parse($period->date_end)->format('d/m/Y') }})</small>
-
-
+                                                                                <td>
+                                                                                    @php $endYr = \Carbon\Carbon::parse($period->date_end)->year; @endphp
+                                                                                    <span class="badge bg-dark">{{ $endYr }}-{{ $endYr + 1 }}</span>
+                                                                                    <br><small class="text-muted">{{ \Carbon\Carbon::parse($period->date_start)->format('d/m/Y') }} — {{ \Carbon\Carbon::parse($period->date_end)->format('d/m/Y') }}</small>
                                                                                 </td>
                                                                                 <td class="text-center">
                                                                                     <span class="badge {{ $isExpired ? 'bg-secondary' : 'bg-secondary' }}">{{ number_format($period->vacationPerYear->days ?? 0, 2) }}</span>

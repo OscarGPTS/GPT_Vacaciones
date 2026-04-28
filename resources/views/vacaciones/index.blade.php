@@ -283,6 +283,7 @@
             ->filter(fn($p) => !$p['is_not_yet_available'])
             ->sortBy('days_until_expiration')
             ->values();
+        $hasAvailableDays = $activePeriods->contains(fn($p) => $p['available_days'] > 0);
     @endphp
     @if($activePeriods->isNotEmpty())
     <div class="row g-3 mb-4">
@@ -312,20 +313,10 @@
                     </div>
                     {{-- Stats row --}}
                     <div class="d-flex gap-2 justify-content-around mt-3">
-                        <div class="vac-period-stat" style="background:rgba(36,105,92,.08);">
-                            <div class="vac-period-stat-value" style="color:#1b4c43;">{{ $period['days_availables'] }}</div>
-                            <div class="vac-period-stat-label" style="color:#24695c;">Asignados</div>
-                        </div>
                         <div class="vac-period-stat" style="background:rgba(186,137,93,.1);">
                             <div class="vac-period-stat-value" style="color:#6a3d00;">{{ $period['days_enjoyed'] }}</div>
                             <div class="vac-period-stat-label" style="color:#ba895d;">Disfrutados</div>
                         </div>
-                        @if(($period['days_reserved'] ?? 0) > 0)
-                        <div class="vac-period-stat" style="background:rgba(192,57,43,.08);">
-                            <div class="vac-period-stat-value" style="color:#6b1e1e;">{{ $period['days_reserved'] }}</div>
-                            <div class="vac-period-stat-label" style="color:#c0392b;">Reservados</div>
-                        </div>
-                        @endif
                         <div class="vac-period-stat" style="background:rgba(41,128,185,.1);">
                             <div class="vac-period-stat-value" style="color:#1a3a8a;">{{ $period['available_days'] }}</div>
                             <div class="vac-period-stat-label" style="color:#2980b9;">Disponibles</div>
@@ -371,10 +362,16 @@
                 <div class="card-header">
                     <div class="d-flex justify-content-between align-items-center">
                         <h5 class="mb-0 fw-bold">Mis Solicitudes de Vacaciones y Permisos</h5>
-                        @if($hasSignature)
+                        @if($hasSignature && ($hasAvailableDays || $canDelegate))
                             <a href="{{ route('vacaciones.create') }}" class="btn btn-primary">
                                 <i class="fa fa-plus"></i> Nueva Solicitud
                             </a>
+                        @elseif($hasSignature && !$hasAvailableDays && !$canDelegate)
+                            <button type="button" class="btn btn-secondary" disabled
+                                    data-bs-toggle="tooltip"
+                                    title="No tienes días de vacaciones disponibles en este momento">
+                                <i class="fa fa-lock me-1"></i> Nueva Solicitud
+                            </button>
                         @else
                             <button type="button" class="btn btn-secondary"
                                     data-bs-toggle="modal" data-bs-target="#firmaModal"
@@ -400,59 +397,51 @@
                         </div>
                     @endif
 
+                    @if($hasSignature && !$hasAvailableDays && !$canDelegate)
+                    <div class="alert alert-warning border mb-3 py-2">
+                        <i class="fa fa-exclamation-triangle me-2"></i>
+                        <strong>Sin días disponibles.</strong>
+                        No cuentas con días de vacaciones disponibles en este momento.
+                        @if($activePeriods->isEmpty() && isset($unlockInfo))
+                            Tus vacaciones se desbloquearán el <strong>{{ $unlockInfo['unlock_date'] }}</strong> (faltan {{ $unlockInfo['days_remaining'] }} días).
+                        @else
+                            Contacta a Recursos Humanos para más información.
+                        @endif
+                    </div>
+                    @endif
+
                     <!-- Balance de Vacaciones - Compacto -->
-                    @if($vacationPeriods->count() > 0)
+                    @if($activePeriods->contains(fn($p) => $p['available_days'] > 0))
                     <div class="alert alert-light border mb-3 py-2">
                         <div class="d-flex align-items-start">
                             <div class="flex-grow-1">
                                 <strong>Balance de vacaciones:</strong>
                                 <div class="mt-1">
-                                    @foreach($vacationPeriods as $period)
+                                    @foreach($activePeriods as $period)
                                         @if($period['available_days'] > 0)
                                             @php
                                                 $daysText = $period['available_days'] === 1 ? 'día' : 'días';
                                                 $dateStart = \Carbon\Carbon::parse($period['date_start'])->format('d/m/Y');
-                                                $dateEnd = \Carbon\Carbon::parse($period['date_end'])->format('d/m/Y');
+                                                $dateEnd   = \Carbon\Carbon::parse($period['date_end'])->format('d/m/Y');
                                                 $expirationDate = \Carbon\Carbon::parse($period['expiration_date'])->format('d/m/Y');
                                                 $daysRemaining = abs($period['days_until_expiration']);
-                                                
-                                                // Determinar clase según urgencia
-                                                if ($period['is_expired']) {
-                                                    $daysClass = 'text-danger fw-bold';
-                                                    $expirationClass = 'text-danger fw-bold';
-                                                    $daysRemainingText = "(hace {$daysRemaining} días)";
-                                                } elseif ($period['expires_soon']) {
+                                                if ($period['expires_soon']) {
                                                     $daysClass = 'text-warning fw-bold';
                                                     $expirationClass = 'text-warning fw-bold';
-                                                    $daysRemainingText = "(faltan {$daysRemaining} días)";
                                                 } else {
                                                     $daysClass = 'text-success fw-bold';
                                                     $expirationClass = '';
-                                                    $daysRemainingText = "(faltan {$daysRemaining} días)";
                                                 }
                                             @endphp
                                             <div class="mb-2">
-                                                • Tienes 
-                                                <span class="{{ $daysClass }}" title="Exactos: {{ $period['available_days_exact'] ?? $period['available_days'] }}">{{ $period['available_days'] }} {{ $daysText }}</span>
-                                                del período 
-                                                <strong>({{ $dateStart }} al {{ $dateEnd }})</strong>
-                                                que vencen el día 
-                                                <strong class="{{ $expirationClass }}">{{ $expirationDate }}</strong>
-                                                <span class="{{ $expirationClass }}">{{ $daysRemainingText }}</span>
-                                                
-                                                @if($period['is_not_yet_available'])
-                                                    @php
-                                                        $availableFromFormatted = \Carbon\Carbon::parse($period['available_from_date'])->format('d/m/Y');
-                                                        $daysUntilAvailable = $period['days_until_available'];
-                                                    @endphp
-                                                    <span class="badge bg-info text-white ms-2">
-                                                        <i class="fa fa-clock"></i> 
-                                                        No disponible hasta {{ $availableFromFormatted }} ({{ $daysUntilAvailable }} días)
-                                                    </span>
-                                                @elseif($period['expires_soon'])
+                                                • Tienes
+                                                <span class="{{ $daysClass }}" title="Exactos: {{ $period['available_days_exact'] }}">{{ $period['available_days'] }} {{ $daysText }}</span>
+                                                del período <strong>({{ $dateStart }} al {{ $dateEnd }})</strong>
+                                                que vencen el <strong class="{{ $expirationClass }}">{{ $expirationDate }}</strong>
+                                                <span class="{{ $expirationClass }}">(faltan {{ $daysRemaining }} días)</span>
+                                                @if($period['expires_soon'])
                                                     <span class="badge bg-warning text-dark ms-2">
-                                                        <i class="fa fa-exclamation-triangle"></i> 
-                                                        ¡Vence pronto!
+                                                        <i class="fa fa-exclamation-triangle"></i> ¡Vence pronto!
                                                     </span>
                                                 @endif
                                             </div>
