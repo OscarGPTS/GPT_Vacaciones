@@ -307,16 +307,21 @@
 
         <div style="font-size: 11.5pt;" class="company-section">
             Compañía:<br><br>
-            
+
         </div>
         <table class="company-table">
             <tr>
-                <td> <p style="padding: 0 4px 0 4px;">X</p></td>
-                <td>Tech Energy Control</td>
-                <td style="padding: 2px;"> <p style="padding-left: 30px"></p></td>
-                <td>GPT Ingeniería & Manufactura</td>
+                @foreach($companies as $company)
+                <td style="width:20px; text-align:center;">
+                    @if($company->id == $user->business_name_id)
+                        <p style="padding: 0 4px 0 4px; font-weight:bold;">X</p>
+                    @else
+                        <p style="padding: 0 4px 0 4px;">&nbsp;</p>
+                    @endif
+                </td>
+                <td>{{ $company->short_name }}</td>
+                @endforeach
             </tr>
-            
         </table>
 
         <div>
@@ -410,19 +415,37 @@
             </thead>
             <tbody>
                 <tr>
+                    {{-- Colaborador --}}
                     <td>
-                        {{-- <div class="signature-label">{{ $user->first_name }} {{ $user->last_name }}</div>
-                        <div class="signature-name">{{ $user->job->name ?? '' }}</div> --}}
+                        @if($sigColaborador && $sigColaborador->signature_url && file_exists(public_path($sigColaborador->signature_url)))
+                            <img src="{{ public_path($sigColaborador->signature_url) }}" style="max-height:55px; max-width:130px;">
+                        @else
+                            <span style="font-size:9pt; color:#888;">Sin firma</span>
+                        @endif
                     </td>
+                    {{-- Jefe inmediato --}}
                     <td>
-                        {{-- <div class="signature-label">{{ $boss ? $boss->first_name . ' ' . $boss->last_name : '' }}</div>
-                        <div class="signature-name">{{ $boss && $boss->job ? $boss->job->name : '' }}</div> --}}
+                        @if($sigJefe && $sigJefe->signature_url && file_exists(public_path($sigJefe->signature_url)))
+                            <img src="{{ public_path($sigJefe->signature_url) }}" style="max-height:55px; max-width:130px;">
+                        @else
+                            <span style="font-size:9pt; color:#888;">Sin firma</span>
+                        @endif
                     </td>
+                    {{-- RRHH — no se almacena el usuario que aprobó --}}
                     <td>
-                        {{-- <div class="signature-label">Recursos Humanos</div> --}}
+                        @if($sigRRHH && $sigRRHH->signature_url && file_exists(public_path($sigRRHH->signature_url)))
+                            <img src="{{ public_path($sigRRHH->signature_url) }}" style="max-height:55px; max-width:130px;">
+                        @else
+                            <span style="font-size:9pt; color:#888;">Sin firma</span>
+                        @endif
                     </td>
+                    {{-- Gerente / Dirección --}}
                     <td>
-                        {{-- <div class="signature-label">Gerencia/Dirección</div> --}}
+                        @if($sigDireccion && $sigDireccion->signature_url && file_exists(public_path($sigDireccion->signature_url)))
+                            <img src="{{ public_path($sigDireccion->signature_url) }}" style="max-height:55px; max-width:130px;">
+                        @else
+                            <span style="font-size:9pt; color:#888;">Sin firma</span>
+                        @endif
                     </td>
                 </tr>
             </tbody>

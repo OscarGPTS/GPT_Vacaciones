@@ -12,6 +12,7 @@ use App\Models\Departamento;
 use App\Models\DirectionApprover;
 use App\Models\ManagerApprover;
 use App\Models\UserSignature;
+use App\Models\RazonSocial;
 use App\Services\VacationCalculatorService;
 use App\Services\VacationPeriodCreatorService;
 use App\Services\VacationDailyAccumulatorService;
@@ -820,6 +821,9 @@ class RequestController extends Controller
             $request = RequestVacations::with([
                 'user.job.departamento',
                 'user.jefe',
+                'user.razonSocial',
+                'directManager',
+                'directionApprover',
                 'reveal',
                 'requestDays'
             ])->findOrFail($requestId);
@@ -869,6 +873,15 @@ class RequestController extends Controller
                 'antiguedad' => $antiguedad,
                 'diasDisponibles' => $diasDisponibles,
                 'fechaGeneracion' => Carbon::now(),
+                'companies' => RazonSocial::whereIn('id', [1, 2])->get(),
+                'sigColaborador' => UserSignature::forUser($user->id),
+                'sigJefe' => $request->direct_manager_id
+                    ? UserSignature::forUser($request->direct_manager_id)
+                    : null,
+                'sigRRHH' => null,
+                'sigDireccion' => $request->direction_approbation_id
+                    ? UserSignature::forUser($request->direction_approbation_id)
+                    : null,
             ];
 
            /*  return view('vacaciones.pdf.solicitud', $data); */
