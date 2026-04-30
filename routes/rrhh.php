@@ -169,6 +169,13 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
     Route::get('test-email', [App\Http\Controllers\TestEmailController::class, 'index'])->name('admin.test-email');
     Route::post('test-email/send', [App\Http\Controllers\TestEmailController::class, 'send'])->name('admin.test-email.send');
 
+    // Módulo de Pruebas — Vista como usuario (impersonation)
+    Route::prefix('impersonate')->name('admin.impersonate.')->group(function () {
+        Route::get('/',           [App\Http\Controllers\Admin\AdminImpersonateController::class, 'index'])->name('index');
+        Route::post('{userId}',   [App\Http\Controllers\Admin\AdminImpersonateController::class, 'start'])->name('start');
+        Route::post('stop/leave', [App\Http\Controllers\Admin\AdminImpersonateController::class, 'stop'])->name('stop');
+    });
+
     // Optimización del Sistema
     Route::get('optimize', [App\Http\Controllers\OptimizeController::class, 'index'])->name('admin.optimize');
     Route::post('optimize/execute', [App\Http\Controllers\OptimizeController::class, 'executeCommand'])->name('admin.optimize.execute');

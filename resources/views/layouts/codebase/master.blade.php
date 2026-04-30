@@ -198,6 +198,33 @@
 
         <!-- Main Container -->
         <main id="" class="mb-4">
+            {{-- =====================================================
+                 BANNER DE MODO PRUEBA (impersonation)
+                 Visible en todas las páginas cuando un admin
+                 está visualizando el sistema como otro usuario.
+            ====================================================== --}}
+            @if(session('impersonate_user_id'))
+                @php $impersonatedUser = \App\Models\User::find(session('impersonate_user_id')); @endphp
+                @if($impersonatedUser)
+                <div style="position:sticky;top:0;z-index:1050;background:#fd7e14;color:#fff;padding:8px 20px;display:flex;align-items:center;justify-content:space-between;font-size:.9rem;box-shadow:0 2px 6px rgba(0,0,0,.25);">
+                    <span>
+                        <i class="fas fa-user-secret me-2"></i>
+                        <strong>MODO PRUEBA</strong> — Visualizando como
+                        <strong>{{ $impersonatedUser->first_name }} {{ $impersonatedUser->last_name }}</strong>
+                        (ID: {{ $impersonatedUser->id }})
+                        &nbsp;·&nbsp; Todas las acciones afectan datos reales de este usuario.
+                    </span>
+                    <form method="POST" action="{{ route('admin.impersonate.stop') }}" style="margin:0;">
+                        @csrf
+                        <button type="submit"
+                            style="background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.5);color:#fff;padding:4px 14px;border-radius:4px;cursor:pointer;font-size:.85rem;">
+                            <i class="fas fa-times me-1"></i> Salir del modo prueba
+                        </button>
+                    </form>
+                </div>
+                @endif
+            @endif
+
             <!-- Page Content -->
             <div class="content">
                 @yield('content')

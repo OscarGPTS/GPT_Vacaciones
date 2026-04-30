@@ -28,6 +28,12 @@
                     <span class="nav-main-link-name">Permisos de Delegación</span>
                 </a>
             </li>
+            <li class="nav-main-item">
+                <a class="nav-main-link {{ request()->is('admin/impersonate*') ? 'active' : '' }}" href="{{ route('admin.impersonate.index') }}">
+                    <i class="nav-main-link-icon fa fa-user-secret"></i>
+                    <span class="nav-main-link-name">Pruebas de Usuario</span>
+                </a>
+            </li>
             {{-- Prueba de Correo y Optimización ocultos --}}
             {{--
             <li class="nav-main-item">
