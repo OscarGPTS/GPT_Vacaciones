@@ -329,7 +329,15 @@
             <p style="font-size:11.5pt;">Departamento: {{ $departamento->name ?? 'N/A' }}</p>
             <p style="font-size:11.5pt;">Fecha de Ingreso: {{ Carbon\Carbon::parse($user->admission)->format('d \d\e F Y') }}</p>
             <p style="font-size:11.5pt;">Antigüedad: {{ $antiguedad }} año{{ $antiguedad != 1 ? 's' : '' }} {{ $antiguedad > 0 ? Carbon\Carbon::parse($user->admission)->diff(Carbon\Carbon::now())->m : '' }} {{ $antiguedad > 0 && Carbon\Carbon::parse($user->admission)->diff(Carbon\Carbon::now())->m > 0 ? 'meses' : '' }}</p>
-            <p style="font-size:11.5pt;">Período del: {{ date('Y') }} – {{ date('Y') + 1 }}</p>
+            @if($vacationPeriod && $vacationPeriod->date_start && $vacationPeriod->date_end)
+                @php
+                    $periodStartYear = \Carbon\Carbon::parse($vacationPeriod->date_start)->year;
+                    $periodEndYear   = \Carbon\Carbon::parse($vacationPeriod->date_end)->year;
+                @endphp
+                <p style="font-size:11.5pt;">Período del: {{ $periodStartYear }} – {{ $periodEndYear }}</p>
+            @else
+                <p style="font-size:11.5pt;">Período del: {{ date('Y') }} – {{ date('Y') + 1 }}</p>
+            @endif
         </div>
         <br>
         <!-- Tabla de Días Hábiles -->

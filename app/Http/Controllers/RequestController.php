@@ -849,15 +849,21 @@ class RequestController extends Controller
             $fechaIngreso = Carbon::parse($user->admission);
             $antiguedad = $fechaIngreso->diffInYears(Carbon::now());
 
-            // Obtener días disponibles actuales
-            $vacationAvailables = VacationsAvailable::where('users_id', $user->id)
-                ->where('status', 'actual')
-                ->get();
-            
-            $diasDisponibles = $vacationAvailables->sum(function($vacation) {
-                // days_availables ya ES el saldo real
-                return $vacation->days_availables;
-            });
+            // Obtener el período específico referenciado en la solicitud (campo opcion)
+            $vacationPeriod = $request->vacationPeriod;
+
+            if ($vacationPeriod) {
+                // days_availables ya ES el saldo real del período específico
+                $diasDisponibles = (float) $vacationPeriod->days_availables;
+            } else {
+                // Fallback: sumar todos los períodos activos si no hay período específico
+                $vacationAvailables = VacationsAvailable::where('users_id', $user->id)
+                    ->where('status', 'actual')
+                    ->get();
+                $diasDisponibles = $vacationAvailables->sum(function($vacation) {
+                    return $vacation->days_availables;
+                });
+            }
 
             // Preparar datos para la vista
             $data = [
@@ -872,8 +878,9 @@ class RequestController extends Controller
                 'requestDays' => $requestDays,
                 'antiguedad' => $antiguedad,
                 'diasDisponibles' => $diasDisponibles,
+                'vacationPeriod' => $vacationPeriod ?? null,
                 'fechaGeneracion' => Carbon::now(),
-                'companies' => RazonSocial::orderBy('id')->get(),
+                'companies' => RazonSocial::whereIn('id', [1,2])->get(),
                 'sigColaborador' => UserSignature::forUser($user->id),
                 'sigJefe' => $request->direct_manager_id
                     ? UserSignature::forUser($request->direct_manager_id)

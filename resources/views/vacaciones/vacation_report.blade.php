@@ -290,9 +290,13 @@
                                                 <span class="badge bg-secondary">Sin períodos activos</span>
                                             @else
                                                 @foreach($periodsDisponibles as $pd)
-                                                    @php $endYr = \Carbon\Carbon::parse($pd->date_end)->year; @endphp
+                                                    @php
+                                                        $endYr = \Carbon\Carbon::parse($pd->date_end)->year;
+                                                        $startYr = \Carbon\Carbon::parse($pd->date_start)->year;
+                                                    @endphp
                                                     <div class="mb-1">
-                                                        <span class="badge bg-secondary">{{ $endYr }}-{{ $endYr + 1 }}</span>
+                                                        <span class="badge bg-dark" title="Período {{ $pd->period }}">P{{ $pd->period }}</span>
+                                                        <span class="badge bg-secondary">{{ $startYr }}-{{ $endYr }}</span>
                                                         <span class="badge bg-primary">{{ number_format($pd->days_availables, 2) }} días</span>
                                                     </div>
                                                 @endforeach
@@ -369,8 +373,11 @@
                                                                     <tr>
                                                                         <td class="text-center"><strong>{{ $index + 1 }}</strong></td>
                                                                         <td><span class="badge bg-secondary">Período {{ $period->period }}</span></td>
-                                                                        @php $endYear = \Carbon\Carbon::parse($period->date_end)->year; @endphp
-                                                                        <td><span class="badge bg-dark">{{ $endYear }}-{{ $endYear + 1 }}</span></td>
+                                                                        @php
+                                                                            $startYear = \Carbon\Carbon::parse($period->date_start)->year;
+                                                                            $endYear   = \Carbon\Carbon::parse($period->date_end)->year;
+                                                                        @endphp
+                                                                        <td><span class="badge bg-dark">{{ $startYear }}-{{ $endYear }}</span></td>
                                                                         <td>{{ \Carbon\Carbon::parse($period->date_end)->format('d/m/Y') }}</td>
                                                                         <td>{{ \Carbon\Carbon::parse($period->cutoff_date)->format('d/m/Y') }}</td>
                                                                         <td class="text-center">
