@@ -873,7 +873,7 @@ class RequestController extends Controller
                 'antiguedad' => $antiguedad,
                 'diasDisponibles' => $diasDisponibles,
                 'fechaGeneracion' => Carbon::now(),
-                'companies' => RazonSocial::whereIn('id', [1, 2])->get(),
+                'companies' => RazonSocial::orderBy('id')->get(),
                 'sigColaborador' => UserSignature::forUser($user->id),
                 'sigJefe' => $request->direct_manager_id
                     ? UserSignature::forUser($request->direct_manager_id)
