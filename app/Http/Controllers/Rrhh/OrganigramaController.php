@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Rrhh;
 use App\Models\User;
 use App\Models\Area;
 use App\Models\Departamento;
+use App\Models\RazonSocial;
+use App\Models\CustomOrgchart;
 use App\Http\Controllers\Controller;
 use App\Models\Job;
 use Illuminate\Http\Request;
@@ -13,14 +15,17 @@ class OrganigramaController extends Controller
 {
     public function index()
     {   
-        $departamentos = Departamento::orderBy('name')->get();
-        return view('rrhh.organigrama.index', compact('departamentos'));
+        $departamentos    = Departamento::orderBy('name')->get();
+        $empresas         = RazonSocial::orderBy('name')->get();
+        $customOrgcharts  = CustomOrgchart::where('is_active', true)->orderBy('created_at')->get();
+        return view('rrhh.organigrama.index', compact('departamentos', 'empresas', 'customOrgcharts'));
     }
 
     public function getEmployees(Request $request)
     {
         // Verificar si hay filtro de departamentos
         $departments = $request->query('departments');
+        $empresaId = $request->query('empresa');
         $convertImages = $request->query('convert_images', false);
         
         if ($departments) {
@@ -31,6 +36,9 @@ class OrganigramaController extends Controller
             $users = User::where('active', 1)
                 ->whereHas('job', function($query) use ($departmentIds) {
                     $query->whereIn('depto_id', $departmentIds);
+                })
+                ->when($empresaId, function($q) use ($empresaId) {
+                    $q->where('business_name_id', $empresaId);
                 })
                 ->with('job')
                 ->get();
@@ -43,8 +51,13 @@ class OrganigramaController extends Controller
             $users = $users->merge($bosses)->unique('id');
             
         } else {
-            // Sin filtro, mostrar todos los usuarios activos
-            $users = User::where('active', 1)->with('job')->get();
+            // Sin filtro de departamento, aplicar solo filtro de empresa si existe
+            $users = User::where('active', 1)
+                ->when($empresaId, function($q) use ($empresaId) {
+                    $q->where('business_name_id', $empresaId);
+                })
+                ->with('job')
+                ->get();
         }
         
         // Inicializar caché de sesión si se requiere conversión
@@ -87,6 +100,32 @@ class OrganigramaController extends Controller
 
         return response()->json($dataEmployees);
 
+    }
+
+    /**
+     * Devuelve los nodos de un organigrama personalizado enriquecidos con datos de usuario.
+     * Usado por OrgChart.js en las pestañas personalizadas.
+     */
+    public function getCustomOrgchartData($id)
+    {
+        $chart = CustomOrgchart::where('is_active', true)->findOrFail($id);
+
+        $defaultAvatar = asset('assets/images/default-avatar.svg');
+
+        $data = collect($chart->nodes ?? [])->map(function ($node) use ($defaultAvatar) {
+            $user = User::with('job')->find($node['id']);
+            return [
+                'id'    => $node['id'],
+                'pid'   => $node['pid'],
+                'name'  => $user
+                    ? trim(($user->first_name ?? '') . ' ' . ($user->last_name ?? ''))
+                    : 'Usuario #' . $node['id'],
+                'title' => $node['label'] ?? 'Sin rol',
+                'img'   => $user ? ($user->profile_image ?: $defaultAvatar) : $defaultAvatar,
+            ];
+        })->toArray();
+
+        return response()->json($data);
     }
 
     /**

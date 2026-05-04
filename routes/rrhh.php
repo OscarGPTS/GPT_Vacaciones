@@ -82,6 +82,7 @@ Route::get('organigrama/getEmployees', [OrganigramaController::class, 'getEmploy
 Route::get('organigrama/getEmployeesByDepartment/{department}', [OrganigramaController::class, 'getEmployeesByDepartment'])->name('organigrama.getEmployeesByDepartment');
 Route::get('organigrama/getEmployeesByOrganization/{organization}', [OrganigramaController::class, 'getEmployeesByOrganization'])->name('organigrama.getEmployeesByOrganization');
 Route::get('organigrama/proxy-image', [OrganigramaController::class, 'proxyImage'])->name('organigrama.proxyImage');
+Route::get('organigrama/custom/{id}/data', [OrganigramaController::class, 'getCustomOrgchartData'])->name('organigrama.custom.data');
 
 Route::middleware(['auth', 'can:ver modulo rrhh'])->group(function () {
     Route::get('puestos', [PuestoController::class, 'index'])

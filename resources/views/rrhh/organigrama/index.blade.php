@@ -2,12 +2,58 @@
 
 @section('content')
 <div class="card">
+
+    {{-- ================================================================
+         Tabs navigation
+    ================================================================ --}}
     <div class="card-header">
-        <h3 class="mb-0">Organigrama</h3>
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <ul class="nav nav-tabs card-header-tabs border-0 mb-0" id="orgTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active"
+                            id="tab-general-btn"
+                            data-bs-toggle="tab"
+                            data-bs-target="#tab-general"
+                            type="button" role="tab">
+                        <i class="fa fa-sitemap me-1"></i> Organigrama General
+                    </button>
+                </li>
+                @foreach($customOrgcharts as $co)
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link"
+                            id="tab-co-{{ $co->id }}-btn"
+                            data-bs-toggle="tab"
+                            data-bs-target="#tab-co-{{ $co->id }}"
+                            type="button" role="tab">
+                        <i class="fa fa-users me-1"></i> {{ $co->title }}
+                    </button>
+                </li>
+                @endforeach
+            </ul>
+
+            @can('ver modulo rrhh')
+                @livewire('organigrama-personalizado')
+            @endcan
+        </div>
     </div>
-    <div class="card-body">
+
+    <div class="tab-content">
+
+    {{-- ================================================================
+         TAB GENERAL
+    ================================================================ --}}
+    <div class="tab-pane fade show active p-3" id="tab-general" role="tabpanel">
         <!-- Controles de filtro y exportación -->
         <div class="row mb-3">
+            <div class="col-md-3">
+                <label for="empresaFilter" class="form-label">Filtrar por empresa</label>
+                <select id="empresaFilter" class="form-select">
+                    <option value="">Todas las empresas</option>
+                    @foreach($empresas as $empresa)
+                        <option value="{{ $empresa->id }}">{{ $empresa->short_name ?: $empresa->name }}</option>
+                    @endforeach
+                </select>
+            </div>
             <div class="col-md-4">
                 <label for="departmentFilter" class="form-label">Filtrar por departamentos</label>
                 <select id="departmentFilter" class="form-select" multiple>
@@ -17,7 +63,7 @@
                 </select>
                 <small class="text-muted">Selecciona uno o varios departamentos (Ctrl+Click). Deja vacío para ver todos.</small>
             </div>
-            <div class="col-md-8 d-flex align-items-end justify-content-end gap-2">
+            <div class="col-md-5 d-flex align-items-end justify-content-end gap-2">
                 <small class="text-muted me-2" id="employeeCount"></small>
                 <button type="button" class="btn btn-primary" id="exportPdfBtn">
                     <i class="fa fa-file-pdf"></i> Exportar a PDF
@@ -30,7 +76,57 @@
 
         <!-- Contenedor del organigrama -->
         <div id="tree" style="width: 100%; height: 800px;"></div>
-    </div>
+
+    </div>{{-- /tab-general --}}
+
+    {{-- ================================================================
+         TABS PERSONALIZADOS
+    ================================================================ --}}
+    @foreach($customOrgcharts as $co)
+    <div class="tab-pane fade p-3"
+         id="tab-co-{{ $co->id }}"
+         role="tabpanel"
+         data-chart-id="{{ $co->id }}">
+
+        {{-- Header con info + acciones (solo RH) --}}
+        <div class="d-flex align-items-start justify-content-between mb-3">
+            <div>
+                <h5 class="mb-0 fw-bold">{{ $co->title }}</h5>
+                @if($co->description)
+                    <small class="text-muted">{{ $co->description }}</small>
+                @endif
+                <div class="mt-1">
+                    <small class="text-muted">
+                        <i class="fa fa-users me-1"></i>
+                        {{ count($co->nodes ?? []) }} integrante{{ count($co->nodes ?? []) !== 1 ? 's' : '' }}
+                    </small>
+                </div>
+            </div>
+            @can('ver modulo rrhh')
+            <div class="d-flex gap-2 flex-shrink-0">
+                <button class="btn btn-sm btn-outline-secondary"
+                        onclick="Livewire.dispatch('editOrgchart', { id: {{ $co->id }} })">
+                    <i class="fa fa-edit me-1"></i> Editar
+                </button>
+                <button class="btn btn-sm btn-outline-danger"
+                        onclick="if(confirm('¿Eliminar el organigrama \"{{ addslashes($co->title) }}\"? Esta acción no se puede deshacer.')) Livewire.dispatch('deleteOrgchart', { id: {{ $co->id }} })">
+                    <i class="fa fa-trash me-1"></i> Eliminar
+                </button>
+            </div>
+            @endcan
+        </div>
+
+        {{-- Contenedor del organigrama personalizado --}}
+        <div id="tree-co-{{ $co->id }}" style="width:100%; height:750px;">
+            <div class="d-flex align-items-center justify-content-center h-100 text-muted">
+                <i class="fa fa-spinner fa-spin me-2"></i> Cargando organigrama…
+            </div>
+        </div>
+
+    </div>{{-- /tab-co-{{ $co->id }} --}}
+    @endforeach
+
+    </div>{{-- /tab-content --}}
 </div>
 @endsection
 
@@ -69,6 +165,11 @@
             // Cargar organigrama inicial
             loadOrgChart();
 
+            // Evento al cambiar el filtro de empresa
+            $('#empresaFilter').on('change', function() {
+                loadOrgChart();
+            });
+
             // Evento al cambiar el filtro de departamentos
             $('#departmentFilter').on('change', function() {
                 loadOrgChart();
@@ -81,19 +182,22 @@
 
         function loadOrgChart(convertImages = false) {
             const selectedDepartments = $('#departmentFilter').val(); // Array de IDs
+            const selectedEmpresa = $('#empresaFilter').val(); // ID de empresa
             
-            let url;
-            if (!selectedDepartments || selectedDepartments.length === 0) {
-                // Sin filtro - organigrama completo
-                url = "{{ route('organigrama.getEmployees') }}";
-            } else {
-                // Con filtro - múltiples departamentos
-                url = "{{ route('organigrama.getEmployees') }}?departments=" + selectedDepartments.join(',');
-            }
+            let url = "{{ route('organigrama.getEmployees') }}";
+            const params = [];
 
-            // Agregar parámetro para convertir imágenes si se solicita
+            if (selectedDepartments && selectedDepartments.length > 0) {
+                params.push('departments=' + selectedDepartments.join(','));
+            }
+            if (selectedEmpresa) {
+                params.push('empresa=' + selectedEmpresa);
+            }
             if (convertImages) {
-                url += (url.includes('?') ? '&' : '?') + 'convert_images=true';
+                params.push('convert_images=true');
+            }
+            if (params.length > 0) {
+                url += '?' + params.join('&');
             }
 
             return fetch(url)
@@ -610,6 +714,51 @@
             } else {
                 return 'organigrama-' + selectedDepartments.length + '-departamentos';
             }
+        }
+
+        // ================================================================
+        // Organigramas personalizados: cargar al activar tab
+        // ================================================================
+        const orgTabsEl = document.getElementById('orgTabs');
+        if (orgTabsEl) {
+            orgTabsEl.addEventListener('shown.bs.tab', function (event) {
+                const target = event.target.getAttribute('data-bs-target');
+                const pane   = document.querySelector(target);
+                if (!pane) return;
+
+                const chartId = pane.getAttribute('data-chart-id');
+                if (!chartId) return; // Es el tab General
+
+                const containerId = 'tree-co-' + chartId;
+                const container   = document.getElementById(containerId);
+                if (!container || container.dataset.chartLoaded) return; // Ya inicializado
+
+                // Fetch data from controller endpoint
+                fetch('{{ url("organigrama/custom") }}/' + chartId + '/data')
+                    .then(function (r) { return r.json(); })
+                    .then(function (data) {
+                        if (!data || data.length === 0) {
+                            container.innerHTML = '<p class="text-center text-muted p-5">Este organigrama no tiene integrantes aún.</p>';
+                            return;
+                        }
+                        container.innerHTML = '';
+                        new OrgChart(container, {
+                            template: 'ana',
+                            enableSearch: true,
+                            nodeBinding: {
+                                field_0: 'name',
+                                field_1: 'title',
+                                img_0:   'img'
+                            },
+                            nodes: data
+                        });
+                        container.dataset.chartLoaded = 'true';
+                    })
+                    .catch(function (err) {
+                        console.error('Error al cargar organigrama personalizado:', err);
+                        container.innerHTML = '<p class="text-center text-danger p-5">Error al cargar el organigrama.</p>';
+                    });
+            });
         }
     </script>
 @endpush
