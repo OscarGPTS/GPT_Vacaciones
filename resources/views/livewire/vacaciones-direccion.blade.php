@@ -36,7 +36,7 @@
                                     <div>
                                         <strong>Firma digital requerida</strong><br>
                                         Debes registrar tu firma digital antes de poder aprobar o rechazar solicitudes de vacaciones.
-                                        <a href="{{ route('perfil.show') }}" class="alert-link ms-1">Ir a mi perfil para agregarla →</a>
+                                        <a href="{{ route('vacaciones.index') }}" class="alert-link ms-1">Ir a Firma Digital para agregarla →</a>
                                     </div>
                                 </div>
                             </div>
