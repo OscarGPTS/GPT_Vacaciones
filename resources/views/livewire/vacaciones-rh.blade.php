@@ -348,14 +348,29 @@
                                                                     wire:click="showDaysDetail({{ $request->id }})">
                                                                 <i class="fas fa-eye me-1"></i> Ver Detalles
                                                             </button>
-                                                            <button type="button" class="btn btn-success btn-sm" 
-                                                                    wire:click="confirmApprove({{ $request->id }})">
-                                                                <i class="fas fa-check me-1"></i> Aprobar
-                                                            </button>
-                                                            <button type="button" class="btn btn-danger btn-sm" 
-                                                                    wire:click="confirmReject({{ $request->id }})">
-                                                                <i class="fas fa-times me-1"></i> Rechazar
-                                                            </button>
+                                                            @if($hasSignature)
+                                                                <button type="button" class="btn btn-success btn-sm" 
+                                                                        wire:click="confirmApprove({{ $request->id }})">
+                                                                    <i class="fas fa-check me-1"></i> Aprobar
+                                                                </button>
+                                                                <button type="button" class="btn btn-danger btn-sm" 
+                                                                        wire:click="confirmReject({{ $request->id }})">
+                                                                    <i class="fas fa-times me-1"></i> Rechazar
+                                                                </button>
+                                                            @else
+                                                                <button type="button" class="btn btn-secondary btn-sm"
+                                                                        style="cursor:not-allowed;opacity:.6;"
+                                                                        onclick="Swal.fire({icon:'warning',title:'Firma requerida',text:'Debes registrar tu firma digital antes de aprobar o rechazar solicitudes.',confirmButtonText:'Ir a mi perfil',showCancelButton:true,cancelButtonText:'Cerrar'}).then(r=>r.isConfirmed&&(window.location='{{ route('perfil.show') }}'))"
+                                                                        title="Registra tu firma para poder aprobar">
+                                                                    <i class="fas fa-lock me-1"></i> Aprobar
+                                                                </button>
+                                                                <button type="button" class="btn btn-secondary btn-sm"
+                                                                        style="cursor:not-allowed;opacity:.6;"
+                                                                        onclick="Swal.fire({icon:'warning',title:'Firma requerida',text:'Debes registrar tu firma digital antes de aprobar o rechazar solicitudes.',confirmButtonText:'Ir a mi perfil',showCancelButton:true,cancelButtonText:'Cerrar'}).then(r=>r.isConfirmed&&(window.location='{{ route('perfil.show') }}'))"
+                                                                        title="Registra tu firma para poder rechazar">
+                                                                    <i class="fas fa-lock me-1"></i> Rechazar
+                                                                </button>
+                                                            @endif
                                                         </div>
                                                     </td>
                                                 </tr>
