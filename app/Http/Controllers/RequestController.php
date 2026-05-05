@@ -12,6 +12,7 @@ use App\Models\Departamento;
 use App\Models\DirectionApprover;
 use App\Models\ManagerApprover;
 use App\Models\UserSignature;
+use App\Models\SystemLog;
 use App\Models\RazonSocial;
 use App\Services\VacationCalculatorService;
 use App\Services\VacationPeriodCreatorService;
@@ -885,7 +886,17 @@ class RequestController extends Controller
                 'sigJefe' => $request->direct_manager_id
                     ? UserSignature::forUser($request->direct_manager_id)
                     : null,
-                'sigRRHH' => null,
+                'sigRRHH' => (function() use ($requestId) {
+                    // Buscar quién aprobó/rechazó en RH en el log del sistema
+                    $rhLog = SystemLog::whereIn('type', ['rh_vacation_approval', 'rh_vacation_rejection'])
+                        ->where('context->request_id', $requestId)
+                        ->latest()
+                        ->first();
+                    $rhUserId = $rhLog ? $rhLog->created_by : null;
+                    // Intentar con el aprobador registrado; si no tiene firma, usar la de Angélica (id 123)
+                    $sig = $rhUserId ? UserSignature::forUser($rhUserId) : null;
+                    return $sig ?? UserSignature::forUser(123);
+                })(),
                 'sigDireccion' => $request->direction_approbation_id
                     ? UserSignature::forUser($request->direction_approbation_id)
                     : null,

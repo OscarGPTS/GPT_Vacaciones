@@ -9,6 +9,7 @@ use App\Models\RequestApproved;
 use App\Models\User;
 use App\Models\Departamento;
 use App\Models\UserSignature;
+use App\Models\SystemLog;
 use App\Services\AutoApprovalService;
 use App\Mail\VacationRequestApprovedByRH;
 use App\Mail\VacationRequestRejectedByRH;
@@ -213,6 +214,12 @@ class VacacionesRh extends Component
                     'updated_at' => now()
                 ]);
 
+                // Registrar quién aprobó en RH para el PDF
+                SystemLog::logInfo('rh_vacation_approval', 'Solicitud de vacaciones aprobada por RH', $this->selectedRequest->user_id, [
+                    'request_id' => $this->selectedRequest->id,
+                    'rh_user_id' => auth()->id(),
+                ]);
+
                 // SEPARAR DÍAS ANTES Y DESPUÉS DEL ANIVERSARIO
                 // Obtener las fechas individuales de los días solicitados
                 $fechasIndividuales = $this->selectedRequest->requestDays->pluck('start');
@@ -337,6 +344,12 @@ class VacacionesRh extends Component
                 $this->selectedRequest->update([
                     'human_resources_status' => 'Rechazada',
                     'updated_at' => now()
+                ]);
+
+                // Registrar quién rechazó en RH para el PDF
+                SystemLog::logInfo('rh_vacation_rejection', 'Solicitud de vacaciones rechazada por RH', $this->selectedRequest->user_id, [
+                    'request_id' => $this->selectedRequest->id,
+                    'rh_user_id' => auth()->id(),
                 ]);
 
                 // Mover días de request_approved a request_rejected
