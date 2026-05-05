@@ -42,6 +42,19 @@
                         </div>
                     @endif
 
+                    @if(!$hasSignature)
+                        <div class="alert alert-warning border-start border-warning border-4" role="alert">
+                            <div class="d-flex align-items-center gap-3">
+                                <i class="fas fa-pen-nib fa-2x text-warning"></i>
+                                <div>
+                                    <strong>Firma digital requerida</strong><br>
+                                    Debes registrar tu firma digital antes de poder aprobar o rechazar solicitudes de vacaciones.
+                                    <a href="{{ route('perfil.show') }}" class="alert-link ms-1">Ir a mi perfil para agregarla →</a>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
+
                     <!-- Filtros Mejorados -->
                     <div class="row mb-4">
                         <div class="col-12">

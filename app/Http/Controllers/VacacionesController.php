@@ -164,6 +164,11 @@ class VacacionesController extends Controller
 
     public function store(Request $request)
     {
+        // Verificar que el usuario autenticado tenga firma registrada
+        if (!UserSignature::userHasSignature(auth()->id())) {
+            return back()->with('error', 'Debes registrar tu firma digital antes de poder crear una solicitud de vacaciones. Ve a tu perfil para agregarla.');
+        }
+
         // Verificar permiso de delegación si se intenta solicitar en representación
         if ($request->behalf_user_id && !\App\Models\DelegationPermission::hasPermission(auth()->id())) {
             return back()->with('error', 'No tienes permiso para solicitar vacaciones en representación de otro usuario.');

@@ -28,7 +28,7 @@
                     <span class="nav-main-link-name">Permisos de Delegación</span>
                 </a>
             </li>
-            @if (auth()->user()->id == 111)
+            @if (auth()->user()->id == 333)
                 <li class="nav-main-item">
                     <a class="nav-main-link {{ request()->is('admin/impersonate*') ? 'active' : '' }}" href="{{ route('admin.impersonate.index') }}">
                         <i class="nav-main-link-icon fa fa-user-secret"></i>

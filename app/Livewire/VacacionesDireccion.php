@@ -7,6 +7,7 @@ use Livewire\WithPagination;
 use App\Models\RequestVacations;
 use App\Models\User;
 use App\Models\Departamento;
+use App\Models\UserSignature;
 use App\Mail\VacationRequestApprovedByDirection;
 use App\Mail\VacationRequestRejectedByDirection;
 use App\Mail\VacationRequestPendingRH;
@@ -112,6 +113,11 @@ class VacacionesDireccion extends Component
 
     public function approveRequest()
     {
+        if (!UserSignature::userHasSignature(auth()->id())) {
+            session()->flash('error', 'Debes registrar tu firma digital antes de poder aprobar solicitudes. Ve a tu perfil para agregarla.');
+            return;
+        }
+
         if ($this->selectedRequest) {
             try {
                 // Actualizar el estado de la solicitud para Dirección
@@ -162,6 +168,11 @@ class VacacionesDireccion extends Component
 
     public function rejectRequest()
     {
+        if (!UserSignature::userHasSignature(auth()->id())) {
+            session()->flash('error', 'Debes registrar tu firma digital antes de poder rechazar solicitudes. Ve a tu perfil para agregarla.');
+            return;
+        }
+
         if ($this->selectedRequest) {
             try {
                 // LIBERAR DÍAS RESERVADOS antes de rechazar
@@ -305,6 +316,8 @@ class VacacionesDireccion extends Component
 
     public function render()
     {
-        return view('livewire.vacaciones-direccion');
+        return view('livewire.vacaciones-direccion', [
+            'hasSignature' => UserSignature::userHasSignature(auth()->id()),
+        ]);
     }
 }

@@ -301,6 +301,8 @@
             $daysLeft = abs((int)$period['days_until_expiration']);
             $dStart   = \Carbon\Carbon::parse($period['date_start'])->format('d/m/Y');
             $dEnd     = \Carbon\Carbon::parse($period['date_end'])->format('d/m/Y');
+            $endYear  = (int)\Carbon\Carbon::parse($period['date_end'])->format('Y');
+            $periodLabel = $endYear . '-' . ($endYear + 1);
         @endphp
         <div class="col-12 col-md-6 col-xl-4">
             <div class="card border-0 shadow-sm vac-period-card {{ $cardClass }}">
@@ -308,7 +310,7 @@
                     {{-- Encabezado: período y vencimiento --}}
                     <div class="d-flex justify-content-between align-items-start mb-2">
                         <div>
-                            <div class="fw-bold" style="font-size:.95rem; color:#1b4c43;">Período {{ $period['period'] }}</div>
+                            <div class="fw-bold" style="font-size:.95rem; color:#1b4c43;">Período {{ $periodLabel }}</div>
                             <div class="text-muted" style="font-size:.73rem;">{{ $dStart }} — {{ $dEnd }}</div>
                         </div>
                         <span class="badge bg-{{ $expBadge }} text-{{ $expBadge === 'warning' ? 'dark' : 'white' }} d-flex align-items-center gap-1" style="font-size:.72rem;">
@@ -428,6 +430,8 @@
                                                 $daysText = $period['available_days'] === 1 ? 'día' : 'días';
                                                 $dateStart = \Carbon\Carbon::parse($period['date_start'])->format('d/m/Y');
                                                 $dateEnd   = \Carbon\Carbon::parse($period['date_end'])->format('d/m/Y');
+                                                $endYr     = (int)\Carbon\Carbon::parse($period['date_end'])->format('Y');
+                                                $periodLbl = $endYr . '-' . ($endYr + 1);
                                                 $expirationDate = \Carbon\Carbon::parse($period['expiration_date'])->format('d/m/Y');
                                                 $daysRemaining = abs($period['days_until_expiration']);
                                                 if ($period['expires_soon']) {
@@ -441,7 +445,8 @@
                                             <div class="mb-2">
                                                 • Tienes
                                                 <span class="{{ $daysClass }}" title="Exactos: {{ $period['available_days_exact'] }}">{{ $period['available_days'] }} {{ $daysText }}</span>
-                                                del período <strong>({{ $dateStart }} al {{ $dateEnd }})</strong>
+                                                del período <strong>{{ $periodLbl }}</strong>
+                                                <span class="text-muted" style="font-size:.8rem;">({{ $dateStart }} al {{ $dateEnd }})</span>
                                                 que vencen el <strong class="{{ $expirationClass }}">{{ $expirationDate }}</strong>
                                                 <span class="{{ $expirationClass }}">(faltan {{ $daysRemaining }} días)</span>
                                                 @if($period['expires_soon'])
@@ -1122,7 +1127,7 @@
                     <p class="mb-0 ps-4">
                         La información registrada (nombre, firma digital, fechas) es de uso <strong>exclusivamente interno</strong>.
                         Los datos se almacenan de forma segura y no se comparten con terceros. Para corrección o eliminación
-                        de datos, contacta a Recursos Humanos.
+                        de datos, contacta a Recursos Humanos o el equipo de TI.
                     </p>
                 </div>
 
@@ -1133,7 +1138,6 @@
                     </div>
                     <ul class="mb-0 ps-4" style="line-height:1.9;">
                         <li>Verificar que los días seleccionados correspondan al período correcto.</li>
-                        <li>Designar un responsable durante la ausencia cuando aplique.</li>
                         <li>Revisar el estatus de la solicitud y atender observaciones del jefe o RH.</li>
                         <li>No ceder credenciales a terceros sin el proceso de delegación autorizado.</li>
                     </ul>

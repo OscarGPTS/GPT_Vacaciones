@@ -8,6 +8,7 @@ use App\Models\RequestVacations;
 use App\Models\User;
 use App\Models\Departamento;
 use App\Models\DirectionApprover;
+use App\Models\UserSignature;
 use App\Mail\VacationRequestApprovedByManager;
 use App\Mail\VacationRequestRejectedByManager;
 use App\Mail\VacationRequestPendingDirection;
@@ -113,6 +114,11 @@ class VacacionesJefeDirecto extends Component
 
     public function approveRequest()
     {
+        if (!UserSignature::userHasSignature(auth()->id())) {
+            session()->flash('error', 'Debes registrar tu firma digital antes de poder aprobar solicitudes. Ve a tu perfil para agregarla.');
+            return;
+        }
+
         if ($this->selectedRequest) {
             try {
                 // ASIGNACIÓN INTELIGENTE DE APROBADOR DE DIRECCIÓN
@@ -198,6 +204,11 @@ class VacacionesJefeDirecto extends Component
 
     public function rejectRequest()
     {
+        if (!UserSignature::userHasSignature(auth()->id())) {
+            session()->flash('error', 'Debes registrar tu firma digital antes de poder rechazar solicitudes. Ve a tu perfil para agregarla.');
+            return;
+        }
+
         if ($this->selectedRequest) {
             try {
                 // LIBERAR DÍAS RESERVADOS antes de rechazar
@@ -338,6 +349,8 @@ class VacacionesJefeDirecto extends Component
 
     public function render()
     {
-        return view('livewire.vacaciones-jefe-directo');
+        return view('livewire.vacaciones-jefe-directo', [
+            'hasSignature' => UserSignature::userHasSignature(auth()->id()),
+        ]);
     }
 }
