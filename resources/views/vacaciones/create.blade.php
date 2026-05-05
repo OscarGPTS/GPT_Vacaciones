@@ -599,6 +599,13 @@
                 if (restrictions.periods && restrictions.periods.length > 0) {
                     let periodsHTML = '<div class="mt-1">';
                     restrictions.periods.forEach(function(period, index) {
+                        // Ocultar períodos bloqueados (date_end aún no ha pasado)
+                        // Para volver a mostrarlos, comenta o elimina las 4 líneas siguientes:
+                        const _infoEndDate = new Date(period.date_end);
+                        _infoEndDate.setHours(0, 0, 0, 0);
+                        const _infoToday = new Date(); _infoToday.setHours(0, 0, 0, 0);
+                        if (_infoEndDate >= _infoToday) return;
+
                         const daysText = period.available_days === 1 ? 'día' : 'días';
                         const exactDays = period.available_days_exact ? ' (' + period.available_days_exact + ' exactos)' : '';
                         
@@ -636,15 +643,18 @@
                             daysRemainingText = '<span class="' + expirationClass + '">(faltan ' + Math.floor(daysRemaining) + ' días)</span>';
                         }
                         
-                        // Formato: Tienes X días del período (fecha - fecha) que vencen el día DD/MM/YYYY (faltan X días)
+                        // Formato: Tienes X días del período YYYY-YYYY (fecha - fecha) que vencen el DD/MM/YYYY (faltan X días)
                         periodsHTML += '<div class="mb-2">';
                         periodsHTML += '• Tienes ';
                         periodsHTML += '<span class="' + daysClass + '" title="' + exactDays + '">' + period.available_days + ' ' + daysText + '</span>';
-                        periodsHTML += ' del período ';
-                        periodsHTML += '<strong>(' + dateStart + ' al ' + dateEnd + ')</strong>';
-                        periodsHTML += ' que vencen el día ';
+                        periodsHTML += ' del período <strong>' + period.period_name + '</strong>';
+                        periodsHTML += ' <span class="text-muted" style="font-size:.8rem;">(' + dateStart + ' al ' + dateEnd + ')</span>';
+                        periodsHTML += ' que vencen el ';
                         periodsHTML += '<strong class="' + expirationClass + '">' + period.expiration_date + '</strong>';
                         periodsHTML += ' ' + daysRemainingText;
+                        if (period.expires_soon) {
+                            periodsHTML += ' <span class="badge bg-warning text-dark ms-1"><i class="fas fa-exclamation-triangle"></i> ¡Vence pronto!</span>';
+                        }
                         periodsHTML += '</div>';
                     });
                     periodsHTML += '</div>';
@@ -719,6 +729,10 @@
                     const periodEndDate = new Date(period.date_end);
                     periodEndDate.setHours(0, 0, 0, 0);
                     const isLocked = periodEndDate >= today; // Si date_end es mayor o igual a hoy, está bloqueado
+
+                    // Ocultar períodos bloqueados del selector de cards.
+                    // Para volver a mostrarlos (con el candado), comenta o elimina la siguiente línea:
+                    if (isLocked) return;
                     
                     // Formatear fechas
                     const dateStart = new Date(period.date_start).toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit', year: '2-digit' });

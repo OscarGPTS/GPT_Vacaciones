@@ -86,9 +86,11 @@ class VacacionesController extends Controller
                 $isExpired = $daysUntilExpiration < 0;
                 $availableDays = $period->available_balance;
 
+                $endYear = (int)\Carbon\Carbon::parse($period->date_end)->format('Y');
+
                 return [
                     'period'               => $period->period,
-                    'period_name'          => 'Período ' . $period->period,
+                    'period_name'          => 'Período ' . $endYear . '-' . ($endYear + 1),
                     'date_start'           => $period->date_start,
                     'date_end'             => $period->date_end,
                     'days_availables'      => $period->days_availables,
@@ -358,10 +360,14 @@ class VacacionesController extends Controller
             
             // Verificar si está vencido
             $isExpired = $daysUntilExpiration < 0;
+
+            // Etiqueta visual basada en el año de date_end
+            $endYear = (int)\Carbon\Carbon::parse($period->date_end)->format('Y');
+            $periodLabel = 'Período ' . $endYear . '-' . ($endYear + 1);
             
             return [
                 'period' => $period->period,
-                'period_name' => $period->period_name,
+                'period_name' => $periodLabel,
                 'available_days' => floor($availableDays), // Sin decimales
                 'available_days_exact' => round($availableDays, 2), // Valor exacto para referencia
                 'expiration_date' => $expirationDate->format('d/m/Y'),
@@ -430,9 +436,11 @@ class VacacionesController extends Controller
             $availableDays = $period->available_balance;
             
             if ($availableDays > 0) {
+                $endYear = (int)\Carbon\Carbon::parse($period->date_end)->format('Y');
+                $periodLabel = 'Período ' . $endYear . '-' . ($endYear + 1);
                 $belongsToPeriod = [
                     'period' => $period->period,
-                    'period_name' => $period->period_name,
+                    'period_name' => $periodLabel,
                     'available_days' => round($availableDays, 2),
                     'date_start' => $period->date_start->format('Y-m-d'),
                     'date_end' => $period->date_end->format('Y-m-d'),

@@ -54,9 +54,11 @@ class ProfileController extends Controller
                 $availableDays = $period->available_balance;
                 $isExpired     = $daysUntilExpiration < 0;
 
+                $endYear = (int)\Carbon\Carbon::parse($period->date_end)->format('Y');
+
                 return [
                     'period'               => $period->period,
-                    'period_name'          => 'Período ' . $period->period,
+                    'period_name'          => 'Período ' . $endYear . '-' . ($endYear + 1),
                     'date_start'           => $period->date_start,
                     'date_end'             => $period->date_end,
                     'days_availables'      => $period->days_availables,
