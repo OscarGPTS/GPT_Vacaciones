@@ -23,6 +23,17 @@
             height: auto;
             min-height: 500px;
         }
+
+        /* Fines de semana deshabilitados - fondo gris */
+        .fc-sun, .fc-sat {
+            background-color: #f5f5f5 !important;
+            color: #aaa !important;
+        }
+        .fc-day-header.fc-sun,
+        .fc-day-header.fc-sat {
+            background-color: #ececec !important;
+            color: #bbb !important;
+        }
         .fc-toolbar {
             margin-bottom: 1rem;
         }
@@ -292,73 +303,78 @@
             <form action="{{ route('vacaciones.store') }}" method="POST" enctype="multipart/form-data" id="vacationForm">
                 @csrf
                 <input type="hidden" name="period" id="periodInput" value="">
-                <div class="row mx-3">
-                    <div class="col-md-6">
-                        <div class="card h-100">
-                            <div class="card-body">
-                                <!-- Selector de usuario (oculto por defecto) -->
-                                <div class="form-group mb-3" id="userSelectionDiv" style="display: none;">
-                                    <label for="behalf_user_id" class="fw-bold">
-                                        <i class="fas fa-user"></i> Seleccionar Usuario <span class="text-danger">*</span>
-                                    </label>
-                                    <select name="behalf_user_id" id="behalf_user_id" class="form-control">
-                                        <option value="">-- Seleccione el usuario --</option>
-                                        @foreach($users as $key => $user)
-                                            <option value="{{ $key }}" {{ old('behalf_user_id') == $key ? 'selected' : '' }}>
-                                                {{ $user }} 
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                    <small class="text-muted">Selecciona el empleado para quien estás creando esta solicitud</small>
-                                    @error('behalf_user_id')
-                                        <small class="text-danger d-block">{{ $message }}</small>
-                                    @enderror
-                                </div>
+                {{-- Campos ocultos del formulario --}}
+                <input type="hidden" name="type_request" value="Vacaciones">
 
-                                <div class="form-group mt-4">
-                                    <label for="type_request">Tipo de solicitud</label>
-                                    <input type="text" class="form-control bg-light text-muted"  value="Vacaciones" readonly>
-                                    <input type="hidden" name="type_request" value="Vacaciones">
-                                </div>
-                                <div class="form-group mt-4">
-                                    <label for="payment">Forma de pago</label>
-                                    <input type="text" class="form-control bg-light text-muted" value="A cuenta de vacaciones" readonly>
-                                    <input type="hidden" name="payment" value="A cuenta de vacaciones">
-                                </div>
-                        {{--     <div class="mb-2 form-group">
-                                <label for="reason">Motivo de las vacaciones (Opcional)</label>
-                                <textarea name="reason" id="reason" cols="30" rows="4" class="form-control"
-                                    placeholder="Ingrese el motivo de sus vacaciones">{{ old('reason') }}</textarea>
-                               
-                            </div> --}}
-
-                            <div class="mb-2 form-group mt-4">
-                                <label for="reveal">¿Quién será el responsable de atender tus pendientes?</label>
-                                <select name="reveal" id="reveal" class="form-control">
-                                    <option value="">Seleccione...</option>
+                {{-- Selector de usuario en representación (oculto por defecto, controlado por JS) --}}
+                <div class="row mx-3 mb-2" id="userSelectionDiv" style="display: none;">
+                    <div class="col-12">
+                        <div class="card border-warning">
+                            <div class="card-body py-2">
+                                <label for="behalf_user_id" class="fw-bold">
+                                    <i class="fas fa-user"></i> Seleccionar Usuario <span class="text-danger">*</span>
+                                </label>
+                                <select name="behalf_user_id" id="behalf_user_id" class="form-control">
+                                    <option value="">-- Seleccione el usuario --</option>
                                     @foreach($users as $key => $user)
-                                        <option value="{{ $key }}" {{ old('reveal') == $key ? 'selected' : '' }}>
+                                        <option value="{{ $key }}" {{ old('behalf_user_id') == $key ? 'selected' : '' }}>
                                             {{ $user }}
                                         </option>
                                     @endforeach
                                 </select>
-                          
+                                <small class="text-muted">Selecciona el empleado para quien estás creando esta solicitud</small>
+                                @error('behalf_user_id')
+                                    <small class="text-danger d-block">{{ $message }}</small>
+                                @enderror
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="col-md-6">
+
+                <div class="row mx-3">
+                    <div class="col-md-8">
                         <div class="card h-100">
-                        <div class="card-body">
-                            <div class="mb-2 form-group">
-                                <label for="days">Selecciona los días que no te presentarás a la oficina</label>
-                                <p class="mt'5"></p>
+                            <div class="card-body">
+                                <div class="mb-3 d-flex align-items-center justify-content-between">
+                                    <label for="days" class="mb-0">Selecciona los días que no te presentarás a la oficina</label>
+                                    <span class="badge bg-primary"><i class="fas fa-umbrella-beach me-1"></i> Vacaciones</span>
+                                </div>
                                 <div class="days" id='calendar'></div>
                             </div>
                         </div>
                     </div>
+                    <div class="col-md-4">
+                        <div class="card h-100 border-info">
+                            <div class="card-header bg-info text-white py-2">
+                                <strong><i class="fas fa-clipboard-list me-1"></i> Condiciones de tu solicitud</strong>
+                            </div>
+                            <div class="card-body" style="font-size: 0.875rem;">
+                                <ul class="list-unstyled mb-0">
+                                    <li class="mb-2">
+                                        <i class="fas fa-calendar-check text-success me-1"></i>
+                                        Solicita con <strong>al menos 5 días</strong> de anticipación.
+                                    </li>
+                                    <li class="mb-2">
+                                        <i class="fas fa-moon text-secondary me-1"></i>
+                                        Los <strong>fines de semana y festivos</strong> no son días hábiles y no se pueden seleccionar.
+                                    </li>
+                                    <li class="mb-2">
+                                        <i class="fas fa-layer-group text-primary me-1"></i>
+                                        Máximo <strong>32 días</strong> por solicitud.
+                                    </li>
+                                    <li class="mb-2">
+                                        <i class="fas fa-hourglass-half text-warning me-1"></i>
+                                        Los días disponibles <strong>vencen 15 meses</strong> después del aniversario del período.
+                                    </li>
+                                    <li class="mb-2">
+                                        <i class="fas fa-user-clock text-danger me-1"></i>
+                                        Se requiere <strong>1 año de antigüedad</strong> mínima para solicitar.
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            </div>
             <div class="text-center px-3 py-3">
                 <button type="submit" class="btnCreate bg-primary bg-blue rounded-lg mt-4" name="submit">Guardar</button>
             </div>
@@ -993,6 +1009,33 @@
                 })
             });
 
+            // Calcular la fecha mínima permitida (5 días hábiles a partir de hoy)
+            function addBusinessDays(date, days) {
+                let d = moment(date).clone();
+                let added = 0;
+                while (added < days) {
+                    d.add(1, 'day');
+                    const dow = d.isoWeekday(); // 1=Lun … 7=Dom
+                    if (dow !== 6 && dow !== 7) added++;
+                }
+                return d;
+            }
+            const today       = moment().startOf('day');
+            const minSelectDate = addBusinessDays(today, 5); // primer día seleccionable
+
+            // Bloquear visualmente los días anteriores a minSelectDate
+            for (let d = today.clone(); d.isBefore(minSelectDate); d.add(1, 'day')) {
+                const dow = d.isoWeekday();
+                if (dow !== 6 && dow !== 7) { // solo días hábiles (fines de semana ya están ocultos)
+                    events.push({
+                        start: d.format('YYYY-MM-DD'),
+                        rendering: 'background',
+                        color: '#ffcccc',   // rojo claro = bloqueado por anticipación
+                        editable: false,
+                    });
+                }
+            }
+
             // Solo manejamos vacaciones
 
             var calendar = $('#calendar').fullCalendar({
@@ -1003,6 +1046,7 @@
                 },
                 defaultView: 'month',
                 locale: 'es',
+                weekends: false,
                 editable: true,
                 displayEventTime: false,
                 allDay: false,
@@ -1025,6 +1069,12 @@
                     if (!currentUserRestrictions.userName || 
                         (currentUserRestrictions.userName === 'tú' && $('#behalf_user_id').val() !== '')) {
                         displayError('Cargando información del usuario, intenta nuevamente en un momento...');
+                        return false;
+                    }
+
+                    // Validar anticipación mínima de 5 días hábiles
+                    if (moment(start).isBefore(minSelectDate, 'day')) {
+                        displayInfo('Debes solicitar con al menos 5 días hábiles de anticipación. El primer día disponible es el ' + minSelectDate.format('DD/MM/YYYY'));
                         return false;
                     }
 
