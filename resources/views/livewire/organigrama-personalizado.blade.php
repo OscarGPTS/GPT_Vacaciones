@@ -24,6 +24,26 @@
 
                 {{-- Body — two columns --}}
                 <div class="modal-body p-0">
+
+                    @if(!$editingId)
+                    <div class="alert alert-info border-0 border-bottom rounded-0 mb-0 py-2 px-3" style="font-size:.82rem;">
+                        <div class="d-flex gap-3">
+                            <i class="fa fa-lightbulb fa-lg text-info flex-shrink-0 mt-1"></i>
+                            <div>
+                                <strong>¿Cómo funciona?</strong>
+                                Crea organigramas flexibles para equipos, brigadas o proyectos — independientes de la estructura general de la empresa.
+                                <ol class="mb-0 mt-1 ps-3">
+                                    <li>Escribe un <strong>título</strong> y, si quieres, una descripción.</li>
+                                    <li>Busca empleados por nombre y agrégalos uno a uno. Asígnales un <strong>rol/etiqueta</strong> (ej. Coordinador, Suplente…).</li>
+                                    <li>Indica a quién <strong>reporta</strong> cada persona para construir la jerarquía. El primero que agregues será la raíz.</li>
+                                    <li>Observa la <strong>vista previa en vivo</strong> a la derecha y ajusta hasta que quede como necesitas.</li>
+                                    <li>Guarda — el organigrama aparecerá como una nueva pestaña.</li>
+                                </ol>
+                            </div>
+                        </div>
+                    </div>
+                    @endif
+
                     <div class="row g-0" style="min-height:600px;">
 
                         {{-- ============ LEFT: form ============ --}}

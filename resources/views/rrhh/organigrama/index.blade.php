@@ -109,7 +109,21 @@
                     <i class="fa fa-edit me-1"></i> Editar
                 </button>
                 <button class="btn btn-sm btn-outline-danger"
-                        onclick="if(confirm('¿Eliminar el organigrama \"{{ addslashes($co->title) }}\"? Esta acción no se puede deshacer.')) Livewire.dispatch('deleteOrgchart', { id: {{ $co->id }} })">
+                        onclick="Swal.fire({
+                            icon: 'warning',
+                            title: '¿Eliminar organigrama?',
+                            html: 'Estás a punto de eliminar <strong>{{ addslashes($co->title) }}</strong>.<br>Esta acción no se puede deshacer.',
+                            showCancelButton: true,
+                            confirmButtonColor: '#dc3545',
+                            cancelButtonColor: '#6c757d',
+                            confirmButtonText: '<i class=\'fa fa-trash me-1\'></i> Sí, eliminar',
+                            cancelButtonText: 'Cancelar',
+                            reverseButtons: true
+                        }).then(function(result) {
+                            if (result.isConfirmed) {
+                                Livewire.dispatch('deleteOrgchart', { id: {{ $co->id }} });
+                            }
+                        })">
                     <i class="fa fa-trash me-1"></i> Eliminar
                 </button>
             </div>
@@ -131,6 +145,18 @@
 @endsection
 
 @push('scripts')
+    <style>
+        /* Fix: SweetAlert2 buttons overridden by Bootstrap — force correct colors */
+        button.swal2-confirm,
+        button.swal2-cancel,
+        button.swal2-deny {
+            color: #fff !important;
+            background-image: none !important;
+        }
+        button.swal2-confirm:not([style*="background"]) { background-color: #3085d6 !important; }
+        button.swal2-cancel:not([style*="background"])  { background-color: #6c757d !important; }
+    </style>
+
     <!-- Librerías necesarias -->
     <script>
         if (typeof jQuery === 'undefined') {
