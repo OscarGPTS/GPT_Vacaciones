@@ -6,7 +6,7 @@ use App\Models\CustomOrgchart;
 use App\Models\User;
 use Livewire\Component;
 use Livewire\Attributes\On;
-use WireUI\Traits\Actions;
+use WireUi\Traits\Actions;
 
 class OrganigramaPersonalizado extends Component
 {
