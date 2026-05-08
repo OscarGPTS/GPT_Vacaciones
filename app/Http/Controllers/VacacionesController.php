@@ -8,6 +8,7 @@ use App\Models\RequestApproved;
 use App\Models\User;
 use App\Models\UserSignature;
 use App\Mail\VacationRequestCreated;
+use App\Mail\VacationRequestUpdated;
 use App\Models\VacationsAvailable;
 use App\Models\ManagerApprover;
 use Illuminate\Http\Request;
@@ -495,6 +496,19 @@ class VacacionesController extends Controller
         $vacationRequest->update([
             'opcion' => $newPeriod,
         ]);
+
+        // 5. Notificar al dueño de la solicitud por correo
+        $vacationRequest->load('requestDays', 'user');
+        try {
+            if ($vacationRequest->user && $vacationRequest->user->email) {
+                Mail::to($vacationRequest->user->email)
+                    ->send(new VacationRequestUpdated($vacationRequest, auth()->user()));
+            }
+        } catch (\Exception $e) {
+            Log::error('Error enviando correo de actualización: ' . $e->getMessage(), [
+                'request_id' => $vacationRequest->id,
+            ]);
+        }
 
         return redirect()->route('vacaciones.index')->with('success', 'Solicitud actualizada correctamente.');
     }

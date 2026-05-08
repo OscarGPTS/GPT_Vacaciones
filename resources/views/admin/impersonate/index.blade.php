@@ -7,8 +7,8 @@
     <div class="d-flex align-items-center justify-content-between mb-4">
         <div>
             <h4 class="mb-0 fw-bold">
-                <i class="fas fa-user-secret text-warning me-2"></i>
-                Módulo de Pruebas — Vista como Usuario
+                <i class="fas fa-user text-warning me-2"></i>
+                Admin Usuarios
             </h4>
             <small class="text-muted">
                 Accede al módulo de vacaciones con la sesión de cualquier empleado activo
