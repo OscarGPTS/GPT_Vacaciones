@@ -177,6 +177,11 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
         Route::post('stop/leave', [App\Http\Controllers\Admin\AdminImpersonateController::class, 'stop'])->name('stop');
     });
 
+    // Panel de Estadísticas — Solo user ID 333
+    Route::get('stats',              [App\Http\Controllers\Admin\AdminStatsController::class, 'index'])->name('admin.stats');
+    Route::get('stats/export-excel', [App\Http\Controllers\Admin\AdminStatsController::class, 'exportExcel'])->name('admin.stats.excel');
+    Route::get('stats/export-pdf',   [App\Http\Controllers\Admin\AdminStatsController::class, 'exportPdf'])->name('admin.stats.pdf');
+
     // Optimización del Sistema
     Route::get('optimize', [App\Http\Controllers\OptimizeController::class, 'index'])->name('admin.optimize');
     Route::post('optimize/execute', [App\Http\Controllers\OptimizeController::class, 'executeCommand'])->name('admin.optimize.execute');

@@ -35,6 +35,12 @@
                         <span class="nav-main-link-name">Admin Usuario</span>
                     </a>
                 </li>
+                <li class="nav-main-item">
+                    <a class="nav-main-link {{ request()->is('admin/stats*') ? 'active' : '' }}" href="{{ route('admin.stats') }}">
+                        <i class="nav-main-link-icon fa fa-chart-line"></i>
+                        <span class="nav-main-link-name">Estadísticas</span>
+                    </a>
+                </li>
             @endif
             
             {{-- Prueba de Correo y Optimización ocultos --}}
