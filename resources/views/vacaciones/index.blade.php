@@ -605,6 +605,13 @@
                                             <button type="button" class="btn btn-outline-info btn-sm" data-bs-toggle="modal" data-bs-target="#detailModal{{ $request->id }}">
                                                 <i class="fas fa-eye"></i> Ver Detalles
                                             </button>
+                                            @if($request->direct_manager_status === 'Pendiente'
+                                                && $request->human_resources_status === 'Pendiente'
+                                                && !in_array($request->direction_approbation_status, ['Aprobada', 'Rechazada']))
+                                                <a href="{{ route('vacaciones.edit', $request->id) }}" class="btn btn-outline-warning btn-sm ms-1">
+                                                    <i class="fas fa-edit"></i> Editar
+                                                </a>
+                                            @endif
                                         </td>
                                     </tr>
                                     @endforeach

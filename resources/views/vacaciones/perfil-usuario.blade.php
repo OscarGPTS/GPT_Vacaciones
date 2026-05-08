@@ -410,12 +410,20 @@
                                         @endif
                                     </td>
                                     <td>
-                                        <div class="d-flex gap-1 justify-content-center">
+                                        <div class="d-flex gap-1 justify-content-center flex-wrap">
                                             <button type="button" class="btn btn-outline-info btn-sm"
                                                     data-bs-toggle="modal" data-bs-target="#detailModal{{ $req->id }}"
                                                     title="Ver detalle">
                                                 <i class="fa fa-eye"></i>
                                             </button>
+                                            @if($req->direct_manager_status === 'Pendiente'
+                                                && $req->human_resources_status === 'Pendiente'
+                                                && !in_array($req->direction_approbation_status, ['Aprobada', 'Rechazada', 'Cancelada']))
+                                            <a href="{{ route('vacaciones.edit', $req->id) }}" class="btn btn-outline-warning btn-sm"
+                                               title="Editar solicitud">
+                                                <i class="fa fa-edit"></i>
+                                            </a>
+                                            @endif
                                             @if(!in_array($req->human_resources_status, ['Aprobada', 'Cancelada']))
                                             <button type="button" class="btn btn-outline-danger btn-sm"
                                                     title="Cancelar solicitud"
