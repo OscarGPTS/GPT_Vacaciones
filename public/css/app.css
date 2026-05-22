@@ -3026,6 +3026,9 @@ input:checked + .toggle-bg {
 .pe-1 {
   padding-inline-end: 0.25rem;
 }
+.pe-3 {
+  padding-inline-end: 0.75rem;
+}
 .pl-1 {
   padding-left: 0.25rem;
 }

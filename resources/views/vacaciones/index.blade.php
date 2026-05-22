@@ -1051,32 +1051,90 @@
             {{-- Cuerpo con scroll fijo --}}
             <div class="modal-body px-4 py-3" style="font-size:.875rem;color:#374151;line-height:1.75;max-height:60vh;overflow-y:auto;" id="termsScrollBody">
 
+                {{-- ── Artículos del Reglamento Interno ── --}}
                 <div class="terms-section mb-4">
                     <div class="d-flex align-items-center gap-2 mb-2">
                         <span class="badge rounded-pill bg-primary" style="font-size:.7rem;">1</span>
-                        <h6 class="mb-0 fw-bold" style="color:#1e3a5f;">Asignación y vigencia de días de vacaciones</h6>
+                        <h6 class="mb-0 fw-bold" style="color:#1e3a5f;">Asignación y vigencia de días de vacaciones <span class="text-muted fw-normal" style="font-size:.78rem;">(Art. 71 Reglamento Interno)</span></h6>
+                    </div>
+                    <div class="ps-4">
+                        <p class="mb-2">
+                            Los colaboradores con <strong>más de un año de servicio</strong> disfrutarán de un período anual de vacaciones
+                            conforme a la siguiente tabla, estipulada en el Reglamento Interno de Trabajo y la <strong>Ley vigente</strong>:
+                        </p>
+                        <div class="table-responsive mb-3">
+                            <table class="table table-sm table-bordered text-center mb-0" style="font-size:.8rem;max-width:320px;">
+                                <thead style="background:#1e3a5f;color:#fff;">
+                                    <tr>
+                                        <th class="py-1 px-3">Años de servicio</th>
+                                        <th class="py-1 px-3">Días de vacaciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td>1</td><td><strong>12</strong></td></tr>
+                                    <tr><td>2</td><td><strong>14</strong></td></tr>
+                                    <tr><td>3</td><td><strong>16</strong></td></tr>
+                                    <tr><td>4</td><td><strong>18</strong></td></tr>
+                                    <tr><td>5</td><td><strong>20</strong></td></tr>
+                                    <tr><td>6 a 10</td><td><strong>22</strong></td></tr>
+                                    <tr><td>11 a 15</td><td><strong>24</strong></td></tr>
+                                    <tr><td>16 a 20</td><td><strong>26</strong></td></tr>
+                                    <tr><td>21 a 25</td><td><strong>28</strong></td></tr>
+                                    <tr><td>26 a 30</td><td><strong>30</strong></td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <p class="mb-1">
+                            La <strong>prima vacacional</strong> se calculará conforme a los días autorizados en la tabla anterior.
+                        </p>
+                        <p class="mb-0 text-muted" style="font-size:.82rem;">
+                            Cada período tiene una vigencia de <strong>15 meses</strong> a partir de la fecha de término; los días no ejercidos
+                            dentro de ese plazo <strong>caducan automáticamente</strong> y no son recuperables.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="terms-section mb-4">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <span class="badge rounded-pill" style="font-size:.7rem;background:#0891b2;">2</span>
+                        <h6 class="mb-0 fw-bold" style="color:#1e3a5f;">Fraccionamiento del período vacacional <span class="text-muted fw-normal" style="font-size:.78rem;">(Art. 72 Reglamento Interno)</span></h6>
                     </div>
                     <p class="mb-0 ps-4">
-                        Los días de vacaciones se asignan conforme a la antigüedad del colaborador según la <strong>Ley Federal del Trabajo</strong>.
-                        Cada período tiene una vigencia de <strong>15 meses</strong> a partir de la fecha de término; los días no ejercidos
-                        dentro de ese plazo <strong>caducan automáticamente</strong> y no son recuperables.
+                        De acuerdo con la naturaleza de las funciones desarrolladas en <strong>GPT Services®</strong>, los colaboradores
+                        podrán, con <strong>previa autorización del jefe inmediato</strong>, fraccionar su descanso vacacional.
+                        Dicho fraccionamiento deberá comunicarse a <strong>Recursos Humanos con al menos 5 días de anticipación</strong>
+                        a la fecha programada.
                     </p>
                 </div>
 
                 <div class="terms-section mb-4">
                     <div class="d-flex align-items-center gap-2 mb-2">
-                        <span class="badge rounded-pill bg-warning text-dark" style="font-size:.7rem;">2</span>
-                        <h6 class="mb-0 fw-bold" style="color:#1e3a5f;">Anticipación mínima para solicitar</h6>
+                        <span class="badge rounded-pill" style="font-size:.7rem;background:#dc2626;">3</span>
+                        <h6 class="mb-0 fw-bold" style="color:#1e3a5f;">Responsabilidad de jefaturas <span class="text-muted fw-normal" style="font-size:.78rem;">(Art. 73 Reglamento Interno)</span></h6>
                     </div>
                     <p class="mb-0 ps-4">
-                        Toda solicitud debe realizarse con al menos <strong>5 días hábiles de anticipación</strong> a la fecha de inicio.
-                        Las solicitudes fuera de ese plazo podrán ser rechazadas por el sistema o por el jefe directo.
+                        Las <strong>jefaturas inmediatas</strong> son responsables de que el personal a su cargo haga uso efectivo
+                        de su descanso vacacional dentro del <strong>año correspondiente más un período de gracia de tres meses</strong>.
+                        El incumplimiento de esta responsabilidad podrá derivar en sanciones conforme al Reglamento Interno de Trabajo.
                     </p>
                 </div>
 
                 <div class="terms-section mb-4">
                     <div class="d-flex align-items-center gap-2 mb-2">
-                        <span class="badge rounded-pill bg-success" style="font-size:.7rem;">3</span>
+                        <span class="badge rounded-pill" style="font-size:.7rem;background:#7c3aed;">4</span>
+                        <h6 class="mb-0 fw-bold" style="color:#1e3a5f;">Entrega del cargo antes de vacaciones <span class="text-muted fw-normal" style="font-size:.78rem;">(Art. 74 Reglamento Interno)</span></h6>
+                    </div>
+                    <p class="mb-0 ps-4">
+                        Antes de iniciar el período de descanso vacacional, el colaborador deberá realizar la
+                        <strong>entrega formal del cargo a su jefe inmediato</strong>, asegurando la continuidad del servicio
+                        en el área correspondiente durante su ausencia.
+                    </p>
+                </div>
+
+                {{-- ── Normativas del sistema ── --}}
+                <div class="terms-section mb-4">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <span class="badge rounded-pill bg-success" style="font-size:.7rem;">5</span>
                         <h6 class="mb-0 fw-bold" style="color:#1e3a5f;">Flujo de aprobación</h6>
                     </div>
                     <div class="ps-4">
@@ -1103,7 +1161,7 @@
 
                 <div class="terms-section mb-4">
                     <div class="d-flex align-items-center gap-2 mb-2">
-                        <span class="badge rounded-pill bg-secondary" style="font-size:.7rem;">4</span>
+                        <span class="badge rounded-pill bg-secondary" style="font-size:.7rem;">6</span>
                         <h6 class="mb-0 fw-bold" style="color:#1e3a5f;">Firma digital</h6>
                     </div>
                     <p class="mb-0 ps-4">
@@ -1113,22 +1171,9 @@
                     </p>
                 </div>
 
-                <div class="terms-section mb-4">
+                <div class="terms-section mb-2">
                     <div class="d-flex align-items-center gap-2 mb-2">
-                        <span class="badge rounded-pill" style="font-size:.7rem;background:#6366f1;">5</span>
-                        <h6 class="mb-0 fw-bold" style="color:#1e3a5f;">Restricciones y límites</h6>
-                    </div>
-                    <ul class="mb-0 ps-4" style="line-height:1.9;">
-                        <li>Mínimo <strong>1 año de antigüedad</strong> para el primer período.</li>
-                        <li>No se pueden elegir días inhábiles, festivos ni fines de semana.</li>
-                        <li>El máximo por solicitud está limitado al saldo del período seleccionado.</li>
-                        <li>No se permiten solicitudes con saldo cero o en períodos vencidos.</li>
-                    </ul>
-                </div>
-
-                <div class="terms-section mb-4">
-                    <div class="d-flex align-items-center gap-2 mb-2">
-                        <span class="badge rounded-pill bg-info" style="font-size:.7rem;">6</span>
+                        <span class="badge rounded-pill bg-info" style="font-size:.7rem;">7</span>
                         <h6 class="mb-0 fw-bold" style="color:#1e3a5f;">Tratamiento de datos personales</h6>
                     </div>
                     <p class="mb-0 ps-4">
@@ -1136,18 +1181,6 @@
                         Los datos se almacenan de forma segura y no se comparten con terceros. Para corrección o eliminación
                         de datos, contacta a Recursos Humanos o el equipo de TI.
                     </p>
-                </div>
-
-                <div class="terms-section mb-2">
-                    <div class="d-flex align-items-center gap-2 mb-2">
-                        <span class="badge rounded-pill bg-dark" style="font-size:.7rem;">7</span>
-                        <h6 class="mb-0 fw-bold" style="color:#1e3a5f;">Responsabilidad del colaborador</h6>
-                    </div>
-                    <ul class="mb-0 ps-4" style="line-height:1.9;">
-                        <li>Verificar que los días seleccionados correspondan al período correcto.</li>
-                        <li>Revisar el estatus de la solicitud y atender observaciones del jefe o RH.</li>
-                        <li>No ceder credenciales a terceros sin el proceso de delegación autorizado.</li>
-                    </ul>
                 </div>
 
             </div>
