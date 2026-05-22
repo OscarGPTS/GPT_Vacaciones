@@ -1171,9 +1171,21 @@
                     </p>
                 </div>
 
+                <div class="terms-section mb-4">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <span class="badge rounded-pill bg-dark" style="font-size:.7rem;">7</span>
+                        <h6 class="mb-0 fw-bold" style="color:#1e3a5f;">Responsabilidad de Recursos Humanos</h6>
+                    </div>
+                    <ul class="mb-0 ps-4" style="line-height:1.9;">
+                        <li>Verificar que los períodos y saldos asignados correspondan a la antigüedad de cada colaborador.</li>
+                        <li>Revisar las solicitudes y emitir aprobación u observaciones dentro del plazo establecido.</li>
+                        <li>Gestionar la correcta habilitación de accesos y permisos en el sistema vacacional.</li>
+                    </ul>
+                </div>
+
                 <div class="terms-section mb-2">
                     <div class="d-flex align-items-center gap-2 mb-2">
-                        <span class="badge rounded-pill bg-info" style="font-size:.7rem;">7</span>
+                        <span class="badge rounded-pill bg-info" style="font-size:.7rem;">8</span>
                         <h6 class="mb-0 fw-bold" style="color:#1e3a5f;">Tratamiento de datos personales</h6>
                     </div>
                     <p class="mb-0 ps-4">
