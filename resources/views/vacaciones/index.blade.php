@@ -800,9 +800,18 @@
                                 <ul class="list-unstyled">
                                     <li><strong>Tipo:</strong> {{ $request->type_request }}</li>
                                     <li><strong>Fecha Solicitud:</strong> {{ $request->created_at->format('d-m-Y H:i') }}</li>
-                                    <li><strong>Forma de Pago:</strong> {{ $request->payment }}</li>
                                     @if($request->opcion)
-                                        <li><strong>Opción:</strong> {{ $request->opcion }}</li>
+                                        @php
+                                            $modalPeriodNum = explode('|', $request->opcion)[0] ?? null;
+                                            $modalPeriodLabel = null;
+                                            if ($modalPeriodNum && isset($allPeriodsMap[$modalPeriodNum])) {
+                                                $modalEndYear = \Carbon\Carbon::parse($allPeriodsMap[$modalPeriodNum]->date_end)->year;
+                                                $modalPeriodLabel = $modalEndYear . '-' . ($modalEndYear + 1);
+                                            }
+                                        @endphp
+                                        <li><strong>Período:</strong>
+                                            <span class="badge bg-secondary">{{ $modalPeriodLabel ?? 'Período ' . $modalPeriodNum }}</span>
+                                        </li>
                                     @endif
                                 </ul>
                             </div>

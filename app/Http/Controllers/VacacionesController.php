@@ -129,11 +129,18 @@ class VacacionesController extends Controller
         $hasAcceptedTerms = $termsRecord && $termsRecord->terms_accepted_at !== null;
         $termsAcceptedAt  = $hasAcceptedTerms ? $termsRecord->terms_accepted_at : null;
 
+        // Mapa period_number → date_end (incluye vencidos) para construir
+        // la etiqueta de período en el modal de detalle (formato 2024-2025).
+        $allPeriodsMap = VacationsAvailable::where('users_id', $userId)
+            ->select(['period', 'date_end'])
+            ->get()
+            ->keyBy('period');
+
         return view('vacaciones.index', compact(
             'requests', 'behalfRequests', 'vacationPeriods', 'totalAvailableDays', 'canDelegate', 'unlockInfo',
             'totalAvailable', 'totalEnjoyed', 'totalReserved', 'totalRemaining',
             'currentUser', 'userSignature', 'hasSignature', 'isSuperAdmin',
-            'hasAcceptedTerms', 'termsAcceptedAt'
+            'hasAcceptedTerms', 'termsAcceptedAt', 'allPeriodsMap'
         ));
     }
 

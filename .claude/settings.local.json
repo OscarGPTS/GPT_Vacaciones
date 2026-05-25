@@ -12,7 +12,8 @@
       "Bash(php -l app/Mail/VacationRequestCancelled.php)",
       "Bash(php -l app/Livewire/VacationReport.php)",
       "Bash(php -l app/Services/VacationCalculatorService.php)",
-      "Bash(php scripts/verify_vacation_report_optimization.php)"
+      "Bash(php scripts/verify_vacation_report_optimization.php)",
+      "Bash(php -l app/Http/Controllers/VacacionesController.php)"
     ]
   }
 }
