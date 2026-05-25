@@ -66,6 +66,10 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/rh/{id}', [RequestController::class, 'approveRejectRH'])->name('rh.action');
         Route::get('/reporte', [RequestController::class, 'vacationReportLivewire'])->name('reporte');
         Route::get('/reporte/perfil/{userId}', [RequestController::class, 'perfilUsuario'])->name('reporte.perfil');
+        Route::get('/reporte/perfil/{userId}/crear-solicitud', [RequestController::class, 'crearSolicitudRH'])->name('reporte.perfil.crear');
+        Route::post('/reporte/perfil/{userId}/crear-solicitud', [RequestController::class, 'storeSolicitudRH'])->name('reporte.perfil.crear.store');
+        Route::get('/reporte/perfil/{userId}/editar-solicitud/{requestId}', [RequestController::class, 'editarSolicitudRH'])->name('reporte.perfil.editar');
+        Route::put('/reporte/perfil/{userId}/editar-solicitud/{requestId}', [RequestController::class, 'updateSolicitudRH'])->name('reporte.perfil.editar.update');
         Route::delete('/reporte/perfil/{userId}/solicitud/{requestId}', [RequestController::class, 'cancelarSolicitud'])->name('reporte.perfil.cancelar');
         Route::get('/importar', VacationImport::class)->name('importar')->middleware('can:ver modulo rrhh');
         Route::get('/calendario', VacationCalendar::class)->name('calendario');

@@ -285,7 +285,7 @@ class VacacionesRh extends Component
                 try {
                     // Pequeño delay para evitar límite de tasa de Mailtrap
                     sleep(1);
-                    
+
                     Mail::to($this->selectedRequest->user->email)
                         ->send(new VacationRequestApprovedByRH($this->selectedRequest));
                     Log::info('Correo de aprobación enviado al empleado', [
@@ -298,7 +298,8 @@ class VacacionesRh extends Component
                         'employee_id' => $this->selectedRequest->user_id
                     ]);
                 }
-            }            } catch (\Exception $e) {
+            }
+            } catch (\Exception $e) {
                 $this->closeDecisionModal();
                 session()->flash('error', 'Error al procesar la aprobación: ' . $e->getMessage());
                 return;

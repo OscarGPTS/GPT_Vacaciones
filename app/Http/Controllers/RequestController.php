@@ -21,6 +21,9 @@ use App\Mail\VacationRequestRejectedByManager;
 use App\Mail\VacationRequestApprovedByManager;
 use App\Mail\VacationRequestPendingRH;
 use App\Mail\VacationRequestPendingDirection;
+use App\Mail\VacationRequestCreated;
+use App\Mail\VacationRequestCancelled;
+use App\Mail\VacationRequestUpdated;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
@@ -464,13 +467,368 @@ class RequestController extends Controller
         return view('vacaciones.vacation_report_livewire');
     }
 
+    /**
+     * Formulario para que RH cree una solicitud de vacaciones a nombre de un usuario.
+     * Sin restricción de antigüedad ni anticipación de 5 días.
+     */
+    public function crearSolicitudRH(int $userId)
+    {
+        if (!auth()->user()->can('ver modulo rrhh')) {
+            return redirect()->route('home')->with('error', 'No tienes permisos para acceder a esta sección.');
+        }
+
+        $targetUser = User::with(['job.departamento', 'jefe.job', 'razonSocial'])->findOrFail($userId);
+
+        // Limpiar días temporales del usuario objetivo
+        RequestApproved::where('users_id', $userId)->whereNull('requests_id')->delete();
+
+        $noworkingdays = NoWorkingDays::orderBy('day')->get();
+
+        return view('vacaciones.crear-solicitud-rh', compact('noworkingdays', 'targetUser'));
+    }
+
+    /**
+     * Guardar solicitud de vacaciones creada por RH a nombre de un usuario.
+     * Se omiten: validación de antigüedad mínima y anticipación de 5 días.
+     * Se conserva: límite de 32 días, validación de saldo del período y vigencia.
+     */
+    public function storeSolicitudRH(Request $request, int $userId)
+    {
+        if (!auth()->user()->can('ver modulo rrhh')) {
+            return redirect()->route('home')->with('error', 'No tienes permisos para acceder a esta sección.');
+        }
+
+        $targetUser = User::findOrFail($userId);
+
+        // Jefe directo personalizado o por defecto
+        $customManagerId = ManagerApprover::getManagerForUser($userId);
+        $directManagerId = $customManagerId ?? $targetUser->boss_id;
+
+        if (!$directManagerId) {
+            return back()->with('error', "No se puede crear la solicitud porque {$targetUser->first_name} {$targetUser->last_name} no tiene un jefe directo asignado.");
+        }
+
+        $request->validate([
+            'type_request' => 'required|in:Vacaciones',
+            'reason' => 'nullable|string|max:400',
+            'reveal' => 'nullable|exists:users,id',
+        ]);
+
+        $selectedDays = RequestApproved::where('users_id', $userId)
+            ->whereNull('requests_id')
+            ->get();
+
+        if ($selectedDays->count() <= 0) {
+            return back()->with('error', 'Debes seleccionar al menos un día en el calendario.');
+        }
+
+        if ($selectedDays->count() > 32) {
+            return back()->with('error', 'No puedes solicitar más de 32 días de vacaciones por solicitud.');
+        }
+
+        $period = $request->input('period', null);
+
+        if ($period) {
+            $parts = explode('|', $period);
+            if (count($parts) === 2) {
+                list($periodNumber, $dateStart) = $parts;
+
+                $vacationPeriod = VacationsAvailable::where('users_id', $userId)
+                    ->where('period', $periodNumber)
+                    ->where('date_start', $dateStart)
+                    ->where('is_historical', false)
+                    ->first();
+
+                if (!$vacationPeriod) {
+                    return back()->with('error', 'No se encontró el período de vacaciones especificado.');
+                }
+
+                $diasDisponibles = $vacationPeriod->available_balance;
+                $fechaLimiteDisfrute = Carbon::parse($vacationPeriod->date_end)->addMonths(15)->endOfDay();
+
+                $diasFueraDeVigencia = $selectedDays->filter(function ($day) use ($fechaLimiteDisfrute) {
+                    return Carbon::parse($day->start)->startOfDay()->gt($fechaLimiteDisfrute);
+                });
+
+                if ($diasFueraDeVigencia->isNotEmpty()) {
+                    return back()->with('error', "Los días seleccionados exceden la vigencia del período {$periodNumber}. Fecha límite: {$fechaLimiteDisfrute->format('d/m/Y')}.");
+                }
+
+                if ($diasDisponibles < $selectedDays->count()) {
+                    return back()->with('error', "El período seleccionado solo tiene {$diasDisponibles} días disponibles (considerando reservas pendientes). Solicitados: {$selectedDays->count()}");
+                }
+
+                $vacationPeriod->update([
+                    'days_reserved' => $vacationPeriod->days_reserved + $selectedDays->count()
+                ]);
+            }
+        }
+
+        $newRequest = RequestVacations::create([
+            'user_id' => $userId,
+            'created_by_user_id' => auth()->id(),
+            'reveal_id' => $request->reveal,
+            'type_request' => 'Vacaciones',
+            'payment' => 'A cuenta de vacaciones',
+            'start' => null,
+            'end' => null,
+            'opcion' => $period,
+            'reason' => $request->reason ?? 'Vacaciones (creada por RH)',
+            'doc_permiso' => null,
+            'direct_manager_id' => $directManagerId,
+            'direct_manager_status' => 'Pendiente',
+            'human_resources_status' => 'Pendiente',
+            'visible' => true,
+        ]);
+
+        $newRequest->load('directManager');
+
+        RequestApproved::where('users_id', $userId)
+            ->whereNull('requests_id')
+            ->update(['requests_id' => $newRequest->id]);
+
+        // Notificar al jefe directo (flujo normal)
+        if ($newRequest->directManager && $newRequest->directManager->email) {
+            try {
+                sleep(1);
+                Mail::to($newRequest->directManager->email)
+                    ->send(new VacationRequestCreated($newRequest));
+                Log::info('Correo enviado al jefe directo (creación por RH)', [
+                    'request_id' => $newRequest->id,
+                    'manager_email' => $newRequest->directManager->email,
+                    'created_by' => auth()->id(),
+                ]);
+            } catch (\Exception $e) {
+                Log::error('Error enviando correo al jefe directo (creación por RH): ' . $e->getMessage(), [
+                    'request_id' => $newRequest->id,
+                ]);
+            }
+        }
+
+        return redirect()
+            ->route('vacaciones.reporte.perfil', $userId)
+            ->with('success', "Solicitud creada correctamente para {$targetUser->first_name} {$targetUser->last_name}.");
+    }
+
+    /**
+     * Formulario para que RH edite una solicitud de vacaciones a nombre del colaborador.
+     * Sin restricción de antigüedad ni anticipación de 5 días.
+     */
+    public function editarSolicitudRH(int $userId, int $requestId)
+    {
+        if (!auth()->user()->can('ver modulo rrhh')) {
+            return redirect()->route('home')->with('error', 'No tienes permisos para acceder a esta sección.');
+        }
+
+        $vacationRequest = RequestVacations::with('requestDays')
+            ->where('id', $requestId)
+            ->where('user_id', $userId)
+            ->firstOrFail();
+
+        // Solo editable cuando ningún nivel haya emitido decisión final
+        $notEditable = in_array('Aprobada', [
+            $vacationRequest->direct_manager_status,
+            $vacationRequest->human_resources_status,
+            $vacationRequest->direction_approbation_status,
+        ]) || in_array('Rechazada', [
+            $vacationRequest->direct_manager_status,
+            $vacationRequest->human_resources_status,
+            $vacationRequest->direction_approbation_status,
+        ]) || $vacationRequest->human_resources_status === 'Cancelada';
+
+        if ($notEditable) {
+            return redirect()
+                ->route('vacaciones.reporte.perfil', $userId)
+                ->with('error', 'Esta solicitud no puede editarse porque ya fue procesada por algún nivel de aprobación.');
+        }
+
+        $targetUser = User::with(['job.departamento', 'jefe.job', 'razonSocial'])->findOrFail($userId);
+
+        // Limpiar días temporales previos del dueño y copiar los días actuales como temporales
+        RequestApproved::where('users_id', $userId)->whereNull('requests_id')->delete();
+
+        foreach ($vacationRequest->requestDays as $day) {
+            RequestApproved::create([
+                'title'       => $day->title,
+                'start'       => $day->start,
+                'end'         => $day->end,
+                'users_id'    => $userId,
+                'requests_id' => null,
+            ]);
+        }
+
+        $existingDays = RequestApproved::where('users_id', $userId)
+            ->whereNull('requests_id')
+            ->get();
+
+        $selectedPeriodData = null;
+        if ($vacationRequest->opcion) {
+            $parts = explode('|', $vacationRequest->opcion);
+            if (count($parts) === 2) {
+                $selectedPeriodData = ['period' => $parts[0], 'date_start' => $parts[1]];
+            }
+        }
+
+        $noworkingdays = NoWorkingDays::orderBy('day')->get();
+
+        return view('vacaciones.editar-solicitud-rh', compact(
+            'vacationRequest', 'noworkingdays', 'existingDays', 'selectedPeriodData', 'targetUser'
+        ));
+    }
+
+    /**
+     * Guardar cambios de una solicitud editada por RH.
+     * Se omiten: validación de antigüedad y anticipación de 5 días.
+     * Se conserva: límite de 32 días, validación de saldo y vigencia del período.
+     */
+    public function updateSolicitudRH(Request $request, int $userId, int $requestId)
+    {
+        if (!auth()->user()->can('ver modulo rrhh')) {
+            return redirect()->route('home')->with('error', 'No tienes permisos para acceder a esta sección.');
+        }
+
+        $vacationRequest = RequestVacations::with('requestDays')
+            ->where('id', $requestId)
+            ->where('user_id', $userId)
+            ->firstOrFail();
+
+        $notEditable = in_array('Aprobada', [
+            $vacationRequest->direct_manager_status,
+            $vacationRequest->human_resources_status,
+            $vacationRequest->direction_approbation_status,
+        ]) || in_array('Rechazada', [
+            $vacationRequest->direct_manager_status,
+            $vacationRequest->human_resources_status,
+            $vacationRequest->direction_approbation_status,
+        ]) || $vacationRequest->human_resources_status === 'Cancelada';
+
+        if ($notEditable) {
+            return back()->with('error', 'Esta solicitud no puede editarse porque ya fue procesada por algún nivel de aprobación.');
+        }
+
+        $newDays = RequestApproved::where('users_id', $userId)->whereNull('requests_id')->get();
+
+        if ($newDays->count() === 0) {
+            return back()->with('error', 'Debes seleccionar al menos un día en el calendario.');
+        }
+
+        if ($newDays->count() > 32) {
+            return back()->with('error', 'No puedes solicitar más de 32 días de vacaciones por solicitud.');
+        }
+
+        $newPeriod = $request->input('period', null);
+        $oldPeriodRecord = null;
+
+        // 1. Liberar días reservados del período anterior
+        if ($vacationRequest->opcion) {
+            $oldParts = explode('|', $vacationRequest->opcion);
+            if (count($oldParts) === 2) {
+                [$oldPeriodNumber, $oldDateStart] = $oldParts;
+                $oldPeriodRecord = VacationsAvailable::where('users_id', $userId)
+                    ->where('period', $oldPeriodNumber)
+                    ->where('date_start', $oldDateStart)
+                    ->first();
+                if ($oldPeriodRecord) {
+                    $oldCount = $vacationRequest->requestDays->count();
+                    $oldPeriodRecord->update([
+                        'days_reserved' => max(0, $oldPeriodRecord->days_reserved - $oldCount),
+                    ]);
+                }
+            }
+        }
+
+        // 2. Validar y reservar días en el período nuevo
+        if ($newPeriod) {
+            $newParts = explode('|', $newPeriod);
+            if (count($newParts) === 2) {
+                [$newPeriodNumber, $newDateStart] = $newParts;
+                $newPeriodRecord = VacationsAvailable::where('users_id', $userId)
+                    ->where('period', $newPeriodNumber)
+                    ->where('date_start', $newDateStart)
+                    ->where('is_historical', false)
+                    ->first();
+
+                if (!$newPeriodRecord) {
+                    if ($oldPeriodRecord) {
+                        $oldPeriodRecord->update([
+                            'days_reserved' => $oldPeriodRecord->days_reserved + $vacationRequest->requestDays->count(),
+                        ]);
+                    }
+                    return back()->with('error', 'No se encontró el período de vacaciones especificado.');
+                }
+
+                $diasDisponibles = $newPeriodRecord->available_balance;
+                $fechaLimiteDisfrute = Carbon::parse($newPeriodRecord->date_end)->addMonths(15)->endOfDay();
+
+                $diasFueraDeVigencia = $newDays->filter(function ($day) use ($fechaLimiteDisfrute) {
+                    return Carbon::parse($day->start)->startOfDay()->gt($fechaLimiteDisfrute);
+                });
+
+                if ($diasFueraDeVigencia->isNotEmpty()) {
+                    if ($oldPeriodRecord) {
+                        $oldPeriodRecord->update([
+                            'days_reserved' => $oldPeriodRecord->days_reserved + $vacationRequest->requestDays->count(),
+                        ]);
+                    }
+                    return back()->with('error', "Los días seleccionados exceden la vigencia del período {$newPeriodNumber}. Fecha límite: {$fechaLimiteDisfrute->format('d/m/Y')}.");
+                }
+
+                if ($diasDisponibles < $newDays->count()) {
+                    if ($oldPeriodRecord) {
+                        $oldPeriodRecord->update([
+                            'days_reserved' => $oldPeriodRecord->days_reserved + $vacationRequest->requestDays->count(),
+                        ]);
+                    }
+                    return back()->with('error', "El período seleccionado solo tiene {$diasDisponibles} días disponibles. Solicitados: {$newDays->count()}");
+                }
+
+                $newPeriodRecord->update([
+                    'days_reserved' => $newPeriodRecord->days_reserved + $newDays->count(),
+                ]);
+            }
+        }
+
+        // 3. Reemplazar los días de la solicitud
+        $vacationRequest->requestDays()->delete();
+        $newDays->each(function ($day) use ($requestId) {
+            $day->update(['requests_id' => $requestId]);
+        });
+
+        // 4. Actualizar opción de período
+        $vacationRequest->update([
+            'opcion' => $newPeriod,
+        ]);
+
+        // 5. Notificar al dueño de la solicitud
+        $vacationRequest->load('requestDays', 'user');
+        try {
+            if ($vacationRequest->user && $vacationRequest->user->email) {
+                sleep(1);
+                Mail::to($vacationRequest->user->email)
+                    ->send(new VacationRequestUpdated($vacationRequest, auth()->user()));
+                Log::info('Correo de actualización (RH) enviado al empleado', [
+                    'request_id' => $vacationRequest->id,
+                    'employee_email' => $vacationRequest->user->email,
+                ]);
+            }
+        } catch (\Exception $e) {
+            Log::error('Error enviando correo de actualización (RH): ' . $e->getMessage(), [
+                'request_id' => $vacationRequest->id,
+            ]);
+        }
+
+        return redirect()
+            ->route('vacaciones.reporte.perfil', $userId)
+            ->with('success', 'Solicitud actualizada correctamente.');
+    }
+
     public function cancelarSolicitud(int $userId, int $requestId)
     {
         if (!auth()->user()->can('ver modulo rrhh')) {
             return redirect()->route('home')->with('error', 'No tienes permisos para acceder a esta sección.');
         }
 
-        $solicitud = RequestVacations::with('requestDays')
+        $solicitud = RequestVacations::with(['requestDays', 'user'])
             ->where('id', $requestId)
             ->where('user_id', $userId)
             ->firstOrFail();
@@ -490,6 +848,25 @@ class RequestController extends Controller
                 'human_resources_status' => 'Cancelada',
             ]);
         });
+
+        // Notificar al empleado dueño de la solicitud
+        if ($solicitud->user && $solicitud->user->email) {
+            try {
+                sleep(1);
+                Mail::to($solicitud->user->email)
+                    ->send(new VacationRequestCancelled($solicitud, auth()->user()));
+                Log::info('Correo de cancelación enviado al empleado', [
+                    'request_id' => $solicitud->id,
+                    'employee_email' => $solicitud->user->email,
+                    'cancelled_by' => auth()->id(),
+                ]);
+            } catch (\Exception $e) {
+                Log::error('Error enviando correo de cancelación: ' . $e->getMessage(), [
+                    'request_id' => $solicitud->id,
+                    'employee_id' => $solicitud->user_id,
+                ]);
+            }
+        }
 
         return redirect()
             ->route('vacaciones.reporte.perfil', $userId)
@@ -584,10 +961,16 @@ class RequestController extends Controller
             }
         }
 
+        // Mapa period_number → date_end para todos los períodos del usuario (incluye vencidos)
+        $allPeriodsMap = VacationsAvailable::where('users_id', $userId)
+            ->select(['period', 'date_end'])
+            ->get()
+            ->keyBy('period');
+
         return view('vacaciones.perfil-usuario', compact(
             'currentUser', 'vacationPeriods', 'requests', 'vacationHistory',
             'userSignature', 'hasSignature', 'hasAcceptedTerms', 'termsAcceptedAt',
-            'unlockInfo'
+            'unlockInfo', 'allPeriodsMap'
         ));
     }
 

@@ -292,8 +292,8 @@
 
     {{-- ═══ TABS: SOLICITUDES + HISTORIAL ════════════════════════════════════ --}}
     <div class="card border-0 shadow-sm mb-4">
-        <div class="card-header bg-white border-bottom">
-            <ul class="nav nav-tabs card-header-tabs" id="perfilTabs" role="tablist">
+        <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <ul class="nav nav-tabs card-header-tabs flex-grow-1 mb-0" id="perfilTabs" role="tablist" style="border-bottom: 0;">
                 <li class="nav-item">
                     <button class="nav-link active fw-semibold" id="tab-solicitudes" data-bs-toggle="tab"
                             data-bs-target="#pane-solicitudes" type="button">
@@ -309,6 +309,11 @@
                     </button>
                 </li>
             </ul>
+            <a href="{{ route('vacaciones.reporte.perfil.crear', $currentUser->id) }}"
+               class="btn btn-success btn-sm fw-semibold"
+               title="Crear una solicitud de vacaciones a nombre de este colaborador, sin restricciones de antigüedad ni anticipación.">
+                <i class="fa fa-plus-circle me-1"></i> Crear solicitud (RH)
+            </a>
         </div>
 
         <div class="card-body">
@@ -352,6 +357,11 @@
                                         $parts = explode('|', $req->opcion);
                                         $periodNumber = $parts[0] ?? null;
                                     }
+                                    $periodLabel = null;
+                                    if ($periodNumber && isset($allPeriodsMap[$periodNumber])) {
+                                        $endYear = \Carbon\Carbon::parse($allPeriodsMap[$periodNumber]->date_end)->year;
+                                        $periodLabel = $endYear . '-' . ($endYear + 1);
+                                    }
                                 @endphp
                                 <tr>
                                     <td>{{ $req->created_at->format('d/m/Y H:i') }}</td>
@@ -360,7 +370,9 @@
                                         <span class="badge bg-primary">{{ $req->requestDays->count() }}</span>
                                     </td>
                                     <td>
-                                        @if($periodNumber)
+                                        @if($periodLabel)
+                                            <span class="badge bg-secondary">{{ $periodLabel }}</span>
+                                        @elseif($periodNumber)
                                             <span class="badge bg-secondary">Período {{ $periodNumber }}</span>
                                         @else
                                             <span class="text-muted fst-italic">N/A</span>
@@ -419,8 +431,9 @@
                                             @if($req->direct_manager_status === 'Pendiente'
                                                 && $req->human_resources_status === 'Pendiente'
                                                 && !in_array($req->direction_approbation_status, ['Aprobada', 'Rechazada', 'Cancelada']))
-                                            <a href="{{ route('vacaciones.edit', $req->id) }}" class="btn btn-outline-warning btn-sm"
-                                               title="Editar solicitud">
+                                            <a href="{{ route('vacaciones.reporte.perfil.editar', ['userId' => $currentUser->id, 'requestId' => $req->id]) }}"
+                                               class="btn btn-outline-warning btn-sm"
+                                               title="Editar solicitud (modo RH, sin restricciones de antigüedad/anticipación)">
                                                 <i class="fa fa-edit"></i>
                                             </a>
                                             @endif
@@ -552,7 +565,17 @@
                             <li><strong>Tipo:</strong> {{ $req->type_request }}</li>
                             <li><strong>Fecha:</strong> {{ $req->created_at->format('d/m/Y H:i') }}</li>
                             @if($req->opcion)
-                                <li><strong>Opción:</strong> {{ $req->opcion }}</li>
+                                @php
+                                    $modalPeriodNum = explode('|', $req->opcion)[0] ?? null;
+                                    $modalPeriodLabel = null;
+                                    if ($modalPeriodNum && isset($allPeriodsMap[$modalPeriodNum])) {
+                                        $modalEndYear = \Carbon\Carbon::parse($allPeriodsMap[$modalPeriodNum]->date_end)->year;
+                                        $modalPeriodLabel = $modalEndYear . '-' . ($modalEndYear + 1);
+                                    }
+                                @endphp
+                                <li><strong>Período:</strong>
+                                    <span class="badge bg-secondary">{{ $modalPeriodLabel ?? 'Período ' . $modalPeriodNum }}</span>
+                                </li>
                             @endif
                         </ul>
                     </div>
