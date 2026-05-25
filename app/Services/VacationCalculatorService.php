@@ -405,10 +405,21 @@ class VacationCalculatorService
         $totalRemaining = 0;
         $today = \Carbon\Carbon::today();
 
-        $allVacations = VacationsAvailable::where('users_id', $user->id)
-            ->where('is_historical', false)
-            ->where('status', '!=', 'vencido')
-            ->get();
+        // Si la relación ya está cargada (eager loading), usarla para evitar N+1.
+        // Replicamos exactamente el filtro SQL: is_historical=false AND status != 'vencido'
+        // (que en MySQL excluye también los NULL).
+        if ($user->relationLoaded('vacationsAvailable')) {
+            $allVacations = $user->vacationsAvailable->filter(function ($v) {
+                return $v->is_historical == false
+                    && $v->status !== null
+                    && $v->status !== 'vencido';
+            });
+        } else {
+            $allVacations = VacationsAvailable::where('users_id', $user->id)
+                ->where('is_historical', false)
+                ->where('status', '!=', 'vencido')
+                ->get();
+        }
 
         // Solo periodos dentro del rango vigente: date_end <= hoy <= cutoff_date
         // Antes de date_end el empleado no ha cumplido el año, no puede usar los días

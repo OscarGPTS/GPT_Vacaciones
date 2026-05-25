@@ -115,10 +115,13 @@ class VacationReport extends Component
     {
         $today = \Carbon\Carbon::today();
         $threeMonthsFromNow = $today->copy()->addMonths(3);
-        
-        $periods = VacationsAvailable::where('users_id', $employee->id)
-            ->where('is_historical', false)
-            ->get();
+
+        // Si la relación ya está cargada (eager loading), usarla.
+        $periods = $employee->relationLoaded('vacationsAvailable')
+            ? $employee->vacationsAvailable->filter(fn($p) => $p->is_historical == false)
+            : VacationsAvailable::where('users_id', $employee->id)
+                ->where('is_historical', false)
+                ->get();
         
         foreach ($periods as $period) {
             $expirationDate = \Carbon\Carbon::parse($period->date_end)->addMonths(15);
@@ -147,10 +150,13 @@ class VacationReport extends Component
     private function hasExpiredPeriods($employee)
     {
         $today = \Carbon\Carbon::today();
-        
-        $periods = VacationsAvailable::where('users_id', $employee->id)
-            ->where('is_historical', false)
-            ->get();
+
+        // Si la relación ya está cargada (eager loading), usarla.
+        $periods = $employee->relationLoaded('vacationsAvailable')
+            ? $employee->vacationsAvailable->filter(fn($p) => $p->is_historical == false)
+            : VacationsAvailable::where('users_id', $employee->id)
+                ->where('is_historical', false)
+                ->get();
         
         foreach ($periods as $period) {
             $expirationDate = \Carbon\Carbon::parse($period->date_end)->addMonths(15);
@@ -529,8 +535,24 @@ class VacationReport extends Component
         $calculator = app(VacationCalculatorService::class);
         $currentYear = date('Y');
 
-        // Obtener todos los usuarios activos con sus relaciones
-        $employees = User::with(['job.departamento', 'requestVacations', 'jefe'])
+        // Obtener todos los usuarios activos con eager loading completo para evitar N+1.
+        // - vacationsAvailable: usado por getAvailableDaysForUser, hasExpiring/ExpiredPeriods y allVacationPeriods.
+        // - requestVacations + requestDays: usado para calcular días tomados / vacationPeriods del año actual.
+        //   Se acota a solicitudes Aprobadas que tienen días del año actual para minimizar transferencia.
+        $employees = User::with([
+                'job.departamento',
+                'jefe',
+                'vacationsAvailable',
+                'requestVacations' => function ($q) use ($currentYear) {
+                    $q->where('human_resources_status', 'Aprobada')
+                      ->whereHas('requestDays', function ($qq) use ($currentYear) {
+                          $qq->whereYear('start', $currentYear);
+                      });
+                },
+                'requestVacations.requestDays' => function ($q) use ($currentYear) {
+                    $q->whereYear('start', $currentYear);
+                },
+            ])
             ->whereHas('job')
             ->where('active', 1)
             ->orderBy('id')
@@ -567,51 +589,36 @@ class VacationReport extends Component
 
         // Procesar datos de vacaciones para cada empleado
         $processedEmployees = $employees->map(function ($employee) use ($calculator, $currentYear) {
-            // Obtener datos de vacaciones del servicio
+            // Obtener datos de vacaciones del servicio (usa la relación vacationsAvailable ya cargada).
             $vacationData = $calculator->getAvailableDaysForUser($employee);
-            
-            // Calcular días tomados en el año actual
-            $daysTaken = RequestVacations::where('user_id', $employee->id)
-                ->where('human_resources_status', 'Aprobada')
-                ->whereHas('requestDays', function ($query) use ($currentYear) {
-                    $query->whereYear('start', $currentYear);
-                })
-                ->with('requestDays')
-                ->get()
-                ->sum(function ($request) use ($currentYear) {
-                    return $request->requestDays->filter(function ($day) use ($currentYear) {
-                        return date('Y', strtotime($day->start)) == $currentYear;
-                    })->count();
-                });
 
-            // Obtener solicitudes del año para mostrar períodos
-            $vacationPeriods = RequestVacations::where('user_id', $employee->id)
-                ->where('human_resources_status', 'Aprobada')
-                ->whereHas('requestDays', function ($query) use ($currentYear) {
-                    $query->whereYear('start', $currentYear);
-                })
-                ->with('requestDays')
-                ->get()
-                ->map(function ($request) use ($currentYear) {
-                    $days = $request->requestDays->filter(function ($day) use ($currentYear) {
-                        return date('Y', strtotime($day->start)) == $currentYear;
-                    })->sortBy('start');
-                    
-                    if ($days->count() > 0) {
-                        return [
-                            'start' => $days->first()->start,
-                            'end' => $days->last()->start,
-                            'days_count' => $days->count(),
-                            'type' => $request->type_request
-                        ];
-                    }
-                    return null;
-                })->filter()->values();
+            // Días tomados / vacationPeriods se calculan en memoria sobre requestVacations ya cargado.
+            // El eager loading ya filtró por: human_resources_status = 'Aprobada' y días del año actual.
+            $daysTaken = 0;
+            $vacationPeriods = collect();
+            foreach ($employee->requestVacations as $request) {
+                $daysOfYear = $request->requestDays
+                    ->filter(fn($day) => date('Y', strtotime($day->start)) == $currentYear)
+                    ->sortBy('start');
 
-            // Obtener TODOS los períodos de vacaciones del usuario (más reciente primero)
-            $allVacationPeriods = VacationsAvailable::where('users_id', $employee->id)
-                ->orderBy('date_end', 'desc')
-                ->get();
+                if ($daysOfYear->count() === 0) {
+                    continue;
+                }
+
+                $daysTaken += $daysOfYear->count();
+                $vacationPeriods->push([
+                    'start' => $daysOfYear->first()->start,
+                    'end' => $daysOfYear->last()->start,
+                    'days_count' => $daysOfYear->count(),
+                    'type' => $request->type_request,
+                ]);
+            }
+            $vacationPeriods = $vacationPeriods->values();
+
+            // allVacationPeriods reusa la relación cargada y ordena en memoria (date_end desc).
+            $allVacationPeriods = $employee->vacationsAvailable
+                ->sortByDesc(fn($p) => $p->date_end ? $p->date_end->getTimestamp() : 0)
+                ->values();
 
             $today = \Carbon\Carbon::today();
             $oldestActivePeriod = $allVacationPeriods

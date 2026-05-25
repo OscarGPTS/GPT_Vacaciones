@@ -9,7 +9,10 @@
       "Bash(php -l app/Http/Controllers/RequestController.php)",
       "Bash(php -l routes/web.php)",
       "Bash(php -l app/Livewire/VacacionesRh.php)",
-      "Bash(php -l app/Mail/VacationRequestCancelled.php)"
+      "Bash(php -l app/Mail/VacationRequestCancelled.php)",
+      "Bash(php -l app/Livewire/VacationReport.php)",
+      "Bash(php -l app/Services/VacationCalculatorService.php)",
+      "Bash(php scripts/verify_vacation_report_optimization.php)"
     ]
   }
 }
