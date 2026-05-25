@@ -387,7 +387,9 @@
                                                 @else
                                                     @foreach($periodsDisponibles as $pd)
                                                         <div class="mb-1">
-                                                            <span class="badge bg-primary">{{ number_format($pd->days_availables, 2) }} días</span>
+                                                            <span class="badge bg-primary">
+                                                                {{ number_format($pd->available_balance, 2) }} días
+                                                            </span>
                                                         </div>
                                                     @endforeach
                                                 @endif
@@ -511,7 +513,7 @@
                                                                                     @endif
                                                                                 </td> --}}
                                                                                 <td class="text-center" style="background-color: {{ $isExpired ? '#e9ecef' : '#d9edf7' }};">
-                                                                                    <strong>{{ number_format($period->days_availables, 2) }}</strong>
+                                                                                    <strong>{{ number_format($period->available_balance, 2) }}</strong>
                                                                                 </td>
                                                                                 <td class="text-center" style="background-color: {{ $isExpired ? '#e9ecef' : '#d4edda' }};">
                                                                                     {{ number_format($period->days_enjoyed_before_anniversary ?? 0, 2) }}
@@ -590,7 +592,7 @@
                                                                             </th>
                                                                             {{-- <th> </th> --}}
                                                                             <th class="text-center" style="background-color: #d9edf7;">
-                                                                                <strong class="fs-6">{{ number_format($vigentePeriods->sum('days_availables'), 2) }}</strong>
+                                                                                <strong class="fs-6">{{ number_format($vigentePeriods->sum(fn($p) => $p->available_balance), 2) }}</strong>
                                                                             </th>
                                                                             <th class="text-center" style="background-color: #d4edda;">
                                                                                 <strong class="fs-6">{{ number_format($vigentePeriods->sum('days_enjoyed_before_anniversary'), 2) }}</strong>
