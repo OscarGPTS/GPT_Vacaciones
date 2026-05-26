@@ -1095,8 +1095,12 @@
                                 </tbody>
                             </table>
                         </div>
-                        <p class="mb-0">
+                        <p class="mb-1">
                             La prima vacacional será calculada de acuerdo a los días autorizados en la tabla antes mencionada.
+                        </p>
+                        <p class="mb-0 text-muted" style="font-size:.82rem;">
+                            Cada período tiene una vigencia de <strong>15 meses</strong> a partir de la fecha de término; los días no ejercidos
+                            dentro de ese plazo <strong>caducan automáticamente</strong> y no son recuperables.
                         </p>
                     </div>
                 </div>
