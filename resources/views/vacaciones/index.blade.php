@@ -1068,8 +1068,10 @@
                     </div>
                     <div class="ps-4">
                         <p class="mb-2">
-                            Los colaboradores con <strong>más de un año de servicio</strong> disfrutarán de un período anual de vacaciones
-                            conforme a la siguiente tabla, estipulada en el Reglamento Interno de Trabajo y la <strong>Ley vigente</strong>:
+                            Los trabajadores que tengan más de un año de servicio disfrutarán de un periodo anual de vacaciones,
+                            que en ningún caso podrá ser menor a 12 días y aumentarán dos días hasta llegar a veinte.
+                            Después del sexto año, el periodo vacacional aumentará en dos días por cada cinco años de servicio,
+                            esto estipulado en la Ley vigente:
                         </p>
                         <div class="table-responsive mb-3">
                             <table class="table table-sm table-bordered text-center mb-0" style="font-size:.8rem;max-width:320px;">
@@ -1093,12 +1095,8 @@
                                 </tbody>
                             </table>
                         </div>
-                        <p class="mb-1">
-                            La <strong>prima vacacional</strong> se calculará conforme a los días autorizados en la tabla anterior.
-                        </p>
-                        <p class="mb-0 text-muted" style="font-size:.82rem;">
-                            Cada período tiene una vigencia de <strong>15 meses</strong> a partir de la fecha de término; los días no ejercidos
-                            dentro de ese plazo <strong>caducan automáticamente</strong> y no son recuperables.
+                        <p class="mb-0">
+                            La prima vacacional será calculada de acuerdo a los días autorizados en la tabla antes mencionada.
                         </p>
                     </div>
                 </div>
@@ -1109,10 +1107,10 @@
                         <h6 class="mb-0 fw-bold" style="color:#1e3a5f;">Fraccionamiento del período vacacional <span class="text-muted fw-normal" style="font-size:.78rem;">(Art. 72 Reglamento Interno)</span></h6>
                     </div>
                     <p class="mb-0 ps-4">
-                        De acuerdo con la naturaleza de las funciones desarrolladas en <strong>GPT Services®</strong>, los colaboradores
-                        podrán, con <strong>previa autorización del jefe inmediato</strong>, fraccionar su descanso vacacional.
-                        Dicho fraccionamiento deberá comunicarse a <strong>Recursos Humanos con al menos 5 días de anticipación</strong>
-                        a la fecha programada.
+                        De acuerdo con la naturaleza de las funciones que se desarrollan en GPT Services®, los trabajadores
+                        podrán, con previa autorización del jefe inmediato, proceder al fraccionamiento del descanso vacacional,
+                        lo cual deberá ser comunicado a Recursos Humanos con cinco días de anterioridad
+                        a la fecha de programación.
                     </p>
                 </div>
 
@@ -1122,9 +1120,9 @@
                         <h6 class="mb-0 fw-bold" style="color:#1e3a5f;">Responsabilidad de jefaturas <span class="text-muted fw-normal" style="font-size:.78rem;">(Art. 73 Reglamento Interno)</span></h6>
                     </div>
                     <p class="mb-0 ps-4">
-                        Las <strong>jefaturas inmediatas</strong> son responsables de que el personal a su cargo haga uso efectivo
-                        de su descanso vacacional dentro del <strong>año correspondiente más un período de gracia de tres meses</strong>.
-                        El incumplimiento de esta responsabilidad podrá derivar en sanciones conforme al Reglamento Interno de Trabajo.
+                        Las jefaturas inmediatas tendrán la responsabilidad de que el personal a su cargo haga uso efectivo
+                        de su descanso físico vacacional dentro del año correspondiente más un periodo de gracia de tres meses.
+                        En caso contrario, la jefatura será sancionada de acuerdo con lo estipulado en el presente Reglamento Interno de Trabajo.
                     </p>
                 </div>
 
@@ -1134,9 +1132,9 @@
                         <h6 class="mb-0 fw-bold" style="color:#1e3a5f;">Entrega del cargo antes de vacaciones <span class="text-muted fw-normal" style="font-size:.78rem;">(Art. 74 Reglamento Interno)</span></h6>
                     </div>
                     <p class="mb-0 ps-4">
-                        Antes de iniciar el período de descanso vacacional, el colaborador deberá realizar la
-                        <strong>entrega formal del cargo a su jefe inmediato</strong>, asegurando la continuidad del servicio
-                        en el área correspondiente durante su ausencia.
+                        El personal que haga uso de su descanso físico vacacional deberá previamente
+                        efectuar la entrega del cargo a su jefe inmediato con la finalidad de no perjudicar la continuidad del
+                        servicio del área correspondiente.
                     </p>
                 </div>
 
