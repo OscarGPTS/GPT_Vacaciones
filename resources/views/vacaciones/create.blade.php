@@ -19,9 +19,24 @@
         }
         /* Estilos adicionales para FullCalendar */
         #calendar {
-            max-width: 100%;
+            /* Limitar el ancho para que no se vea desproporcionado a pantalla completa */
+            max-width: 760px;
+            margin: 0 auto;
             height: auto;
-            min-height: 500px;
+            min-height: 420px;
+        }
+        /* Encabezado del calendario alineado al mismo ancho centrado */
+        .calendar-header {
+            max-width: 760px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        /* Tipografía y celdas más compactas */
+        #calendar .fc-toolbar h2 {
+            font-size: 1.25rem;
+        }
+        #calendar .fc-day-grid-event {
+            font-size: 0.8rem;
         }
 
         /* Fines de semana deshabilitados - fondo gris */
@@ -268,7 +283,7 @@
                     <li>Máximo <strong id="maxDaysText">32</strong> días por solicitud</li>
                     <li id="periodsInfoItem">Días disponibles: <strong id="availableDaysText">Calculando...</strong></li>
                     <li>Solicitar con al menos 5 días de anticipación</li>
-                    <li>Requiere 1 año de antigüedad mínima (<span id="antiquityText">Verificando...</span>)</li>
+                    <li id="antiquityItem">Requiere 1 año de antigüedad mínima (<span id="antiquityText">Verificando...</span>)</li>
                 </ul>
             </div>
             
@@ -332,45 +347,14 @@
                 </div>
 
                 <div class="row mx-3">
-                    <div class="col-md-8">
+                    <div class="col-12">
                         <div class="card h-100">
                             <div class="card-body">
-                                <div class="mb-3 d-flex align-items-center justify-content-between">
+                                <div class="mb-3 d-flex align-items-center justify-content-between calendar-header">
                                     <label for="days" class="mb-0">Selecciona los días que no te presentarás a la oficina</label>
                                     <span class="badge bg-primary"><i class="fas fa-umbrella-beach me-1"></i> Vacaciones</span>
                                 </div>
                                 <div class="days" id='calendar'></div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="card h-100 border-info">
-                            <div class="card-header bg-info text-white py-2">
-                                <strong><i class="fas fa-clipboard-list me-1"></i> Condiciones de tu solicitud</strong>
-                            </div>
-                            <div class="card-body" style="font-size: 0.875rem;">
-                                <ul class="list-unstyled mb-0">
-                                    <li class="mb-2">
-                                        <i class="fas fa-calendar-check text-success me-1"></i>
-                                        Solicita con <strong>al menos 5 días</strong> de anticipación.
-                                    </li>
-                                    <li class="mb-2">
-                                        <i class="fas fa-moon text-secondary me-1"></i>
-                                        Los <strong>fines de semana y festivos</strong> no son días hábiles y no se pueden seleccionar.
-                                    </li>
-                                    <li class="mb-2">
-                                        <i class="fas fa-layer-group text-primary me-1"></i>
-                                        Máximo <strong>32 días</strong> por solicitud.
-                                    </li>
-                                    <li class="mb-2">
-                                        <i class="fas fa-hourglass-half text-warning me-1"></i>
-                                        Los días disponibles <strong>vencen 15 meses</strong> después del aniversario del período.
-                                    </li>
-                                    <li class="mb-2">
-                                        <i class="fas fa-user-clock text-danger me-1"></i>
-                                        Se requiere <strong>1 año de antigüedad</strong> mínima para solicitar.
-                                    </li>
-                                </ul>
                             </div>
                         </div>
                     </div>
@@ -609,8 +593,21 @@
                 
                 console.log('Actualizando UI con restricciones:', restrictions);
                 
-                $('#maxDaysText').text(restrictions.maxDays);
-                
+                // Máximo por solicitud: sumar SOLO los períodos disponibles ahora
+                // (no vencidos y cuyo date_end ya pasó). Los períodos bloqueados aún no
+                // se pueden solicitar, por lo que no deben contarse en el máximo mostrado.
+                const _maxToday = new Date(); _maxToday.setHours(0, 0, 0, 0);
+                let _availableNow = 0;
+                (restrictions.periods || []).forEach(function(p) {
+                    if (p.is_expired) return;
+                    const _end = new Date(p.date_end); _end.setHours(0, 0, 0, 0);
+                    if (_end >= _maxToday) return; // bloqueado: aún no disponible
+                    _availableNow += Math.floor(p.available_days);
+                });
+                const _maxPerRequest = Math.min(32, _availableNow);
+                restrictions.maxDays = _maxPerRequest;
+                $('#maxDaysText').text(_maxPerRequest);
+
                 // Actualizar información de períodos
                 if (restrictions.periods && restrictions.periods.length > 0) {
                     let periodsHTML = '<div class="mt-1">';
@@ -691,11 +688,12 @@
                 const antiquityMonths = restrictions.antiquityMonths || 0;
                 
                 if (restrictions.meetsAntiquity) {
-                    const yearsText = antiquityYears === 1 ? '1 año' : antiquityYears + ' años';
-                    $('#antiquityText').html('<span class="text-success"><i class="fas fa-check-circle"></i> Cumple (' + yearsText + ')</span>');
+                    // Ya cumple el año de antigüedad: ocultar el recordatorio.
+                    $('#antiquityItem').hide();
                 } else {
                     const monthsText = antiquityMonths === 1 ? '1 mes' : antiquityMonths + ' meses';
                     $('#antiquityText').html('<span class="text-danger"><i class="fas fa-times-circle"></i> No cumple (' + monthsText + ')</span>');
+                    $('#antiquityItem').show();
                 }
 
                 console.log('Antigüedad actualizada - Años:', antiquityYears, 'Meses:', antiquityMonths, 'Cumple:', restrictions.meetsAntiquity);
@@ -1046,6 +1044,7 @@
                 },
                 defaultView: 'month',
                 locale: 'es',
+                aspectRatio: 1.6,
                 weekends: false,
                 editable: true,
                 displayEventTime: false,

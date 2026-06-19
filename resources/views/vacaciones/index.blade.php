@@ -1048,7 +1048,7 @@
             <div class="modal-header border-0 pb-2" style="background:#f8fafc;">
                 <div>
                     <h5 class="modal-title fw-bold mb-0" id="termsModalLabel" style="color:#111827;">
-                        <i class="fa fa-file-contract me-2 text-primary"></i>Términos y Condiciones
+                        <i class="fa fa-question-circle me-2 text-primary"></i>Ayuda
                     </h5>
                     <p class="mb-0 text-muted" style="font-size:.75rem;">
                         Sistema de Gestión de Vacaciones &nbsp;·&nbsp; Actualización: Abril 2026
@@ -1130,22 +1130,10 @@
                     </p>
                 </div>
 
-                <div class="terms-section mb-4">
-                    <div class="d-flex align-items-center gap-2 mb-2">
-                        <span class="badge rounded-pill" style="font-size:.7rem;background:#7c3aed;">4</span>
-                        <h6 class="mb-0 fw-bold" style="color:#1e3a5f;">Entrega del cargo antes de vacaciones <span class="text-muted fw-normal" style="font-size:.78rem;">(Art. 74 Reglamento Interno)</span></h6>
-                    </div>
-                    <p class="mb-0 ps-4">
-                        El personal que haga uso de su descanso físico vacacional deberá previamente
-                        efectuar la entrega del cargo a su jefe inmediato con la finalidad de no perjudicar la continuidad del
-                        servicio del área correspondiente.
-                    </p>
-                </div>
-
                 {{-- ── Normativas del sistema ── --}}
                 <div class="terms-section mb-4">
                     <div class="d-flex align-items-center gap-2 mb-2">
-                        <span class="badge rounded-pill bg-success" style="font-size:.7rem;">5</span>
+                        <span class="badge rounded-pill bg-success" style="font-size:.7rem;">4</span>
                         <h6 class="mb-0 fw-bold" style="color:#1e3a5f;">Flujo de aprobación</h6>
                     </div>
                     <div class="ps-4">
@@ -1172,7 +1160,7 @@
 
                 <div class="terms-section mb-4">
                     <div class="d-flex align-items-center gap-2 mb-2">
-                        <span class="badge rounded-pill bg-secondary" style="font-size:.7rem;">6</span>
+                        <span class="badge rounded-pill bg-secondary" style="font-size:.7rem;">5</span>
                         <h6 class="mb-0 fw-bold" style="color:#1e3a5f;">Firma digital</h6>
                     </div>
                     <p class="mb-0 ps-4">
@@ -1184,7 +1172,7 @@
 
                 <div class="terms-section mb-4">
                     <div class="d-flex align-items-center gap-2 mb-2">
-                        <span class="badge rounded-pill bg-dark" style="font-size:.7rem;">7</span>
+                        <span class="badge rounded-pill bg-dark" style="font-size:.7rem;">6</span>
                         <h6 class="mb-0 fw-bold" style="color:#1e3a5f;">Responsabilidad de Recursos Humanos</h6>
                     </div>
                     <ul class="mb-0 ps-4" style="line-height:1.9;">
@@ -1196,7 +1184,7 @@
 
                 <div class="terms-section mb-2">
                     <div class="d-flex align-items-center gap-2 mb-2">
-                        <span class="badge rounded-pill bg-info" style="font-size:.7rem;">8</span>
+                        <span class="badge rounded-pill bg-info" style="font-size:.7rem;">7</span>
                         <h6 class="mb-0 fw-bold" style="color:#1e3a5f;">Tratamiento de datos personales</h6>
                     </div>
                     <p class="mb-0 ps-4">
