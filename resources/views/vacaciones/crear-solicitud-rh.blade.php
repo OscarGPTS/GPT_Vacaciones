@@ -12,7 +12,10 @@
         }
         .fc-day-grid-event .fc-time{ display: none; }
         .fc-day-grid-event .fc-content{ white-space: nowrap; }
-        #calendar { max-width: 100%; height: auto; min-height: 500px; }
+        #calendar { max-width: 760px; margin: 0 auto; height: auto; min-height: 420px; }
+        .calendar-header { max-width: 760px; margin-left: auto; margin-right: auto; }
+        #calendar .fc-toolbar h2 { font-size: 1.25rem; }
+        #calendar .fc-day-grid-event { font-size: 0.8rem; }
         .fc-sun, .fc-sat { background-color: #f5f5f5 !important; color: #aaa !important; }
         .fc-day-header.fc-sun, .fc-day-header.fc-sat { background-color: #ececec !important; color: #bbb !important; }
         .fc-toolbar { margin-bottom: 1rem; }
@@ -158,41 +161,14 @@
             <input type="hidden" name="type_request" value="Vacaciones">
 
             <div class="row mx-3">
-                <div class="col-md-8">
+                <div class="col-12">
                     <div class="card h-100">
                         <div class="card-body">
-                            <div class="mb-3 d-flex align-items-center justify-content-between">
+                            <div class="mb-3 d-flex align-items-center justify-content-between calendar-header">
                                 <label for="days" class="mb-0">Selecciona los días que el colaborador no se presentará</label>
                                 <span class="badge bg-primary"><i class="fas fa-umbrella-beach me-1"></i> Vacaciones</span>
                             </div>
                             <div class="days" id='calendar'></div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="card h-100 border-info">
-                        <div class="card-header bg-info text-white py-2">
-                            <strong><i class="fas fa-clipboard-list me-1"></i> Condiciones (modo RH)</strong>
-                        </div>
-                        <div class="card-body" style="font-size: 0.875rem;">
-                            <ul class="list-unstyled mb-0">
-                                <li class="mb-2">
-                                    <i class="fas fa-moon text-secondary me-1"></i>
-                                    Los <strong>fines de semana y festivos</strong> no son días hábiles y no se pueden seleccionar.
-                                </li>
-                                <li class="mb-2">
-                                    <i class="fas fa-layer-group text-primary me-1"></i>
-                                    Máximo <strong>32 días</strong> por solicitud.
-                                </li>
-                                <li class="mb-2">
-                                    <i class="fas fa-hourglass-half text-warning me-1"></i>
-                                    Los días disponibles <strong>vencen 15 meses</strong> después del aniversario del período.
-                                </li>
-                                <li class="mb-2">
-                                    <i class="fas fa-user-clock text-success me-1"></i>
-                                    <strong>Sin restricción</strong> de antigüedad ni anticipación.
-                                </li>
-                            </ul>
                         </div>
                     </div>
                 </div>
@@ -344,7 +320,17 @@
 
             function updateRestrictionsUI() {
                 const restrictions = currentUserRestrictions;
-                $('#maxDaysText').text(restrictions.maxDays);
+
+                // Máximo por solicitud: sumar SOLO los períodos listados abajo (no vencidos).
+                // En modo RH los períodos bloqueados sí son seleccionables, por lo que se incluyen.
+                let _availableNow = 0;
+                (restrictions.periods || []).forEach(function(p) {
+                    if (p.is_expired) return;
+                    _availableNow += Math.floor(p.available_days);
+                });
+                const _maxPerRequest = Math.min(32, _availableNow);
+                restrictions.maxDays = _maxPerRequest;
+                $('#maxDaysText').text(_maxPerRequest);
 
                 if (restrictions.periods && restrictions.periods.length > 0) {
                     let periodsHTML = '<div class="mt-1">';
@@ -602,6 +588,7 @@
                 },
                 defaultView: 'month',
                 locale: 'es',
+                aspectRatio: 1.6,
                 weekends: false,
                 editable: true,
                 displayEventTime: false,
