@@ -206,7 +206,6 @@
                 <h5><i class="fa fa-info-circle"></i> Información de Vacaciones</h5>
                 <p class="mb-0">Modifica los días seleccionados en el calendario. Recuerda:</p>
                 <ul class="mb-0 mt-2" id="restrictionsList">
-                    <li>Máximo <strong id="maxDaysText">32</strong> días por solicitud</li>
                     <li id="periodsInfoItem">Días disponibles: <strong id="availableDaysText">Calculando...</strong></li>
                     <li>Solicitar con al menos 5 días de anticipación</li>
                     <li id="antiquityItem">Requiere 1 año de antigüedad mínima (<span id="antiquityText">Verificando...</span>)</li>

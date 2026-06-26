@@ -249,7 +249,7 @@
     <div class="card">
         <div class="card-header">
             <div class="d-flex justify-content-between">
-                <h3>Solicitar un permiso</h3>
+                <h3>Solicitar Vacaciones</h3>
                 <div>
                  
                     <!-- Modal -->
@@ -280,7 +280,6 @@
                 <h5><i class="fa fa-info-circle"></i> Información de Vacaciones</h5>
                 <p class="mb-0">Completa el formulario y selecciona los días de vacaciones en el calendario. Recuerda:</p>
                 <ul class="mb-0 mt-2" id="restrictionsList">
-                    <li>Máximo <strong id="maxDaysText">32</strong> días por solicitud</li>
                     <li id="periodsInfoItem">Días disponibles: <strong id="availableDaysText">Calculando...</strong></li>
                     <li>Solicitar con al menos 5 días de anticipación</li>
                     <li id="antiquityItem">Requiere 1 año de antigüedad mínima (<span id="antiquityText">Verificando...</span>)</li>

@@ -138,7 +138,6 @@
             <div class="alert alert-info" id="vacationInfoAlert">
                 <h5 class="mb-2"><i class="fa fa-info-circle"></i> Información de Vacaciones</h5>
                 <ul class="mb-0">
-                    <li>Máximo <strong id="maxDaysText">32</strong> días por solicitud</li>
                     <li id="periodsInfoItem">Días disponibles: <strong id="availableDaysText">Calculando...</strong></li>
                 </ul>
             </div>
