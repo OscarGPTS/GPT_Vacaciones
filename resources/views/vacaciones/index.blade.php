@@ -204,7 +204,7 @@
                         data-bs-toggle="modal" data-bs-target="#termsModal"
                         style="white-space:nowrap;">
                     <i class="fa {{ $hasAcceptedTerms ? 'fa-eye' : 'fa-file-signature' }} me-1"></i>
-                    {{ $hasAcceptedTerms ? 'Ver términos' : 'Leer y aceptar' }}
+                    {{ $hasAcceptedTerms ? 'Ver ayuda' : 'Leer y aceptar' }}
                 </button>
             </div>
         </div>
