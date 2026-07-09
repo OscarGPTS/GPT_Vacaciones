@@ -436,7 +436,7 @@
                                                     <th class="text-nowrap text-center">
                                                         Días
                                                     </th>
-                                                    <th class="text-nowrap" style="min-width: 260px;">
+                                                    <th class="text-nowrap text-center" style="min-width: 460px;">
                                                         Progreso de Aprobación
                                                     </th>
                                                     <th class="text-nowrap text-center">
@@ -477,7 +477,7 @@
                                                     $stateText = function ($state) {
                                                         return [
                                                             'done'      => 'Aprobada',
-                                                            'current'   => 'Pendiente de revisión',
+                                                            'current'   => 'En revisión',
                                                             'rejected'  => 'Rechazada',
                                                             'waiting'   => 'En espera',
                                                             'cancelled' => 'Cancelada',
@@ -485,11 +485,11 @@
                                                     };
 
                                                     $steps = [
-                                                        ['label' => 'Solicitud enviada', 'icon' => 'fa-paper-plane', 'state' => $isCancelled ? 'cancelled' : 'done',
-                                                         'status' => $isCancelled ? 'Cancelada' : $request->created_at->format('d/m/Y H:i')],
-                                                        ['label' => 'Jefe Directo', 'icon' => 'fa-user-tie',    'state' => $stepJefe, 'status' => $stateText($stepJefe)],
-                                                        ['label' => 'Dirección',    'icon' => 'fa-building',    'state' => $stepDir,  'status' => $stateText($stepDir)],
-                                                        ['label' => 'Recursos Humanos', 'icon' => 'fa-user-shield', 'state' => $stepRh, 'status' => $stateText($stepRh)],
+                                                        ['label' => 'Solicitud enviada', 'state' => $isCancelled ? 'cancelled' : 'done',
+                                                         'status' => $isCancelled ? 'Cancelada' : $request->created_at->format('d/m/Y')],
+                                                        ['label' => 'Jefe Directo', 'state' => $stepJefe, 'status' => $stateText($stepJefe)],
+                                                        ['label' => 'Dirección',    'state' => $stepDir,  'status' => $stateText($stepDir)],
+                                                        ['label' => 'Recursos Humanos', 'state' => $stepRh, 'status' => $stateText($stepRh)],
                                                     ];
                                                 @endphp
                                                 <tr class="border-start border-light border-3">
@@ -522,29 +522,20 @@
                                                         <span class="badge bg-primary fs-6">{{ $request->requestDays->count() }}</span>
                                                     </td>
                                                     <td>
-                                                        <div class="v-stepper">
+                                                        <div class="h-stepper">
                                                             @foreach($steps as $step)
-                                                                <div class="v-step step-{{ $step['state'] }}">
-                                                                    <div class="v-step-indicator">
-                                                                        <div class="v-step-circle">
-                                                                            @if($step['state'] === 'done')
-                                                                                <i class="fas fa-check"></i>
-                                                                            @elseif($step['state'] === 'rejected')
-                                                                                <i class="fas fa-times"></i>
-                                                                            @elseif($step['state'] === 'cancelled')
-                                                                                <i class="fas fa-ban"></i>
-                                                                            @else
-                                                                                <i class="fas {{ $step['icon'] }}"></i>
-                                                                            @endif
-                                                                        </div>
-                                                                        @if(!$loop->last)
-                                                                            <div class="v-step-line {{ $step['state'] === 'done' ? 'line-done' : '' }}"></div>
+                                                                <div class="h-step step-{{ $step['state'] }} {{ $loop->index > 0 && $steps[$loop->index - 1]['state'] === 'done' ? 'line-done' : '' }}">
+                                                                    <div class="h-step-circle">
+                                                                        @if($step['state'] === 'done')
+                                                                            <i class="fas fa-check"></i>
+                                                                        @elseif($step['state'] === 'rejected')
+                                                                            <i class="fas fa-times"></i>
+                                                                        @elseif($step['state'] === 'current')
+                                                                            <span class="h-step-dot"></span>
                                                                         @endif
                                                                     </div>
-                                                                    <div class="v-step-content">
-                                                                        <div class="v-step-label">{{ $step['label'] }}</div>
-                                                                        <div class="v-step-status">{{ $step['status'] }}</div>
-                                                                    </div>
+                                                                    <div class="h-step-label">{{ $step['label'] }}</div>
+                                                                    <div class="h-step-status">{{ $step['status'] }}</div>
                                                                 </div>
                                                             @endforeach
                                                         </div>
@@ -831,7 +822,7 @@
             $tStateText = function ($state) {
                 return [
                     'done'      => 'Aprobada',
-                    'current'   => 'Pendiente de revisión — etapa actual',
+                    'current'   => 'En revisión',
                     'rejected'  => 'Rechazada',
                     'waiting'   => 'En espera',
                     'cancelled' => 'Cancelada',
@@ -839,11 +830,11 @@
             };
 
             $tSteps = [
-                ['label' => 'Solicitud enviada', 'icon' => 'fa-paper-plane', 'state' => $tCancelled ? 'cancelled' : 'done',
+                ['label' => 'Solicitud enviada', 'state' => $tCancelled ? 'cancelled' : 'done',
                  'status' => $tCancelled ? 'Cancelada' : $selectedRequest->created_at->format('d/m/Y H:i')],
-                ['label' => 'Jefe Directo', 'icon' => 'fa-user-tie',    'state' => $tStepJefe, 'status' => $tStateText($tStepJefe)],
-                ['label' => 'Dirección',    'icon' => 'fa-building',    'state' => $tStepDir,  'status' => $tStateText($tStepDir)],
-                ['label' => 'Recursos Humanos', 'icon' => 'fa-user-shield', 'state' => $tStepRh, 'status' => $tStateText($tStepRh)],
+                ['label' => 'Jefe Directo', 'state' => $tStepJefe, 'status' => $tStateText($tStepJefe)],
+                ['label' => 'Dirección',    'state' => $tStepDir,  'status' => $tStateText($tStepDir)],
+                ['label' => 'Recursos Humanos', 'state' => $tStepRh, 'status' => $tStateText($tStepRh)],
             ];
 
             $tCurrentStage = \App\Livewire\VacacionesRh::currentStageOf($selectedRequest);
@@ -853,19 +844,42 @@
         <div class="modal fade show" style="display: block; z-index: 1055;" tabindex="-1" role="dialog" aria-modal="true" wire:click="closeTrackingModal">
             <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable" role="document" wire:click.stop>
                 <div class="modal-content bg-white border-0 shadow">
-                    <div class="modal-header" style="background:#eef2ff;">
-                        <h5 class="modal-title" style="color:#3730a3;">
-                            <i class="fas fa-route me-2"></i>
+                    <div class="modal-header" style="background:#f8f9fa;border-bottom:1px solid #e9ecef;">
+                        <h5 class="modal-title" style="color:#212529;font-size:1.05rem;">
                             Seguimiento de Solicitud — {{ $selectedRequest->user->first_name }} {{ $selectedRequest->user->last_name }}
                         </h5>
                         <button type="button" class="btn-close" wire:click="closeTrackingModal"></button>
                     </div>
                     <div class="modal-body">
+                        {{-- Stepper horizontal de progreso (estilo rastreo de pedido) --}}
+                        <div class="mb-4 px-2">
+                            <h6 class="fw-bold text-muted mb-3" style="font-size:.78rem;text-transform:uppercase;letter-spacing:.06em;">
+                                Progreso de Aprobación
+                            </h6>
+                            <div class="h-stepper h-stepper-lg">
+                                @foreach($tSteps as $step)
+                                    <div class="h-step step-{{ $step['state'] }} {{ $loop->index > 0 && $tSteps[$loop->index - 1]['state'] === 'done' ? 'line-done' : '' }}">
+                                        <div class="h-step-circle">
+                                            @if($step['state'] === 'done')
+                                                <i class="fas fa-check"></i>
+                                            @elseif($step['state'] === 'rejected')
+                                                <i class="fas fa-times"></i>
+                                            @elseif($step['state'] === 'current')
+                                                <span class="h-step-dot"></span>
+                                            @endif
+                                        </div>
+                                        <div class="h-step-label">{{ $step['label'] }}</div>
+                                        <div class="h-step-status">{{ $step['status'] }}</div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+
                         <div class="row g-3">
                             {{-- Detalles de la solicitud --}}
-                            <div class="col-md-6">
-                                <h6 class="fw-bold text-muted mb-3" style="font-size:.8rem;text-transform:uppercase;letter-spacing:.05em;">
-                                    <i class="fas fa-info-circle me-1"></i> Detalles
+                            <div class="col-12">
+                                <h6 class="fw-bold text-muted mb-3" style="font-size:.78rem;text-transform:uppercase;letter-spacing:.06em;">
+                                    Detalles
                                 </h6>
                                 <ul class="list-group list-group-flush small">
                                     <li class="list-group-item d-flex justify-content-between px-0">
@@ -900,44 +914,10 @@
                                     </li>
                                 </ul>
                             </div>
-
-                            {{-- Stepper vertical de progreso --}}
-                            <div class="col-md-6">
-                                <h6 class="fw-bold text-muted mb-3" style="font-size:.8rem;text-transform:uppercase;letter-spacing:.05em;">
-                                    <i class="fas fa-shoe-prints me-1"></i> Progreso de Aprobación
-                                </h6>
-                                <div class="v-stepper v-stepper-lg">
-                                    @foreach($tSteps as $step)
-                                        <div class="v-step step-{{ $step['state'] }}">
-                                            <div class="v-step-indicator">
-                                                <div class="v-step-circle">
-                                                    @if($step['state'] === 'done')
-                                                        <i class="fas fa-check"></i>
-                                                    @elseif($step['state'] === 'rejected')
-                                                        <i class="fas fa-times"></i>
-                                                    @elseif($step['state'] === 'cancelled')
-                                                        <i class="fas fa-ban"></i>
-                                                    @else
-                                                        <i class="fas {{ $step['icon'] }}"></i>
-                                                    @endif
-                                                </div>
-                                                @if(!$loop->last)
-                                                    <div class="v-step-line {{ $step['state'] === 'done' ? 'line-done' : '' }}"></div>
-                                                @endif
-                                            </div>
-                                            <div class="v-step-content">
-                                                <div class="v-step-label">{{ $step['label'] }}</div>
-                                                <div class="v-step-status">{{ $step['status'] }}</div>
-                                            </div>
-                                        </div>
-                                    @endforeach
-                                </div>
-                            </div>
                         </div>
 
                         @if($tCurrentStage)
-                            <div class="alert alert-info mt-3 mb-0 py-2" style="font-size:.85rem;">
-                                <i class="fas fa-arrow-circle-right me-1"></i>
+                            <div class="alert alert-light border mt-3 mb-0 py-2" style="font-size:.85rem;color:#495057;">
                                 Etapa actual: <strong>{{ $tStageLabels[$tCurrentStage] }}</strong>.
                                 Al avanzar, se ejecutará el mismo flujo de aprobación de esa etapa (asignaciones y notificaciones incluidas).
                             </div>
@@ -1053,154 +1033,157 @@
     @endif
 </div>
 
-@push('styles')
+@push('css')
 <style>
 .bg-gradient-primary {
     background:#ffffff;
 }
 
-/* ═══ Stepper vertical de seguimiento (estilo rastreo de pedido) ═════════ */
-.v-stepper {
-    display: flex;
-    flex-direction: column;
-    padding: .25rem 0;
-}
-
-.v-step {
+/* ═══ Stepper horizontal de seguimiento (estilo rastreo de pedido) ═══════ */
+.h-stepper {
     display: flex;
     align-items: flex-start;
-    gap: .75rem;
+    width: 100%;
+    min-width: 420px;
+    padding: .35rem 0;
 }
 
-.v-step-indicator {
+.h-step {
+    flex: 1;
     display: flex;
     flex-direction: column;
     align-items: center;
-    flex-shrink: 0;
-    align-self: stretch;
+    position: relative;
+    text-align: center;
+    min-width: 0;
 }
 
-.v-step-circle {
-    width: 32px;
-    height: 32px;
+/* Línea conectora: del centro del paso anterior al centro de este paso */
+.h-step:not(:first-child)::before {
+    content: '';
+    position: absolute;
+    top: 11px;              /* centro vertical del círculo (24px / 2 - grosor/2) */
+    right: 50%;
+    width: calc(100% - 32px);
+    margin-right: 16px;
+    height: 3px;
+    background: #dee2e6;
+    border-radius: 2px;
+    z-index: 0;
+}
+
+.h-step.line-done::before {
+    background: #198754;
+}
+
+.h-step-circle {
+    width: 24px;
+    height: 24px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: .78rem;
-    border: 2px solid #d1d5db;
-    background: #f9fafb;
-    color: #9ca3af;
-    transition: all .3s ease;
+    font-size: .6rem;
+    border: 2px solid #ced4da;
+    background: #fff;
+    color: #adb5bd;
+    position: relative;
     z-index: 1;
 }
 
-.v-stepper-lg .v-step-circle {
-    width: 40px;
-    height: 40px;
-    font-size: .9rem;
-}
-
-.v-step-line {
-    width: 3px;
-    flex-grow: 1;
-    min-height: 22px;
-    background: #e5e7eb;
-    border-radius: 2px;
-    margin: 2px 0;
-}
-
-.v-stepper-lg .v-step-line {
-    min-height: 30px;
-}
-
-.v-step-line.line-done {
+.h-step-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
     background: #198754;
 }
 
-.v-step-content {
-    padding-bottom: 1rem;
-    padding-top: .25rem;
-    min-width: 0;
-}
-
-.v-step:last-child .v-step-content {
-    padding-bottom: 0;
-}
-
-.v-step-label {
-    font-size: .8rem;
-    font-weight: 700;
-    color: #9ca3af;
+.h-step-label {
+    font-size: .74rem;
+    font-weight: 600;
+    color: #212529;
     line-height: 1.2;
+    margin-top: .5rem;
 }
 
-.v-stepper-lg .v-step-label {
-    font-size: .9rem;
-}
-
-.v-step-status {
-    font-size: .72rem;
-    color: #9ca3af;
+.h-step-status {
+    font-size: .68rem;
+    color: #6c757d;
+    line-height: 1.2;
     margin-top: .1rem;
 }
 
-.v-stepper-lg .v-step-status {
-    font-size: .8rem;
+/* Versión grande (modal) */
+.h-stepper-lg {
+    min-width: 0;
+    padding: .5rem 0 .25rem;
+}
+
+.h-stepper-lg .h-step-circle {
+    width: 32px;
+    height: 32px;
+    font-size: .75rem;
+}
+
+.h-stepper-lg .h-step-dot {
+    width: 13px;
+    height: 13px;
+}
+
+.h-stepper-lg .h-step:not(:first-child)::before {
+    top: 15px;
+    width: calc(100% - 42px);
+    margin-right: 21px;
+    height: 3px;
+}
+
+.h-stepper-lg .h-step-label {
+    font-size: .84rem;
+}
+
+.h-stepper-lg .h-step-status {
+    font-size: .74rem;
 }
 
 /* Paso completado */
-.v-step.step-done .v-step-circle {
+.h-step.step-done .h-step-circle {
     background: #198754;
     border-color: #198754;
     color: #fff;
 }
-.v-step.step-done .v-step-label {
-    color: #198754;
-}
-.v-step.step-done .v-step-status {
-    color: #157347;
+
+/* Paso actual (en revisión) */
+.h-step.step-current .h-step-circle {
+    border-color: #198754;
+    background: #fff;
+    box-shadow: 0 0 0 4px rgba(25, 135, 84, .15);
 }
 
-/* Paso actual (en espera de acción) */
-.v-step.step-current .v-step-circle {
-    background: #fff8e1;
-    border-color: #f59e0b;
-    color: #b45309;
-    animation: stepperPulse 1.6s ease-in-out infinite;
-}
-.v-step.step-current .v-step-label {
-    color: #b45309;
-}
-.v-step.step-current .v-step-status {
-    color: #b45309;
+/* Pasos futuros */
+.h-step.step-waiting .h-step-label {
+    color: #adb5bd;
 }
 
 /* Paso rechazado */
-.v-step.step-rejected .v-step-circle {
+.h-step.step-rejected .h-step-circle {
     background: #dc3545;
     border-color: #dc3545;
     color: #fff;
 }
-.v-step.step-rejected .v-step-label,
-.v-step.step-rejected .v-step-status {
+.h-step.step-rejected .h-step-label,
+.h-step.step-rejected .h-step-status {
     color: #dc3545;
 }
 
 /* Paso cancelado */
-.v-step.step-cancelled .v-step-circle {
-    background: #e5e7eb;
-    border-color: #9ca3af;
-    color: #6b7280;
+.h-step.step-cancelled .h-step-circle {
+    background: #adb5bd;
+    border-color: #adb5bd;
+    color: #fff;
 }
-.v-step.step-cancelled .v-step-label,
-.v-step.step-cancelled .v-step-status {
-    color: #6b7280;
-}
-
-@keyframes stepperPulse {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, .45); }
-    50%      { box-shadow: 0 0 0 7px rgba(245, 158, 11, 0); }
+.h-step.step-cancelled .h-step-label,
+.h-step.step-cancelled .h-step-status {
+    color: #6c757d;
 }
 
 .nav-pills .nav-link {
@@ -1223,9 +1206,19 @@
 }
 
 .nav-pills .nav-link.active {
-    background-color: #e4e4e4;
-    color: white;
-    box-shadow: 0 0.5rem 1rem rgba(0, 123, 255, 0.15);
+    background-color: #dc3545;
+    color: #fff;
+    box-shadow: 0 0.4rem 0.9rem rgba(220, 53, 69, 0.3);
+}
+
+.nav-pills .nav-link.active small {
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.nav-pills .nav-link.active .badge {
+    background-color: #fff !important;
+    color: #dc3545 !important;
+    font-weight: 700;
 }
 
 .table th {
@@ -1293,8 +1286,10 @@
 }
 
 .rh-modal-dialog {
-    background: #ffffff !important;
-    border-radius: 16px;
+    /* Solo posiciona el modal — la superficie blanca es .rh-modal-content.
+       Un fondo aquí pintaría de blanco toda la altura del viewport
+       (por el min-height de .modal-dialog-centered). */
+    background: transparent !important;
 }
 
 .rh-modal-content {
