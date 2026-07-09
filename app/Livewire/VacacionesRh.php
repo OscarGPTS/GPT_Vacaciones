@@ -10,9 +10,15 @@ use App\Models\User;
 use App\Models\Departamento;
 use App\Models\UserSignature;
 use App\Models\SystemLog;
+use App\Models\DirectionApprover;
 use App\Services\AutoApprovalService;
 use App\Mail\VacationRequestApprovedByRH;
 use App\Mail\VacationRequestRejectedByRH;
+use App\Mail\VacationRequestApprovedByManager;
+use App\Mail\VacationRequestRejectedByManager;
+use App\Mail\VacationRequestPendingDirection;
+use App\Mail\VacationRequestPendingRH;
+use App\Mail\VacationRequestRejectedByDirection;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
@@ -39,6 +45,8 @@ class VacacionesRh extends Component
     public $showAutoApprovalModal = false;
     public $showDecisionModal = false;
     public $decisionType = null;
+    public $decisionStage = null; // 'manager' | 'direction' | 'rh'
+    public $showTrackingModal = false;
 
     protected $queryString = [
         'userFilter' => ['except' => ''],
@@ -128,6 +136,7 @@ class VacacionesRh extends Component
         }
 
         $this->decisionType = 'approve';
+        $this->decisionStage = 'rh';
         $this->showDecisionModal = true;
     }
 
@@ -138,6 +147,7 @@ class VacacionesRh extends Component
         }
 
         $this->decisionType = 'reject';
+        $this->decisionStage = 'rh';
         $this->showDecisionModal = true;
     }
 
@@ -145,17 +155,375 @@ class VacacionesRh extends Component
     {
         $this->showDecisionModal = false;
         $this->decisionType = null;
+        $this->decisionStage = null;
     }
 
     public function executeDecision()
     {
         if ($this->decisionType === 'approve') {
-            $this->approveRequest();
+            if ($this->decisionStage === 'manager') {
+                $this->approveAsManager();
+            } elseif ($this->decisionStage === 'direction') {
+                $this->approveAsDirection();
+            } else {
+                $this->approveRequest();
+            }
             return;
         }
 
         if ($this->decisionType === 'reject') {
-            $this->rejectRequest();
+            if ($this->decisionStage === 'manager') {
+                $this->rejectAsManager();
+            } elseif ($this->decisionStage === 'direction') {
+                $this->rejectAsDirection();
+            } else {
+                $this->rejectRequest();
+            }
+        }
+    }
+
+    /* ═══ Seguimiento: gestión de solicitud desde cualquier etapa ═══════════ */
+
+    /**
+     * Etapa actual del flujo en la que está detenida la solicitud.
+     * Devuelve null si la solicitud ya terminó (aprobada, rechazada o cancelada).
+     */
+    public static function currentStageOf(RequestVacations $request): ?string
+    {
+        if ($request->human_resources_status === 'Cancelada'
+            || $request->human_resources_status === 'Rechazada'
+            || $request->human_resources_status === 'Aprobada'
+            || $request->direct_manager_status === 'Rechazada'
+            || $request->direction_approbation_status === 'Rechazada') {
+            return null;
+        }
+
+        if ($request->direct_manager_status === 'Pendiente') {
+            return 'manager';
+        }
+
+        if ($request->direction_approbation_status !== 'Aprobada') {
+            return 'direction';
+        }
+
+        return 'rh';
+    }
+
+    public function showTrackingDetail($requestId)
+    {
+        $this->loadSelectedRequest($requestId);
+        $this->showTrackingModal = true;
+    }
+
+    public function closeTrackingModal()
+    {
+        $this->showTrackingModal = false;
+        $this->selectedRequest = null;
+    }
+
+    public function confirmAdvance($requestId = null)
+    {
+        if ($requestId) {
+            $this->loadSelectedRequest($requestId);
+        }
+
+        $stage = $this->selectedRequest ? self::currentStageOf($this->selectedRequest) : null;
+        if (!$stage) {
+            session()->flash('error', 'Esta solicitud ya no tiene etapas pendientes por avanzar.');
+            return;
+        }
+
+        $this->decisionType = 'approve';
+        $this->decisionStage = $stage;
+        $this->showDecisionModal = true;
+    }
+
+    public function confirmRejectTracking($requestId = null)
+    {
+        if ($requestId) {
+            $this->loadSelectedRequest($requestId);
+        }
+
+        $stage = $this->selectedRequest ? self::currentStageOf($this->selectedRequest) : null;
+        if (!$stage) {
+            session()->flash('error', 'Esta solicitud ya no puede ser rechazada.');
+            return;
+        }
+
+        $this->decisionType = 'reject';
+        $this->decisionStage = $stage;
+        $this->showDecisionModal = true;
+    }
+
+    /**
+     * Aprobar la etapa de Jefe Directo (mismo flujo que VacacionesJefeDirecto::approveRequest).
+     */
+    private function approveAsManager()
+    {
+        if (!UserSignature::userHasSignature(auth()->id())) {
+            session()->flash('error', 'Debes registrar tu firma digital antes de poder aprobar solicitudes.');
+            return;
+        }
+
+        if (!$this->selectedRequest) {
+            return;
+        }
+
+        try {
+            // ASIGNACIÓN INTELIGENTE DE APROBADOR DE DIRECCIÓN por departamento
+            $employee = $this->selectedRequest->user;
+            $departamentoId = $employee->job->depto_id ?? null;
+
+            if (!$departamentoId) {
+                session()->flash('error', 'Error: El empleado no tiene un departamento asignado.');
+                return;
+            }
+
+            $customDirectionId = DirectionApprover::getDirectionApproverForDepartment($departamentoId);
+            $directionApproverId = $customDirectionId ?? User::where('job_id', 60)->where('active', 1)->value('id');
+
+            if (!$directionApproverId) {
+                session()->flash('error', 'Error: No se encontró un aprobador de Dirección asignado para este departamento.');
+                return;
+            }
+
+            $this->selectedRequest->update([
+                'direct_manager_status' => 'Aprobada',
+                'direction_approbation_status' => 'Pendiente',
+                'direction_approbation_id' => $directionApproverId,
+                'updated_at' => now()
+            ]);
+
+            SystemLog::logInfo('rh_tracking_manager_approval', 'Etapa de Jefe Directo aprobada desde Seguimiento RH', $this->selectedRequest->user_id, [
+                'request_id' => $this->selectedRequest->id,
+                'rh_user_id' => auth()->id(),
+            ]);
+
+            session()->flash('success', 'Etapa de Jefe Directo aprobada. La solicitud pasó a Dirección.');
+
+            // Notificar al empleado
+            if ($this->selectedRequest->user && $this->selectedRequest->user->email) {
+                try {
+                    sleep(1);
+                    Mail::to($this->selectedRequest->user->email)
+                        ->send(new VacationRequestApprovedByManager($this->selectedRequest));
+                } catch (\Exception $e) {
+                    Log::error('Error enviando correo de aprobación al empleado: ' . $e->getMessage(), [
+                        'request_id' => $this->selectedRequest->id
+                    ]);
+                }
+            }
+
+            // Notificar a Dirección
+            $directionUser = User::find($directionApproverId);
+            if ($directionUser && $directionUser->email) {
+                try {
+                    sleep(1);
+                    Mail::to($directionUser->email)
+                        ->send(new VacationRequestPendingDirection(
+                            $this->selectedRequest->user,
+                            $this->selectedRequest->requestDays->count(),
+                            auth()->user()
+                        ));
+                } catch (\Exception $e) {
+                    Log::error('Error enviando correo a Dirección: ' . $e->getMessage(), [
+                        'request_id' => $this->selectedRequest->id
+                    ]);
+                }
+            }
+        } catch (\Exception $e) {
+            $this->closeDecisionModal();
+            session()->flash('error', 'Error al procesar la aprobación: ' . $e->getMessage());
+            return;
+        }
+
+        $this->closeDecisionModal();
+        $this->closeTrackingModal();
+    }
+
+    /**
+     * Rechazar en la etapa de Jefe Directo (mismo flujo que VacacionesJefeDirecto::rejectRequest).
+     */
+    private function rejectAsManager()
+    {
+        if (!UserSignature::userHasSignature(auth()->id())) {
+            session()->flash('error', 'Debes registrar tu firma digital antes de poder rechazar solicitudes.');
+            return;
+        }
+
+        if (!$this->selectedRequest) {
+            return;
+        }
+
+        try {
+            $this->releaseReservedDaysForSelected();
+
+            $this->selectedRequest->update([
+                'direct_manager_status' => 'Rechazada',
+                'updated_at' => now()
+            ]);
+
+            SystemLog::logInfo('rh_tracking_manager_rejection', 'Etapa de Jefe Directo rechazada desde Seguimiento RH', $this->selectedRequest->user_id, [
+                'request_id' => $this->selectedRequest->id,
+                'rh_user_id' => auth()->id(),
+            ]);
+
+            session()->flash('success', 'Solicitud rechazada en la etapa de Jefe Directo. Los días han sido liberados.');
+
+            if ($this->selectedRequest->user && $this->selectedRequest->user->email) {
+                try {
+                    sleep(1);
+                    Mail::to($this->selectedRequest->user->email)
+                        ->send(new VacationRequestRejectedByManager($this->selectedRequest));
+                } catch (\Exception $e) {
+                    Log::error('Error enviando correo de rechazo al empleado: ' . $e->getMessage(), [
+                        'request_id' => $this->selectedRequest->id
+                    ]);
+                }
+            }
+        } catch (\Exception $e) {
+            $this->closeDecisionModal();
+            session()->flash('error', 'Error al procesar el rechazo: ' . $e->getMessage());
+            return;
+        }
+
+        $this->closeDecisionModal();
+        $this->closeTrackingModal();
+    }
+
+    /**
+     * Aprobar la etapa de Dirección (mismo flujo que VacacionesDireccion::approveRequest).
+     */
+    private function approveAsDirection()
+    {
+        if (!UserSignature::userHasSignature(auth()->id())) {
+            session()->flash('error', 'Debes registrar tu firma digital antes de poder aprobar solicitudes.');
+            return;
+        }
+
+        if (!$this->selectedRequest) {
+            return;
+        }
+
+        try {
+            $this->selectedRequest->update([
+                'direction_approbation_status' => 'Aprobada',
+                'direction_approbation_id' => auth()->id(),
+                'updated_at' => now()
+            ]);
+
+            SystemLog::logInfo('rh_tracking_direction_approval', 'Etapa de Dirección aprobada desde Seguimiento RH', $this->selectedRequest->user_id, [
+                'request_id' => $this->selectedRequest->id,
+                'rh_user_id' => auth()->id(),
+            ]);
+
+            session()->flash('success', 'Etapa de Dirección aprobada. La solicitud pasó a Recursos Humanos para aprobación final.');
+
+            // Notificar a RH (mismo flujo que Dirección)
+            $rhUsers = config('vacations.rh_user_ids', []);
+            foreach ($rhUsers as $rhUserId) {
+                $rhUser = User::find($rhUserId);
+                if ($rhUser && $rhUser->email) {
+                    try {
+                        sleep(1);
+                        Mail::to($rhUser->email)
+                            ->send(new VacationRequestPendingRH($this->selectedRequest));
+                    } catch (\Exception $e) {
+                        Log::error('Error enviando correo a RH: ' . $e->getMessage(), [
+                            'request_id' => $this->selectedRequest->id,
+                            'rh_user_id' => $rhUserId
+                        ]);
+                    }
+                }
+            }
+        } catch (\Exception $e) {
+            $this->closeDecisionModal();
+            session()->flash('error', 'Error al procesar la aprobación: ' . $e->getMessage());
+            return;
+        }
+
+        $this->closeDecisionModal();
+        $this->closeTrackingModal();
+    }
+
+    /**
+     * Rechazar en la etapa de Dirección (mismo flujo que VacacionesDireccion::rejectRequest).
+     */
+    private function rejectAsDirection()
+    {
+        if (!UserSignature::userHasSignature(auth()->id())) {
+            session()->flash('error', 'Debes registrar tu firma digital antes de poder rechazar solicitudes.');
+            return;
+        }
+
+        if (!$this->selectedRequest) {
+            return;
+        }
+
+        try {
+            $this->releaseReservedDaysForSelected();
+
+            $this->selectedRequest->update([
+                'direction_approbation_status' => 'Rechazada',
+                'direction_approbation_id' => auth()->id(),
+                'updated_at' => now()
+            ]);
+
+            SystemLog::logInfo('rh_tracking_direction_rejection', 'Etapa de Dirección rechazada desde Seguimiento RH', $this->selectedRequest->user_id, [
+                'request_id' => $this->selectedRequest->id,
+                'rh_user_id' => auth()->id(),
+            ]);
+
+            session()->flash('success', 'Solicitud rechazada en la etapa de Dirección. Los días han sido liberados.');
+
+            if ($this->selectedRequest->user && $this->selectedRequest->user->email) {
+                try {
+                    sleep(1);
+                    Mail::to($this->selectedRequest->user->email)
+                        ->send(new VacationRequestRejectedByDirection($this->selectedRequest));
+                } catch (\Exception $e) {
+                    Log::error('Error enviando correo de rechazo de Dirección: ' . $e->getMessage(), [
+                        'request_id' => $this->selectedRequest->id
+                    ]);
+                }
+            }
+        } catch (\Exception $e) {
+            $this->closeDecisionModal();
+            session()->flash('error', 'Error al procesar el rechazo: ' . $e->getMessage());
+            return;
+        }
+
+        $this->closeDecisionModal();
+        $this->closeTrackingModal();
+    }
+
+    /**
+     * Liberar días reservados de la solicitud seleccionada (flujo existente de rechazo).
+     */
+    private function releaseReservedDaysForSelected(): void
+    {
+        if (empty($this->selectedRequest->opcion)) {
+            return;
+        }
+
+        $parts = explode('|', $this->selectedRequest->opcion);
+        if (count($parts) !== 2) {
+            return;
+        }
+
+        list($periodNumber, $dateStart) = $parts;
+
+        $periodo = \App\Models\VacationsAvailable::where('users_id', $this->selectedRequest->user_id)
+            ->where('period', $periodNumber)
+            ->where('date_start', $dateStart)
+            ->where('is_historical', false)
+            ->first();
+
+        if ($periodo) {
+            $diasSolicitados = $this->selectedRequest->requestDays->count();
+            $periodo->update([
+                'days_reserved' => max(0, $periodo->days_reserved - $diasSolicitados)
+            ]);
         }
     }
 
@@ -307,6 +675,7 @@ class VacacionesRh extends Component
 
             $this->closeDecisionModal();
             $this->showDaysModal = false;
+            $this->showTrackingModal = false;
             $this->selectedRequest = null;
         }
     }
@@ -386,6 +755,7 @@ class VacacionesRh extends Component
 
             $this->closeDecisionModal();
             $this->showDaysModal = false;
+            $this->showTrackingModal = false;
             $this->selectedRequest = null;
         }
     }
@@ -418,7 +788,9 @@ class VacacionesRh extends Component
         $this->showDaysModal = false;
         $this->showAutoApprovalModal = false;
         $this->showDecisionModal = false;
+        $this->showTrackingModal = false;
         $this->decisionType = null;
+        $this->decisionStage = null;
         $this->selectedRequest = null;
     }
 
@@ -505,6 +877,47 @@ class VacacionesRh extends Component
         return collect([]);
     }
 
+    /**
+     * Seguimiento: todas las solicitudes sin importar la etapa del flujo,
+     * para visualizar en qué paso de aprobación se encuentra cada una.
+     */
+    public function getTrackingRequestsProperty()
+    {
+        if ($this->statusFilter !== 'tracking') {
+            return collect([]);
+        }
+
+        $query = RequestVacations::with(['user.job.departamento', 'requestDays']);
+
+        // Aplicar filtro por usuario
+        if ($this->userFilter) {
+            $query->where('user_id', $this->userFilter);
+        }
+
+        // Aplicar filtro por departamento
+        if ($this->departmentFilter) {
+            $query->whereHas('user.job.departamento', function (Builder $q) {
+                $q->where('id', $this->departmentFilter);
+            });
+        }
+
+        // Aplicar búsqueda por texto
+        if ($this->search) {
+            $query->where(function (Builder $q) {
+                $q->whereHas('user', function (Builder $subQ) {
+                    $subQ->where('first_name', 'like', '%' . $this->search . '%')
+                         ->orWhere('last_name', 'like', '%' . $this->search . '%');
+                })
+                ->orWhere('reason', 'like', '%' . $this->search . '%')
+                ->orWhere('type_request', 'like', '%' . $this->search . '%');
+            });
+        }
+
+        $query->orderBy($this->sortField, $this->sortDirection);
+
+        return $query->paginate($this->perPage);
+    }
+
     public function getProcessedRequestsProperty()
     {
         if ($this->statusFilter === 'processed') {
@@ -513,16 +926,29 @@ class VacacionesRh extends Component
         return collect([]);
     }
 
-    public function getUsersProperty()
+    /**
+     * IDs de usuarios con solicitudes según la pestaña activa.
+     * En 'Seguimiento' se incluyen todas las solicitudes sin importar la etapa.
+     */
+    private function getFilterUserIds(): array
     {
-        // Primero obtener IDs de usuarios desde mysql_vacations
-        $userIds = RequestVacations::where('direct_manager_status', 'Aprobada')
+        if ($this->statusFilter === 'tracking') {
+            return RequestVacations::distinct()->pluck('user_id')->toArray();
+        }
+
+        return RequestVacations::where('direct_manager_status', 'Aprobada')
             ->where('direction_approbation_status', 'Aprobada')
             ->where('human_resources_status', '!=', 'Rechazada')
             ->distinct()
             ->pluck('user_id')
             ->toArray();
-        
+    }
+
+    public function getUsersProperty()
+    {
+        // Primero obtener IDs de usuarios desde mysql_vacations
+        $userIds = $this->getFilterUserIds();
+
         // Luego filtrar usuarios en mysql usando whereIn (no cross-database)
         return User::whereIn('id', $userIds)
             ->where('active', 1)
@@ -533,12 +959,7 @@ class VacacionesRh extends Component
     public function getDepartmentsProperty()
     {
         // Primero obtener IDs de usuarios desde mysql_vacations
-        $userIds = RequestVacations::where('direct_manager_status', 'Aprobada')
-            ->where('direction_approbation_status', 'Aprobada')
-            ->where('human_resources_status', '!=', 'Rechazada')
-            ->distinct()
-            ->pluck('user_id')
-            ->toArray();
+        $userIds = $this->getFilterUserIds();
         
         // Luego obtener departamentos de esos usuarios (via jobs)
         return Departamento::whereHas('jobs.empleados', function (Builder $q) use ($userIds) {

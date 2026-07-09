@@ -149,7 +149,7 @@
                 </div>
                 <div>
                     <div class="fw-semibold" style="font-size:.9rem;color:#111827;">
-                        Términos y Condiciones del Sistema de Vacaciones
+                        Ayuda
                     </div>
                     <div style="font-size:.78rem;color:#6b7280;margin-top:.1rem;">
                         @if($hasAcceptedTerms)

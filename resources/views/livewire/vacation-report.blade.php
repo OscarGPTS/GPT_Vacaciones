@@ -158,6 +158,11 @@
                                     </span>
                                 </button>
 
+                                <!-- Exportar por Rango de Fechas -->
+                                <button wire:click="openDateRangeExportModal" class="btn btn-success" title="Exportar vacaciones tomadas dentro de un rango de fechas">
+                                    <i class="fas fa-calendar-week"></i> Exportar por Rango de Fechas
+                                </button>
+
                                 <a href="{{ url('/vacaciones/calendario') }}" class="btn btn-primary" title="Ir al calendario de vacaciones">
                                     <i class="fas fa-calendar-alt"></i> Calendario de Vacaciones
                                 </a>
@@ -252,6 +257,23 @@
                                             @endif
                                         </small>
                                     </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label">Estado del Colaborador</label>
+                                        <select wire:model.live="statusFilter" class="form-select">
+                                            <option value="active">Activos</option>
+                                            <option value="inactive">Dados de baja</option>
+                                            <option value="all">Todos</option>
+                                        </select>
+                                        <small class="text-muted d-block mt-1">
+                                            @if($statusFilter === 'inactive')
+                                                Mostrando solo colaboradores dados de baja
+                                            @elseif($statusFilter === 'all')
+                                                Mostrando activos y dados de baja
+                                            @else
+                                                Mostrando solo colaboradores activos
+                                            @endif
+                                        </small>
+                                    </div>
                                     <div class="col-md-2">
                                         <label class="form-label">Mostrar por página</label>
                                         <select wire:model.live="perPage" class="form-select">
@@ -262,7 +284,7 @@
                                         </select>
                                     </div>
                                     <div class="col-md-2 d-flex align-items-end gap-2 mb-4 ">
-                                        @if($searchTerm || $selectedUserId || $departmentFilter || $expirationFilter !== 'all')
+                                        @if($searchTerm || $selectedUserId || $departmentFilter || $expirationFilter !== 'all' || $statusFilter !== 'active')
                                             <button wire:click="clearFilters" class="btn btn-outline-secondary" title="Limpiar filtros">
                                                 <i class="fas fa-times"></i> Limpiar
                                             </button>
@@ -351,6 +373,9 @@
                                                 <div class="d-flex align-items-center">
                                                     <div>
                                                         <strong>{{ $employee->first_name }} {{ $employee->last_name }}</strong>
+                                                        @if($employee->active != 1)
+                                                            <span class="badge bg-danger ms-1">Baja</span>
+                                                        @endif
                                                         <br><small class="text-muted">ID: {{ $employee->id }}</small>
                                                     </div>
                                                 </div>
@@ -1311,6 +1336,71 @@
     @endpush
 
     <!-- Modal de Confirmación - Calcular Vacaciones -->
+    <!-- Modal de Exportación por Rango de Fechas -->
+    @if($showDateRangeExportModal)
+    <div class="modal fade show" style="display: block; background: rgba(0,0,0,0.5);" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content bg-white">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title">
+                        <i class="fas fa-calendar-week me-2"></i>
+                        Exportar por Rango de Fechas
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" wire:click="closeDateRangeExportModal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted mb-3">
+                        Selecciona el rango de fechas. Se exportan los días de vacaciones tomados dentro del rango, únicamente de solicitudes aprobadas por todo el flujo (jefe directo, dirección y RH). El Excel incluye el número de colaborador, nombre, razón social y el día de vacaciones (un renglón por día).
+                    </p>
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Fecha de inicio</label>
+                            <input type="date" wire:model="exportStartDate" class="form-control @error('exportStartDate') is-invalid @enderror">
+                            @error('exportStartDate')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Fecha de fin</label>
+                            <input type="date" wire:model="exportEndDate" class="form-control @error('exportEndDate') is-invalid @enderror">
+                            @error('exportEndDate')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+                    </div>
+
+                    @if($selectedUserId || $departmentFilter)
+                        <div class="alert alert-info mt-3 mb-0">
+                            <small>
+                                <i class="fas fa-filter me-1"></i>
+                                Se aplicarán también los filtros activos del reporte (empleado / departamento).
+                            </small>
+                        </div>
+                    @endif
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" wire:click="closeDateRangeExportModal">
+                        <i class="fas fa-times me-1"></i> Cancelar
+                    </button>
+                    <button type="button"
+                            class="btn btn-success"
+                            wire:click="exportVacationsByDateRange"
+                            wire:loading.attr="disabled"
+                            wire:target="exportVacationsByDateRange">
+                        <span wire:loading.remove wire:target="exportVacationsByDateRange">
+                            <i class="fas fa-file-excel me-1"></i> Exportar
+                        </span>
+                        <span wire:loading wire:target="exportVacationsByDateRange">
+                            <i class="fas fa-spinner fa-spin me-1"></i> Exportando...
+                        </span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
+
     @if($showCalculateVacationsModal)
     <div class="modal fade show" style="display: block; background: rgba(0,0,0,0.5);" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">

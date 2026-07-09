@@ -186,7 +186,7 @@
                     </div>
                     <div>
                         <div class="fw-semibold" style="font-size:.9rem;color:#111827;">
-                            Términos y Condiciones del Sistema de Vacaciones
+                            Ayuda
                         </div>
                         <div style="font-size:.78rem;color:#6b7280;margin-top:.1rem;">
                             @if($hasAcceptedTerms)
@@ -597,6 +597,8 @@
                                                 <span class="badge bg-success">Aprobada</span>
                                             @elseif($request->human_resources_status === 'Rechazada')
                                                 <span class="badge bg-danger">Rechazada</span>
+                                            @elseif($request->human_resources_status === 'Cancelada')
+                                                <span class="badge bg-secondary">Cancelada</span>
                                             @else
                                                 <span class="badge bg-secondary">-</span>
                                             @endif
@@ -611,6 +613,17 @@
                                                 <a href="{{ route('vacaciones.edit', $request->id) }}" class="btn btn-outline-warning btn-sm ms-1">
                                                     <i class="fas fa-edit"></i> Editar
                                                 </a>
+                                            @endif
+                                            @if($request->direct_manager_status === 'Pendiente'
+                                                && $request->human_resources_status !== 'Cancelada')
+                                                <button type="button" class="btn btn-outline-danger btn-sm ms-1"
+                                                        data-bs-toggle="modal" data-bs-target="#cancelRequestModal"
+                                                        data-request-id="{{ $request->id }}"
+                                                        data-dias="{{ $request->requestDays->count() }}"
+                                                        data-fecha="{{ $request->created_at->format('d/m/Y') }}"
+                                                        title="Cancelar solicitud">
+                                                    <i class="fas fa-ban"></i> Cancelar
+                                                </button>
                                             @endif
                                         </td>
                                     </tr>
@@ -780,6 +793,56 @@
         </div>
     </div>
     @endif
+
+    {{-- ═══ MODAL CANCELAR SOLICITUD (propia) ═══════════════════════════════ --}}
+    <div class="modal fade" id="cancelRequestModal" tabindex="-1" aria-labelledby="cancelRequestModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content bg-white border-0 shadow">
+                <div class="modal-header border-0 pb-0" style="background:#fff5f5;">
+                    <div class="d-flex align-items-center gap-2">
+                        <div style="width:38px;height:38px;border-radius:.4rem;background:#fee2e2;display:flex;align-items:center;justify-content:center;">
+                            <i class="fa fa-exclamation-triangle text-danger"></i>
+                        </div>
+                        <h5 class="modal-title mb-0 fw-bold" id="cancelRequestModalLabel" style="color:#991b1b;font-size:1rem;">
+                            Cancelar Solicitud
+                        </h5>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body pt-3">
+                    <p style="font-size:.9rem;color:#374151;">
+                        ¿Estás seguro de que deseas cancelar esta solicitud?
+                    </p>
+                    <div class="rounded p-3 mb-3" style="background:#f8fafc;border:1px solid #e2e8f0;font-size:.85rem;">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="text-muted">Fecha solicitud:</span>
+                            <span class="fw-semibold" id="cancelReqFecha">—</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span class="text-muted">Días a liberar:</span>
+                            <span class="fw-semibold text-success" id="cancelReqDias">—</span>
+                        </div>
+                    </div>
+                    <div class="alert alert-warning py-2 mb-0" style="font-size:.82rem;">
+                        <i class="fa fa-info-circle me-1"></i>
+                        Solo puedes cancelar mientras tu jefe directo no la haya revisado. La solicitud quedará <strong>Cancelada</strong> y los días reservados volverán al saldo del período.
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">
+                        No cancelar
+                    </button>
+                    <form id="cancelRequestForm" method="POST">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="btn btn-danger btn-sm fw-semibold">
+                            <i class="fa fa-times me-1"></i> Sí, cancelar solicitud
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Modales para Mis Solicitudes -->
     @foreach($requests as $request)
@@ -1207,7 +1270,7 @@
                                    style="width:1.1rem;height:1.1rem;margin-top:0;cursor:pointer;">
                             <label class="form-check-label" for="termsCheck"
                                    style="font-size:.84rem;cursor:pointer;color:#374151;">
-                                He leído y acepto los términos y condiciones
+                                He leído y acepto la ayuda
                             </label>
                         </div>
                         <div class="d-flex gap-2">
@@ -1370,6 +1433,24 @@
     if (check && btn) {
         check.addEventListener('change', () => { btn.disabled = !check.checked; });
     }
+})();
+
+// Cancelar solicitud propia — configurar el action del formulario
+(function () {
+    const cancelModal = document.getElementById('cancelRequestModal');
+    if (!cancelModal) return;
+
+    cancelModal.addEventListener('show.bs.modal', function (e) {
+        const btn       = e.relatedTarget;
+        const requestId = btn.dataset.requestId;
+        const dias      = btn.dataset.dias;
+        const fecha     = btn.dataset.fecha;
+
+        document.getElementById('cancelReqFecha').textContent = fecha;
+        document.getElementById('cancelReqDias').textContent  = dias + (dias == 1 ? ' día' : ' días');
+
+        document.getElementById('cancelRequestForm').action = `/vacaciones/cancelar/${requestId}`;
+    });
 })();
 </script>
 @endpush

@@ -15,7 +15,8 @@
       "Bash(php scripts/verify_vacation_report_optimization.php)",
       "Bash(php -l app/Http/Controllers/VacacionesController.php)",
       "Bash(cd /c/xampp/htdocs/rrhh.satechenergy/resources/views/vacaciones && grep -rn \"año de antigüedad\\\\|Información de Vacaciones\\\\|id='calendar'\\\\|#calendar {\" perfil-usuario.blade.php | head -30)",
-      "Read(//c/c/xampp/htdocs/rrhh.satechenergy/resources/views/vacaciones/**)"
+      "Read(//c/c/xampp/htdocs/rrhh.satechenergy/resources/views/vacaciones/**)",
+      "Bash(grep -n '@push\\\\|@endpush\\\\|@section\\\\|@endsection\\\\|Modales para Mis Solicitudes\\\\|@foreach\\($requests' /c/xampp/htdocs/rrhh.satechenergy/resources/views/vacaciones/index.blade.php)"
     ]
   }
 }

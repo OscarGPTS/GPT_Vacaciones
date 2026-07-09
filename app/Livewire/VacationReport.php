@@ -45,6 +45,7 @@ class VacationReport extends Component
     public $selectedUserId = null;
     public $showSearchResults = false;
     public $expirationFilter = 'all'; // Opciones: 'all', 'expiring', 'expired'
+    public $statusFilter = 'active'; // Opciones: 'active' (activos), 'inactive' (dados de baja), 'all'
     
     // Modal de vacaciones tomadas
     public $showVacationHistoryModal = false;
@@ -65,6 +66,11 @@ class VacationReport extends Component
     public $showUpdateDaysModal = false;
     public $showUpdateDaysResultsModal = false;
     public $updateDaysResults = null;
+
+    // Modal de exportación por rango de fechas
+    public $showDateRangeExportModal = false;
+    public $exportStartDate = '';
+    public $exportEndDate = '';
 
     // Usuarios con incidencias
     public $showEditIncidentModal = false;
@@ -95,16 +101,33 @@ class VacationReport extends Component
         $this->selectedUserId = null;
         $this->departmentFilter = '';
         $this->expirationFilter = 'all';
+        $this->statusFilter = 'active';
         $this->showSearchResults = false;
         $this->resetPage();
     }
-    
+
     // Reset pagination cuando cambian los filtros
     public function updated($propertyName)
     {
-        if (in_array($propertyName, ['selectedUserId', 'departmentFilter', 'expirationFilter', 'perPage'])) {
+        if (in_array($propertyName, ['selectedUserId', 'departmentFilter', 'expirationFilter', 'statusFilter', 'perPage'])) {
             $this->resetPage();
         }
+    }
+
+    /**
+     * Aplica el filtro de estado (activo / baja / todos) a una consulta de usuarios.
+     */
+    private function applyStatusFilter($query)
+    {
+        if ($this->statusFilter === 'inactive') {
+            $query->where('active', 2);
+        } elseif ($this->statusFilter === 'all') {
+            $query->whereIn('active', [1, 2]);
+        } else {
+            $query->where('active', 1);
+        }
+
+        return $query;
     }
     
     /**
@@ -468,7 +491,7 @@ class VacationReport extends Component
 
         return User::with(['job.departamento'])
             ->whereHas('job')
-            ->where('active', 1)
+            ->tap(fn($query) => $this->applyStatusFilter($query))
             ->where(function ($query) {
                 $query->where('first_name', 'like', '%' . $this->searchTerm . '%')
                     ->orWhere('last_name', 'like', '%' . $this->searchTerm . '%')
@@ -523,7 +546,7 @@ class VacationReport extends Component
     {
         return User::with(['job.departamento'])
             ->whereHas('job')
-            ->where('active', 1)
+            ->whereIn('active', [1, 2])
             ->orderBy('first_name')
             ->orderBy('last_name')
             ->get();
@@ -554,7 +577,7 @@ class VacationReport extends Component
                 },
             ])
             ->whereHas('job')
-            ->where('active', 1)
+            ->tap(fn($query) => $this->applyStatusFilter($query))
             ->orderBy('id')
             ->get();
 
@@ -702,7 +725,7 @@ class VacationReport extends Component
         // Obtener empleados aplicando los filtros activos
         $employees = User::with(['job.departamento'])
             ->whereHas('job')
-            ->where('active', 1)
+            ->tap(fn($query) => $this->applyStatusFilter($query))
             ->orderBy('first_name')
             ->orderBy('last_name')
             ->get();
@@ -1180,10 +1203,10 @@ class VacationReport extends Component
                 $sheet->getColumnDimension($col)->setVisible(false);
             }
 
-            // Obtener usuarios activos y aplicar filtros actuales del reporte
+            // Obtener usuarios y aplicar filtros actuales del reporte
             $employees = User::with(['job.departamento', 'jefe'])
                 ->whereHas('job')
-                ->where('active', 1)
+                ->tap(fn($query) => $this->applyStatusFilter($query))
                 ->orderBy('id')
                 ->get();
 
@@ -1379,6 +1402,228 @@ class VacationReport extends Component
             Log::error('Error exportando vacaciones: ' . $e->getMessage());
             Log::error($e->getTraceAsString());
             
+            $this->notification()->error(
+                'Error al Exportar',
+                'Ocurrió un error: ' . $e->getMessage()
+            );
+        }
+    }
+
+    /**
+     * Abrir modal de exportación por rango de fechas
+     */
+    public function openDateRangeExportModal()
+    {
+        $this->exportStartDate = '';
+        $this->exportEndDate = '';
+        $this->resetErrorBag();
+        $this->showDateRangeExportModal = true;
+    }
+
+    /**
+     * Cerrar modal de exportación por rango de fechas
+     */
+    public function closeDateRangeExportModal()
+    {
+        $this->showDateRangeExportModal = false;
+        $this->exportStartDate = '';
+        $this->exportEndDate = '';
+        $this->resetErrorBag();
+    }
+
+    /**
+     * Exportar por rango de fechas los días de vacaciones tomados dentro del rango.
+     * Genera un Excel con: número de colaborador (id), nombre, razón social, día de vacaciones y estatus.
+     */
+    public function exportVacationsByDateRange()
+    {
+        $this->validate([
+            'exportStartDate' => 'required|date',
+            'exportEndDate' => 'required|date|after_or_equal:exportStartDate',
+        ], [
+            'exportStartDate.required' => 'La fecha de inicio es obligatoria.',
+            'exportStartDate.date' => 'La fecha de inicio no es válida.',
+            'exportEndDate.required' => 'La fecha de fin es obligatoria.',
+            'exportEndDate.date' => 'La fecha de fin no es válida.',
+            'exportEndDate.after_or_equal' => 'La fecha de fin debe ser igual o posterior a la fecha de inicio.',
+        ]);
+
+        try {
+            $start = \Carbon\Carbon::parse($this->exportStartDate)->startOfDay();
+            $end = \Carbon\Carbon::parse($this->exportEndDate)->endOfDay();
+
+            // Filas a nivel de día: [id, nombre, razón social, día de vacaciones].
+            // Un renglón por cada día de vacaciones tomado dentro del rango.
+            $exportRows = collect();
+
+            // Días de vacaciones tomados dentro del rango.
+            // Solo solicitudes aprobadas en todo el flujo (jefe directo, dirección y RH).
+            // Se consulta desde RequestVacations (misma conexión que requestDays).
+            $requests = RequestVacations::with(['requestDays' => function ($query) use ($start, $end) {
+                    $query->whereBetween('start', [$start, $end])->orderBy('start');
+                }])
+                ->where('type_request', 'Vacaciones')
+                ->where('direct_manager_status', 'Aprobada')
+                ->where('direction_approbation_status', 'Aprobada')
+                ->where('human_resources_status', 'Aprobada')
+                ->whereHas('requestDays', function ($query) use ($start, $end) {
+                    $query->whereBetween('start', [$start, $end]);
+                })
+                ->orderBy('user_id')
+                ->orderBy('start')
+                ->get();
+
+            // Datos de los colaboradores involucrados.
+            $userIds = $requests->pluck('user_id')->unique()->values();
+
+            $usersQuery = User::with(['job.departamento', 'razonSocial'])
+                ->whereIn('id', $userIds);
+
+            if ($this->selectedUserId) {
+                $usersQuery->where('id', $this->selectedUserId);
+            }
+            if ($this->departmentFilter) {
+                $usersQuery->whereHas('job.departamento', function ($query) {
+                    $query->where('id', $this->departmentFilter);
+                });
+            }
+
+            $users = $usersQuery->get()->keyBy('id');
+
+            foreach ($requests as $request) {
+                $user = $users->get($request->user_id);
+                if (!$user) {
+                    continue;
+                }
+
+                $base = [
+                    'id' => $user->id,
+                    'name' => trim($user->first_name . ' ' . $user->last_name),
+                    'razon' => $user->razonSocial->name ?? 'Sin asignar',
+                ];
+
+                foreach ($request->requestDays->sortBy('start') as $day) {
+                    $exportRows->push(array_merge($base, [
+                        'dia' => \Carbon\Carbon::parse($day->start)->format('d/m/Y'),
+                    ]));
+                }
+            }
+
+            if ($exportRows->isEmpty()) {
+                $this->notification()->warning(
+                    'Sin resultados para exportar',
+                    'No hay días de vacaciones que coincidan con los filtros y el rango seleccionados.'
+                );
+                return null;
+            }
+
+            // Etiquetas
+            $reportTitle = 'REPORTE DE VACACIONES';
+            $sheetTitle = 'Vacaciones';
+
+            // Crear el spreadsheet
+            $spreadsheet = new Spreadsheet();
+            $sheet = $spreadsheet->getActiveSheet();
+            $sheet->setTitle($sheetTitle);
+
+            // Título y subtítulo
+            $sheet->setCellValue('A1', $reportTitle);
+            $sheet->mergeCells('A1:D1');
+            $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14);
+            $sheet->getStyle('A1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+
+            $subtitle = 'Vacaciones tomadas del ' . $start->format('d/m/Y') . ' al ' . $end->format('d/m/Y');
+            $sheet->setCellValue('A2', $subtitle);
+            $sheet->mergeCells('A2:D2');
+            $sheet->getStyle('A2')->getFont()->setBold(true)->setSize(11);
+            $sheet->getStyle('A2')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+
+            // Encabezados (fila 4)
+            $headers = [
+                'A4' => 'No. Colaborador',
+                'B4' => 'Nombre',
+                'C4' => 'Razón Social',
+                'D4' => 'Día de Vacaciones',
+            ];
+
+            foreach ($headers as $cell => $text) {
+                $sheet->setCellValue($cell, $text);
+                $sheet->getStyle($cell)->applyFromArray([
+                    'font' => [
+                        'bold' => true,
+                        'color' => ['rgb' => 'FFFFFF'],
+                    ],
+                    'fill' => [
+                        'fillType' => Fill::FILL_SOLID,
+                        'startColor' => ['rgb' => '2563EB'],
+                    ],
+                    'alignment' => [
+                        'horizontal' => Alignment::HORIZONTAL_CENTER,
+                        'vertical' => Alignment::VERTICAL_CENTER,
+                    ],
+                    'borders' => [
+                        'allBorders' => [
+                            'borderStyle' => Border::BORDER_THIN,
+                            'color' => ['rgb' => '000000'],
+                        ],
+                    ],
+                ]);
+            }
+
+            // Datos
+            $row = 5;
+            foreach ($exportRows as $data) {
+                $sheet->setCellValue("A{$row}", $data['id']);
+                $sheet->setCellValue("B{$row}", $data['name']);
+                $sheet->setCellValue("C{$row}", $data['razon']);
+                $sheet->setCellValue("D{$row}", $data['dia']);
+                $row++;
+            }
+
+            $lastRow = $row - 1;
+
+            // Bordes y alineación de datos
+            $sheet->getStyle("A5:D{$lastRow}")->applyFromArray([
+                'borders' => [
+                    'allBorders' => [
+                        'borderStyle' => Border::BORDER_THIN,
+                        'color' => ['rgb' => 'CCCCCC'],
+                    ],
+                ],
+            ]);
+            $sheet->getStyle("A5:A{$lastRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $sheet->getStyle("D5:D{$lastRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+
+            // Ancho de columnas
+            $sheet->getColumnDimension('A')->setWidth(16);
+            $sheet->getColumnDimension('B')->setWidth(38);
+            $sheet->getColumnDimension('C')->setWidth(32);
+            $sheet->getColumnDimension('D')->setWidth(18);
+
+            // Guardar archivo
+            $fileName = 'reporte_vacaciones_' . $start->format('Y-m-d') . '_al_' . $end->format('Y-m-d') . '.xlsx';
+            $filePath = storage_path('app/temp/' . $fileName);
+
+            if (!file_exists(storage_path('app/temp'))) {
+                mkdir(storage_path('app/temp'), 0755, true);
+            }
+
+            $writer = new Xlsx($spreadsheet);
+            $writer->save($filePath);
+
+            $this->closeDateRangeExportModal();
+
+            $this->notification()->success(
+                'Exportación Exitosa',
+                'Se exportaron ' . $exportRows->count() . ' registros correctamente.'
+            );
+
+            return response()->download($filePath)->deleteFileAfterSend(true);
+
+        } catch (\Exception $e) {
+            Log::error('Error exportando por rango de fechas: ' . $e->getMessage());
+            Log::error($e->getTraceAsString());
+
             $this->notification()->error(
                 'Error al Exportar',
                 'Ocurrió un error: ' . $e->getMessage()

@@ -161,7 +161,7 @@
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link {{ $statusFilter === 'processed' ? 'active' : '' }} text-start" 
+                            <button class="nav-link {{ $statusFilter === 'processed' ? 'active' : '' }} text-start"
                                     wire:click="$set('statusFilter', 'processed')" type="button">
                                 <div class="d-flex align-items-center justify-content-between">
                                     <div>
@@ -170,6 +170,18 @@
                                     <span class="badge bg-light text-dark">{{ $this->processedRequests->count() }}</span>
                                 </div>
                                 <small class="d-block mt-1">Solicitudes ya procesadas por RH</small>
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link {{ $statusFilter === 'tracking' ? 'active' : '' }} text-start"
+                                    wire:click="$set('statusFilter', 'tracking')" type="button">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <div>
+                                        <strong>Seguimiento</strong>
+                                    </div>
+                                    <span class="badge bg-light text-dark">{{ $this->trackingRequests->count() }}</span>
+                                </div>
+                                <small class="d-block mt-1">Estado de las solicitudes en el flujo de aprobación</small>
                             </button>
                         </li>
                     </ul>
@@ -401,6 +413,198 @@
                                     </div>
                                 @endif
                             </div>
+                        @elseif($statusFilter === 'tracking')
+                            <!-- Pestaña de Seguimiento -->
+                            <div class="tab-pane fade show active">
+                                @if($this->trackingRequests->count() > 0)
+                                    <div class="table-responsive">
+                                        <table class="table table-hover align-middle">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th class="text-nowrap">
+                                                        Empleado
+                                                    </th>
+                                                    <th class="text-nowrap">
+                                                        Departamento
+                                                    </th>
+                                                    <th class="text-nowrap" style="cursor: pointer;" wire:click="sortBy('created_at')">
+                                                        Fecha Solicitud
+                                                        @if($sortField === 'created_at')
+                                                            <i class="fas fa-sort-{{ $sortDirection === 'asc' ? 'up' : 'down' }} ms-1"></i>
+                                                        @endif
+                                                    </th>
+                                                    <th class="text-nowrap text-center">
+                                                        Días
+                                                    </th>
+                                                    <th class="text-nowrap" style="min-width: 260px;">
+                                                        Progreso de Aprobación
+                                                    </th>
+                                                    <th class="text-nowrap text-center">
+                                                        Estado General
+                                                    </th>
+                                                    <th class="text-nowrap text-center">
+                                                        Acciones
+                                                    </th>
+                                                </tr>
+                                            </thead>
+                                            <tbody style="font-size: 15px;">
+                                                @foreach($this->trackingRequests as $request)
+                                                @php
+                                                    $jefe = $request->direct_manager_status;
+                                                    $dir  = $request->direction_approbation_status;
+                                                    $rh   = $request->human_resources_status;
+
+                                                    $isCancelled = $rh === 'Cancelada';
+                                                    $rejectedBy  = $jefe === 'Rechazada' ? 'Jefe Directo'
+                                                                 : ($dir === 'Rechazada' ? 'Dirección'
+                                                                 : ($rh === 'Rechazada' ? 'RH' : null));
+
+                                                    // Estado de cada paso: done | current | rejected | waiting | cancelled
+                                                    $stepJefe = $jefe === 'Aprobada' ? 'done'
+                                                              : ($jefe === 'Rechazada' ? 'rejected'
+                                                              : ($isCancelled ? 'cancelled' : 'current'));
+
+                                                    $stepDir  = $dir === 'Aprobada' ? 'done'
+                                                              : ($dir === 'Rechazada' ? 'rejected'
+                                                              : ($isCancelled ? 'cancelled'
+                                                              : ($stepJefe === 'done' ? 'current' : 'waiting')));
+
+                                                    $stepRh   = $rh === 'Aprobada' ? 'done'
+                                                              : ($rh === 'Rechazada' ? 'rejected'
+                                                              : ($isCancelled ? 'cancelled'
+                                                              : ($stepDir === 'done' ? 'current' : 'waiting')));
+
+                                                    $stateText = function ($state) {
+                                                        return [
+                                                            'done'      => 'Aprobada',
+                                                            'current'   => 'Pendiente de revisión',
+                                                            'rejected'  => 'Rechazada',
+                                                            'waiting'   => 'En espera',
+                                                            'cancelled' => 'Cancelada',
+                                                        ][$state] ?? '';
+                                                    };
+
+                                                    $steps = [
+                                                        ['label' => 'Solicitud enviada', 'icon' => 'fa-paper-plane', 'state' => $isCancelled ? 'cancelled' : 'done',
+                                                         'status' => $isCancelled ? 'Cancelada' : $request->created_at->format('d/m/Y H:i')],
+                                                        ['label' => 'Jefe Directo', 'icon' => 'fa-user-tie',    'state' => $stepJefe, 'status' => $stateText($stepJefe)],
+                                                        ['label' => 'Dirección',    'icon' => 'fa-building',    'state' => $stepDir,  'status' => $stateText($stepDir)],
+                                                        ['label' => 'Recursos Humanos', 'icon' => 'fa-user-shield', 'state' => $stepRh, 'status' => $stateText($stepRh)],
+                                                    ];
+                                                @endphp
+                                                <tr class="border-start border-light border-3">
+                                                    <td>
+                                                        <div class="d-flex align-items-center">
+                                                            <div>
+                                                                <strong class="d-block">{{ $request->user->first_name ?? 'N/A' }} {{ $request->user->last_name ?? '' }}</strong>
+                                                                @if($request->user && $request->user->job)
+                                                                    <small class="text-muted">{{ $request->user->job->name ?? '' }}</small>
+                                                                @endif
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td>
+                                                        @if($request->user && $request->user->job && $request->user->job->departamento)
+                                                            <span class="badge bg-light text-dark">
+                                                                {{ $request->user->job->departamento->name }}
+                                                            </span>
+                                                        @else
+                                                            <span class="text-muted"><i class="fas fa-question-circle me-1"></i>Sin asignar</span>
+                                                        @endif
+                                                    </td>
+                                                    <td>
+                                                        <div class="text-center">
+                                                            <span class="fw-bold d-block">{{ $request->created_at->format('d-m-Y') }}</span>
+                                                            <small class="text-muted">{{ $request->created_at->format('H:i') }}</small>
+                                                        </div>
+                                                    </td>
+                                                    <td class="text-center">
+                                                        <span class="badge bg-primary fs-6">{{ $request->requestDays->count() }}</span>
+                                                    </td>
+                                                    <td>
+                                                        <div class="v-stepper">
+                                                            @foreach($steps as $step)
+                                                                <div class="v-step step-{{ $step['state'] }}">
+                                                                    <div class="v-step-indicator">
+                                                                        <div class="v-step-circle">
+                                                                            @if($step['state'] === 'done')
+                                                                                <i class="fas fa-check"></i>
+                                                                            @elseif($step['state'] === 'rejected')
+                                                                                <i class="fas fa-times"></i>
+                                                                            @elseif($step['state'] === 'cancelled')
+                                                                                <i class="fas fa-ban"></i>
+                                                                            @else
+                                                                                <i class="fas {{ $step['icon'] }}"></i>
+                                                                            @endif
+                                                                        </div>
+                                                                        @if(!$loop->last)
+                                                                            <div class="v-step-line {{ $step['state'] === 'done' ? 'line-done' : '' }}"></div>
+                                                                        @endif
+                                                                    </div>
+                                                                    <div class="v-step-content">
+                                                                        <div class="v-step-label">{{ $step['label'] }}</div>
+                                                                        <div class="v-step-status">{{ $step['status'] }}</div>
+                                                                    </div>
+                                                                </div>
+                                                            @endforeach
+                                                        </div>
+                                                    </td>
+                                                    <td class="text-center">
+                                                        @if($isCancelled)
+                                                            <span class="badge bg-secondary">
+                                                                <i class="fas fa-ban me-1"></i> Cancelada
+                                                            </span>
+                                                        @elseif($rejectedBy)
+                                                            <span class="badge bg-danger">
+                                                                <i class="fas fa-times-circle me-1"></i> Rechazada por {{ $rejectedBy }}
+                                                            </span>
+                                                        @elseif($rh === 'Aprobada')
+                                                            <span class="badge bg-success">
+                                                                <i class="fas fa-check-double me-1"></i> Aprobada
+                                                            </span>
+                                                        @else
+                                                            @php
+                                                                $waitingOn = $stepJefe === 'current' ? 'Jefe Directo' : ($stepDir === 'current' ? 'Dirección' : 'RH');
+                                                            @endphp
+                                                            <span class="badge bg-warning text-dark">
+                                                                <i class="fas fa-hourglass-half me-1"></i> Esperando {{ $waitingOn }}
+                                                            </span>
+                                                        @endif
+                                                    </td>
+                                                    <td class="text-center">
+                                                        <button type="button" class="btn btn-outline-primary btn-sm"
+                                                                wire:click="showTrackingDetail({{ $request->id }})">
+                                                            <i class="fas fa-tasks me-1"></i> Gestionar
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                                @endforeach
+                                            </tbody>
+                                        </table>
+                                    </div>
+
+                                    <!-- Paginación -->
+                                    @if($this->trackingRequests->count() > 0)
+                                        <div class="mt-3">
+                                            {{ $this->trackingRequests->links() }}
+                                        </div>
+                                    @endif
+                                @else
+                                    <div class="text-center py-5">
+                                        <div class="mb-4">
+                                            <i class="fas fa-route fa-4x text-muted"></i>
+                                        </div>
+                                        <h4 class="text-muted">No hay solicitudes para dar seguimiento</h4>
+                                        <p class="text-muted">
+                                            @if($search || $userFilter || $departmentFilter)
+                                                No se encontraron solicitudes para los filtros seleccionados.
+                                            @else
+                                                Los usuarios aún no han registrado solicitudes de vacaciones.
+                                            @endif
+                                        </p>
+                                    </div>
+                                @endif
+                            </div>
                         @else
                             <!-- Pestaña de Procesadas -->
                             <div class="tab-pane fade show active">
@@ -602,6 +806,170 @@
         @include('livewire.partials.rh-days-detail-modal')
     @endif
 
+    @if($showTrackingModal && $selectedRequest)
+        @php
+            $tJefe = $selectedRequest->direct_manager_status;
+            $tDir  = $selectedRequest->direction_approbation_status;
+            $tRh   = $selectedRequest->human_resources_status;
+
+            $tCancelled = $tRh === 'Cancelada';
+
+            $tStepJefe = $tJefe === 'Aprobada' ? 'done'
+                       : ($tJefe === 'Rechazada' ? 'rejected'
+                       : ($tCancelled ? 'cancelled' : 'current'));
+
+            $tStepDir  = $tDir === 'Aprobada' ? 'done'
+                       : ($tDir === 'Rechazada' ? 'rejected'
+                       : ($tCancelled ? 'cancelled'
+                       : ($tStepJefe === 'done' ? 'current' : 'waiting')));
+
+            $tStepRh   = $tRh === 'Aprobada' ? 'done'
+                       : ($tRh === 'Rechazada' ? 'rejected'
+                       : ($tCancelled ? 'cancelled'
+                       : ($tStepDir === 'done' ? 'current' : 'waiting')));
+
+            $tStateText = function ($state) {
+                return [
+                    'done'      => 'Aprobada',
+                    'current'   => 'Pendiente de revisión — etapa actual',
+                    'rejected'  => 'Rechazada',
+                    'waiting'   => 'En espera',
+                    'cancelled' => 'Cancelada',
+                ][$state] ?? '';
+            };
+
+            $tSteps = [
+                ['label' => 'Solicitud enviada', 'icon' => 'fa-paper-plane', 'state' => $tCancelled ? 'cancelled' : 'done',
+                 'status' => $tCancelled ? 'Cancelada' : $selectedRequest->created_at->format('d/m/Y H:i')],
+                ['label' => 'Jefe Directo', 'icon' => 'fa-user-tie',    'state' => $tStepJefe, 'status' => $tStateText($tStepJefe)],
+                ['label' => 'Dirección',    'icon' => 'fa-building',    'state' => $tStepDir,  'status' => $tStateText($tStepDir)],
+                ['label' => 'Recursos Humanos', 'icon' => 'fa-user-shield', 'state' => $tStepRh, 'status' => $tStateText($tStepRh)],
+            ];
+
+            $tCurrentStage = \App\Livewire\VacacionesRh::currentStageOf($selectedRequest);
+            $tStageLabels  = ['manager' => 'Jefe Directo', 'direction' => 'Dirección', 'rh' => 'Recursos Humanos'];
+            $tPeriod       = $selectedRequest->vacation_period;
+        @endphp
+        <div class="modal fade show" style="display: block; z-index: 1055;" tabindex="-1" role="dialog" aria-modal="true" wire:click="closeTrackingModal">
+            <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable" role="document" wire:click.stop>
+                <div class="modal-content bg-white border-0 shadow">
+                    <div class="modal-header" style="background:#eef2ff;">
+                        <h5 class="modal-title" style="color:#3730a3;">
+                            <i class="fas fa-route me-2"></i>
+                            Seguimiento de Solicitud — {{ $selectedRequest->user->first_name }} {{ $selectedRequest->user->last_name }}
+                        </h5>
+                        <button type="button" class="btn-close" wire:click="closeTrackingModal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row g-3">
+                            {{-- Detalles de la solicitud --}}
+                            <div class="col-md-6">
+                                <h6 class="fw-bold text-muted mb-3" style="font-size:.8rem;text-transform:uppercase;letter-spacing:.05em;">
+                                    <i class="fas fa-info-circle me-1"></i> Detalles
+                                </h6>
+                                <ul class="list-group list-group-flush small">
+                                    <li class="list-group-item d-flex justify-content-between px-0">
+                                        <span class="text-muted">Empleado</span>
+                                        <strong>{{ $selectedRequest->user->first_name }} {{ $selectedRequest->user->last_name }}</strong>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between px-0">
+                                        <span class="text-muted">Departamento</span>
+                                        <strong>{{ $selectedRequest->user->job->departamento->name ?? 'Sin asignar' }}</strong>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between px-0">
+                                        <span class="text-muted">Tipo</span>
+                                        <strong>{{ $selectedRequest->type_request }}</strong>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between px-0">
+                                        <span class="text-muted">Días solicitados</span>
+                                        <strong>{{ $selectedRequest->requestDays->count() }}</strong>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between px-0">
+                                        <span class="text-muted">Período</span>
+                                        <strong>{{ $tPeriod ? 'Período ' . $tPeriod->period : 'No especificado' }}</strong>
+                                    </li>
+                                    <li class="list-group-item px-0">
+                                        <span class="text-muted d-block mb-1">Días de vacaciones</span>
+                                        <div class="d-flex flex-wrap gap-1">
+                                            @foreach($selectedRequest->requestDays->sortBy('start') as $day)
+                                                <span class="badge bg-light text-dark border">
+                                                    {{ \Carbon\Carbon::parse($day->start)->format('d/m/Y') }}
+                                                </span>
+                                            @endforeach
+                                        </div>
+                                    </li>
+                                </ul>
+                            </div>
+
+                            {{-- Stepper vertical de progreso --}}
+                            <div class="col-md-6">
+                                <h6 class="fw-bold text-muted mb-3" style="font-size:.8rem;text-transform:uppercase;letter-spacing:.05em;">
+                                    <i class="fas fa-shoe-prints me-1"></i> Progreso de Aprobación
+                                </h6>
+                                <div class="v-stepper v-stepper-lg">
+                                    @foreach($tSteps as $step)
+                                        <div class="v-step step-{{ $step['state'] }}">
+                                            <div class="v-step-indicator">
+                                                <div class="v-step-circle">
+                                                    @if($step['state'] === 'done')
+                                                        <i class="fas fa-check"></i>
+                                                    @elseif($step['state'] === 'rejected')
+                                                        <i class="fas fa-times"></i>
+                                                    @elseif($step['state'] === 'cancelled')
+                                                        <i class="fas fa-ban"></i>
+                                                    @else
+                                                        <i class="fas {{ $step['icon'] }}"></i>
+                                                    @endif
+                                                </div>
+                                                @if(!$loop->last)
+                                                    <div class="v-step-line {{ $step['state'] === 'done' ? 'line-done' : '' }}"></div>
+                                                @endif
+                                            </div>
+                                            <div class="v-step-content">
+                                                <div class="v-step-label">{{ $step['label'] }}</div>
+                                                <div class="v-step-status">{{ $step['status'] }}</div>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                        </div>
+
+                        @if($tCurrentStage)
+                            <div class="alert alert-info mt-3 mb-0 py-2" style="font-size:.85rem;">
+                                <i class="fas fa-arrow-circle-right me-1"></i>
+                                Etapa actual: <strong>{{ $tStageLabels[$tCurrentStage] }}</strong>.
+                                Al avanzar, se ejecutará el mismo flujo de aprobación de esa etapa (asignaciones y notificaciones incluidas).
+                            </div>
+                        @endif
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" wire:click="closeTrackingModal">Cerrar</button>
+                        @if($tCurrentStage)
+                            @if($hasSignature)
+                                <button type="button" class="btn btn-danger"
+                                        wire:click="confirmRejectTracking({{ $selectedRequest->id }})">
+                                    <i class="fas fa-times me-1"></i> Rechazar ({{ $tStageLabels[$tCurrentStage] }})
+                                </button>
+                                <button type="button" class="btn btn-success"
+                                        wire:click="confirmAdvance({{ $selectedRequest->id }})">
+                                    <i class="fas fa-arrow-right me-1"></i> Avanzar: aprobar {{ $tStageLabels[$tCurrentStage] }}
+                                </button>
+                            @else
+                                <span class="text-muted small">
+                                    <i class="fas fa-lock me-1"></i> Registra tu firma digital para poder avanzar o rechazar solicitudes.
+                                </span>
+                            @endif
+                        @endif
+                    </div>
+                </div>
+            </div>
+        </div>
+        @if(!$showDecisionModal)
+            <div class="modal-backdrop fade show" style="z-index: 1050;"></div>
+        @endif
+    @endif
+
     @if($showDecisionModal && $selectedRequest)
         <div class="modal fade show rh-decision-modal" style="display: block; z-index: 1061;" tabindex="-1" role="dialog" aria-modal="true" wire:click="closeDecisionModal">
             <div class="modal-dialog rh-modal-dialog modal-dialog-centered" role="document" wire:click.stop>
@@ -610,8 +978,11 @@
                         <h5 class="modal-title">
                             <i class="fas {{ $decisionType === 'approve' ? 'fa-check-circle' : 'fa-times-circle' }} me-2"></i>
                             {{ $decisionType === 'approve' ? 'Confirmar aprobación' : 'Confirmar rechazo' }}
+                            @if($decisionStage && $decisionStage !== 'rh')
+                                — Etapa: {{ $decisionStage === 'manager' ? 'Jefe Directo' : 'Dirección' }}
+                            @endif
                         </h5>
-                     
+
                     </div>
                     <div class="modal-body rh-modal-body">
                         @php
@@ -620,13 +991,21 @@
                             $projectedDaysModal = $requestPeriodModal
                                 ? max(0, ($requestPeriodModal->days_availables ?? 0) - $requestedDaysModal)
                                 : null;
+
+                            if ($decisionType === 'approve') {
+                                $decisionText = [
+                                    'manager'   => 'Al aprobar la etapa de Jefe Directo, la solicitud avanzará a Dirección y se notificará al aprobador correspondiente.',
+                                    'direction' => 'Al aprobar la etapa de Dirección, la solicitud avanzará a Recursos Humanos para la aprobación final.',
+                                ][$decisionStage] ?? 'Al aprobar, los días de esta solicitud se descontarán del período seleccionado del empleado.';
+                            } else {
+                                $decisionText = [
+                                    'manager'   => 'Al rechazar en la etapa de Jefe Directo, los días reservados volverán a quedar disponibles y se notificará al empleado.',
+                                    'direction' => 'Al rechazar en la etapa de Dirección, los días reservados volverán a quedar disponibles y se notificará al empleado.',
+                                ][$decisionStage] ?? 'Al rechazar, los días reservados de esta solicitud volverán a quedar disponibles.';
+                            }
                         @endphp
 
-                        <p class="mb-3">
-                            {{ $decisionType === 'approve'
-                                ? 'Al aprobar, los días de esta solicitud se descontarán del período seleccionado del empleado.'
-                                : 'Al rechazar, los días reservados de esta solicitud volverán a quedar disponibles.' }}
-                        </p>
+                        <p class="mb-3">{{ $decisionText }}</p>
 
                         <ul class="list-group list-group-flush small">
                             <li class="list-group-item d-flex justify-content-between">
@@ -649,7 +1028,7 @@
                             @endif
                         </ul>
 
-                        @if($decisionType === 'approve' && $projectedDaysModal !== null)
+                        @if($decisionType === 'approve' && ($decisionStage === 'rh' || !$decisionStage) && $projectedDaysModal !== null)
                             <div class="alert alert-success mt-3 mb-0">
                                 <i class="fas fa-arrow-right me-1"></i>
                                 Saldo proyectado del período después de aprobar: <strong>{{ number_format($projectedDaysModal, 2) }} días</strong>
@@ -678,6 +1057,150 @@
 <style>
 .bg-gradient-primary {
     background:#ffffff;
+}
+
+/* ═══ Stepper vertical de seguimiento (estilo rastreo de pedido) ═════════ */
+.v-stepper {
+    display: flex;
+    flex-direction: column;
+    padding: .25rem 0;
+}
+
+.v-step {
+    display: flex;
+    align-items: flex-start;
+    gap: .75rem;
+}
+
+.v-step-indicator {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex-shrink: 0;
+    align-self: stretch;
+}
+
+.v-step-circle {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .78rem;
+    border: 2px solid #d1d5db;
+    background: #f9fafb;
+    color: #9ca3af;
+    transition: all .3s ease;
+    z-index: 1;
+}
+
+.v-stepper-lg .v-step-circle {
+    width: 40px;
+    height: 40px;
+    font-size: .9rem;
+}
+
+.v-step-line {
+    width: 3px;
+    flex-grow: 1;
+    min-height: 22px;
+    background: #e5e7eb;
+    border-radius: 2px;
+    margin: 2px 0;
+}
+
+.v-stepper-lg .v-step-line {
+    min-height: 30px;
+}
+
+.v-step-line.line-done {
+    background: #198754;
+}
+
+.v-step-content {
+    padding-bottom: 1rem;
+    padding-top: .25rem;
+    min-width: 0;
+}
+
+.v-step:last-child .v-step-content {
+    padding-bottom: 0;
+}
+
+.v-step-label {
+    font-size: .8rem;
+    font-weight: 700;
+    color: #9ca3af;
+    line-height: 1.2;
+}
+
+.v-stepper-lg .v-step-label {
+    font-size: .9rem;
+}
+
+.v-step-status {
+    font-size: .72rem;
+    color: #9ca3af;
+    margin-top: .1rem;
+}
+
+.v-stepper-lg .v-step-status {
+    font-size: .8rem;
+}
+
+/* Paso completado */
+.v-step.step-done .v-step-circle {
+    background: #198754;
+    border-color: #198754;
+    color: #fff;
+}
+.v-step.step-done .v-step-label {
+    color: #198754;
+}
+.v-step.step-done .v-step-status {
+    color: #157347;
+}
+
+/* Paso actual (en espera de acción) */
+.v-step.step-current .v-step-circle {
+    background: #fff8e1;
+    border-color: #f59e0b;
+    color: #b45309;
+    animation: stepperPulse 1.6s ease-in-out infinite;
+}
+.v-step.step-current .v-step-label {
+    color: #b45309;
+}
+.v-step.step-current .v-step-status {
+    color: #b45309;
+}
+
+/* Paso rechazado */
+.v-step.step-rejected .v-step-circle {
+    background: #dc3545;
+    border-color: #dc3545;
+    color: #fff;
+}
+.v-step.step-rejected .v-step-label,
+.v-step.step-rejected .v-step-status {
+    color: #dc3545;
+}
+
+/* Paso cancelado */
+.v-step.step-cancelled .v-step-circle {
+    background: #e5e7eb;
+    border-color: #9ca3af;
+    color: #6b7280;
+}
+.v-step.step-cancelled .v-step-label,
+.v-step.step-cancelled .v-step-status {
+    color: #6b7280;
+}
+
+@keyframes stepperPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, .45); }
+    50%      { box-shadow: 0 0 0 7px rgba(245, 158, 11, 0); }
 }
 
 .nav-pills .nav-link {

@@ -14,6 +14,7 @@ use App\Models\ManagerApprover;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class VacacionesController extends Controller
@@ -518,6 +519,87 @@ class VacacionesController extends Controller
         }
 
         return redirect()->route('vacaciones.index')->with('success', 'Solicitud actualizada correctamente.');
+    }
+
+    /**
+     * Cancelar la propia solicitud del usuario autenticado.
+     * Solo permitido mientras el jefe directo NO la haya aprobado
+     * (direct_manager_status === 'Pendiente'), es decir, antes del primer
+     * paso del flujo de aprobación. Libera los días reservados al período.
+     */
+    public function cancelarSolicitud(int $id)
+    {
+        $userId = auth()->id();
+
+        $solicitud = RequestVacations::with(['requestDays', 'user'])
+            ->where('id', $id)
+            ->where('user_id', $userId)
+            ->firstOrFail();
+
+        // Solo se puede cancelar si aún no la aprobó (ni rechazó) el jefe directo
+        // y no ha sido cancelada previamente.
+        if ($solicitud->direct_manager_status !== 'Pendiente'
+            || $solicitud->human_resources_status === 'Cancelada') {
+            return redirect()
+                ->route('vacaciones.index')
+                ->with('error', 'Solo puedes cancelar solicitudes que aún no han sido revisadas por tu jefe directo.');
+        }
+
+        DB::connection('mysql_vacations')->transaction(function () use ($solicitud) {
+            // 1. Liberar días reservados en el período correspondiente
+            $this->releaseReservedDays($solicitud);
+
+            // 2. Marcar la solicitud como cancelada
+            $solicitud->update([
+                'human_resources_status' => 'Cancelada',
+            ]);
+        });
+
+        Log::info('Solicitud cancelada por el propio usuario', [
+            'request_id' => $solicitud->id,
+            'user_id'    => $userId,
+        ]);
+
+        return redirect()
+            ->route('vacaciones.index')
+            ->with('success', 'Solicitud cancelada. Los días reservados fueron devueltos al período correspondiente.');
+    }
+
+    /**
+     * Libera los días reservados de una solicitud al período correspondiente.
+     * Reproduce el flujo existente de RequestController::releaseReservedDays.
+     */
+    protected function releaseReservedDays(RequestVacations $requestVacation)
+    {
+        if (empty($requestVacation->opcion)) {
+            return;
+        }
+
+        $parts = explode('|', $requestVacation->opcion);
+        if (count($parts) !== 2) {
+            return;
+        }
+
+        list($periodNumber, $dateStart) = $parts;
+
+        $periodo = VacationsAvailable::where('users_id', $requestVacation->user_id)
+            ->where('period', $periodNumber)
+            ->where('date_start', $dateStart)
+            ->where('is_historical', false)
+            ->first();
+
+        if ($periodo) {
+            $diasSolicitados = $requestVacation->requestDays->count();
+            $periodo->update([
+                'days_reserved' => max(0, $periodo->days_reserved - $diasSolicitados),
+            ]);
+
+            Log::info('Días reservados liberados (cancelación por usuario)', [
+                'request_id'    => $requestVacation->id,
+                'period'        => $periodNumber,
+                'days_released' => $diasSolicitados,
+            ]);
+        }
     }
 
     // AJAX para obtener restricciones del usuario
