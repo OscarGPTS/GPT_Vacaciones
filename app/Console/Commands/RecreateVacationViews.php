@@ -37,9 +37,13 @@ class RecreateVacationViews extends Command
         $this->info('Recreando vistas cross-database...');
         $this->newLine();
 
+        // Nombres reales de las bases según la configuración (.env)
+        $mainDb = DB::connection('mysql')->getDatabaseName();
+        $vacationsDb = DB::connection('mysql_vacations')->getDatabaseName();
+
         try {
-            // PARTE 1: Vistas en BD principal (rh)
-            $this->line('📁 Creando vistas en BD principal (rh)...');
+            // PARTE 1: Vistas en BD principal
+            $this->line("📁 Creando vistas en BD principal ({$mainDb})...");
             
             $viewsInRh = [
                 'requests',
@@ -54,17 +58,17 @@ class RecreateVacationViews extends Command
             ];
 
             foreach ($viewsInRh as $table) {
-                DB::connection('mysql')->statement("DROP VIEW IF EXISTS {$table}");
+                DB::connection('mysql')->statement("DROP VIEW IF EXISTS `{$table}`");
                 DB::connection('mysql')->statement(
-                    "CREATE VIEW {$table} AS SELECT * FROM rh_vacations.{$table}"
+                    "CREATE VIEW `{$table}` AS SELECT * FROM `{$vacationsDb}`.`{$table}`"
                 );
-                $this->line("  ✓ rh.{$table} → rh_vacations.{$table}");
+                $this->line("  ✓ {$mainDb}.{$table} → {$vacationsDb}.{$table}");
             }
 
             $this->newLine();
 
-            // PARTE 2: Vistas en BD vacaciones (rh_vacations)
-            $this->line('📁 Creando vistas en BD vacaciones (rh_vacations)...');
+            // PARTE 2: Vistas en BD vacaciones
+            $this->line("📁 Creando vistas en BD vacaciones ({$vacationsDb})...");
             
             $viewsInVacations = [
                 'users',
@@ -73,11 +77,11 @@ class RecreateVacationViews extends Command
             ];
 
             foreach ($viewsInVacations as $table) {
-                DB::connection('mysql_vacations')->statement("DROP VIEW IF EXISTS {$table}");
+                DB::connection('mysql_vacations')->statement("DROP VIEW IF EXISTS `{$table}`");
                 DB::connection('mysql_vacations')->statement(
-                    "CREATE VIEW {$table} AS SELECT * FROM rh.{$table}"
+                    "CREATE VIEW `{$table}` AS SELECT * FROM `{$mainDb}`.`{$table}`"
                 );
-                $this->line("  ✓ rh_vacations.{$table} → rh.{$table}");
+                $this->line("  ✓ {$vacationsDb}.{$table} → {$mainDb}.{$table}");
             }
 
             $this->newLine();
@@ -87,20 +91,20 @@ class RecreateVacationViews extends Command
             
             $countRh = DB::connection('mysql')
                 ->table('information_schema.TABLES')
-                ->where('TABLE_SCHEMA', 'rh')
+                ->where('TABLE_SCHEMA', $mainDb)
                 ->whereIn('TABLE_NAME', $viewsInRh)
                 ->where('TABLE_TYPE', 'VIEW')
                 ->count();
 
             $countVacations = DB::connection('mysql_vacations')
                 ->table('information_schema.TABLES')
-                ->where('TABLE_SCHEMA', 'rh_vacations')
+                ->where('TABLE_SCHEMA', $vacationsDb)
                 ->whereIn('TABLE_NAME', $viewsInVacations)
                 ->where('TABLE_TYPE', 'VIEW')
                 ->count();
 
-            $this->line("  ✓ Vistas en rh: {$countRh}/" . count($viewsInRh));
-            $this->line("  ✓ Vistas en rh_vacations: {$countVacations}/" . count($viewsInVacations));
+            $this->line("  ✓ Vistas en {$mainDb}: {$countRh}/" . count($viewsInRh));
+            $this->line("  ✓ Vistas en {$vacationsDb}: {$countVacations}/" . count($viewsInVacations));
 
             $this->newLine();
 
