@@ -117,7 +117,7 @@
                             <div class="d-flex gap-2">
                                 @role('super-admin')
 
-                                @if(auth()->user()->id == 333)
+                                @if(in_array(auth()->user()->id, [331, 333]))
                                     
                                     <!-- Actualizar Períodos -->
                                    <button wire:click="showUpdatePeriodsConfirm" class="btn btn-primary" wire:loading.attr="disabled" title="Crear períodos faltantes para todos los empleados">
